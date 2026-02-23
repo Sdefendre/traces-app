@@ -350,7 +350,7 @@ export function AppShell() {
       {/* Editor */}
       {!editorCollapsed ? (
         <div
-          className="panel-glass overflow-hidden transition-all duration-300 ease-in-out relative"
+          className="panel-glass overflow-hidden transition-all duration-300 ease-in-out"
           style={{
             ...(graphCollapsed
               ? { flex: '1 1 0%' }
@@ -358,37 +358,6 @@ export function AppShell() {
             borderLeft: '1px solid var(--glass-border)',
           }}
         >
-          {/* Collapse editor button — top-left of editor */}
-          <button
-            onClick={toggleEditorCollapsed}
-            className="absolute top-10 left-3 z-30 titlebar-no-drag"
-            style={{
-              width: 28,
-              height: 28,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 6,
-              border: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.04)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-              e.currentTarget.style.color = 'var(--text)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-            title="Collapse notes"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
           <EditorPanel />
         </div>
       ) : (

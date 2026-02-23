@@ -9,7 +9,7 @@ import { MarkdownEditor } from './MarkdownEditor';
 export function EditorPanel() {
   const { tabs, activeTabId, closeTab } = useEditorStore();
   const { activeFile } = useVaultStore();
-  const { editorLightMode, toggleEditorTheme } = useUIStore();
+  const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed } = useUIStore();
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
   // Editor-specific colors based on light/dark mode
@@ -102,14 +102,40 @@ export function EditorPanel() {
         })}
       </div>
 
-      {/* Breadcrumb + theme toggle */}
+      {/* Breadcrumb + collapse + theme toggle */}
       <div
-        className="flex items-center justify-between px-6 py-2"
+        className="flex items-center justify-between px-4 py-2 gap-2"
         style={{ borderBottom: `1px solid ${editorBorder}` }}
       >
-        <span className="text-sm" style={{ color: editorSecondary }}>
-          {activeTab.path.replace(/\//g, ' / ')}
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Collapse editor button */}
+          <button
+            onClick={toggleEditorCollapsed}
+            className="flex-shrink-0 titlebar-no-drag transition-colors"
+            style={{
+              width: 24,
+              height: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 5,
+              border: `1px solid ${editorBorder}`,
+              background: 'transparent',
+              color: editorSecondary,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = editorText)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = editorSecondary)}
+            title="Collapse notes"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <span className="text-sm truncate" style={{ color: editorSecondary }}>
+            {activeTab.path.replace(/\//g, ' / ')}
+          </span>
+        </div>
         <button
           onClick={toggleEditorTheme}
           className="transition-colors text-xs px-2 py-1 rounded"
