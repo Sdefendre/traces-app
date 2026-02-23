@@ -6,7 +6,7 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Send, ChevronRight, Eraser } from 'lucide-react';
+import { Send, ChevronLeft, Eraser } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,8 +56,10 @@ const MODEL_LABELS: Record<string, string> = {
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
 };
 
-const DEFAULT_SYSTEM_PROMPT =
-  'You are Traces, an AI assistant embedded in a knowledge management app called Traces. You can read, write, edit, search, and delete files in the user\'s vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.';
+function buildSystemPrompt(provider: string, model: string): string {
+  const displayName = MODEL_LABELS[model] || model;
+  return `You are TracesAI, an AI assistant embedded in a knowledge management app called Traces. You are currently running as ${displayName} (model ID: ${model}) from ${provider}. If the user asks what model you are, tell them you are ${displayName}. You can read, write, edit, search, and delete files in the user's vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.`;
+}
 
 // File-modifying tools that should trigger a refresh
 const FILE_MODIFYING_TOOLS = new Set(['write_file', 'edit_file', 'delete_file']);
@@ -176,8 +178,8 @@ export function ChatPanel() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // System prompt (always use default, not user-editable)
-  const systemPrompt = DEFAULT_SYSTEM_PROMPT;
+  // System prompt — includes current model info
+  const systemPrompt = buildSystemPrompt(provider, model);
 
   // Model state
   const [provider, setProvider] = useState<Provider>('ollama');
@@ -316,7 +318,7 @@ export function ChatPanel() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full pt-10" style={{ color: 'var(--text)' }}>
+    <div className="flex flex-col h-full pt-2" style={{ color: 'var(--text)' }}>
       {/* Typing indicator keyframes */}
       <style>{`
         @keyframes typingDot {
@@ -327,7 +329,7 @@ export function ChatPanel() {
 
       {/* Header — collapse + clear */}
       <div
-        className="flex items-center justify-between px-3 py-2 relative z-[60]"
+        className="flex items-center justify-between px-3 pt-10 pb-2 relative z-[60]"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <span className="text-sm text-muted-foreground">Chat</span>
@@ -338,7 +340,7 @@ export function ChatPanel() {
             </Button>
           )}
           <Button variant="ghost" size="icon-xs" onClick={toggleChat} title="Collapse chat" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-            <ChevronRight className="size-3.5" />
+            <ChevronLeft className="size-3.5" />
           </Button>
         </div>
       </div>
@@ -348,8 +350,16 @@ export function ChatPanel() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
         {messages.length === 0 && (
           <div className="text-center mt-12">
-            <div className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
-              Traces AI
+            <div
+              className="text-xl font-bold tracking-tight"
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #2383e2, #a855f7, #ec4899)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 12px rgba(99,102,241,0.4))',
+              }}
+            >
+              TracesAI
             </div>
           </div>
         )}
@@ -493,7 +503,7 @@ export function ChatPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="Ask Traces..."
+            placeholder="Chat with your Traces..."
             className="flex-1 min-w-0 bg-transparent text-sm placeholder:text-gray-500 focus:outline-none"
             style={{ color: 'var(--text)' }}
           />

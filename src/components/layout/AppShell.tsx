@@ -11,7 +11,7 @@ import { EditorPanel } from '@/components/editor/EditorPanel';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { GraphSettings } from '@/components/graph/GraphSettings';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, Minus, Plus, PanelLeftClose, Maximize, X } from 'lucide-react';
+import { ChevronRight, Minus, Plus, PanelLeftClose, Maximize, X } from 'lucide-react';
 
 export function AppShell() {
   const { loadVault, setGraphData, refreshFiles, loading } = useVaultStore();
@@ -137,16 +137,52 @@ export function AppShell() {
     );
   }
 
+  // Determine which panels are visible
+  const graphVisible = !graphCollapsed;
+  const editorVisible = !editorCollapsed;
+  const chatVisible = chatOpen;
+
+  // Dynamic flex: the first visible panel in priority order gets flex-grow
+  // when the panels above it are all collapsed
+  const sidebarFlex = !sidebarCollapsed && !graphVisible && !editorVisible && !chatVisible;
+  const editorFlex = editorVisible && !graphVisible;
+  const chatFlex = chatVisible && !graphVisible && !editorVisible;
+
+  // Collapsed tab strip — vertical label with icon
+  const CollapsedTab = ({ label, icon: Icon, onClick, title }: { label: string; icon: React.ElementType; onClick: () => void; title: string }) => (
+    <button
+      onClick={onClick}
+      title={title}
+      className="flex-shrink-0 flex items-center gap-1.5 cursor-pointer titlebar-no-drag relative z-[60] px-2 py-3 hover:bg-white/[0.04] transition-colors"
+      style={{
+        writingMode: 'vertical-lr',
+        borderRight: '1px solid var(--glass-border)',
+      }}
+    >
+      <Icon className="size-3.5 text-muted-foreground rotate-90" />
+      <span className="text-[11px] text-muted-foreground tracking-wider uppercase whitespace-nowrap">{label}</span>
+    </button>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden relative z-10">
       <div className="fixed top-0 left-0 right-0 h-8 titlebar-drag z-50" />
 
-      {/* Sidebar expand button */}
-      {sidebarCollapsed && (
-        <div className="flex-shrink-0 flex flex-col items-center justify-start relative z-[60]" style={{ width: 32, paddingTop: 48 }}>
-          <Button variant="ghost" size="icon-xs" onClick={toggleSidebar} title="Expand sidebar" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-            <ChevronRight className="size-3.5" />
-          </Button>
+      {/* Collapsed panel strip — all collapsed tabs grouped on the left */}
+      {(sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen) && (
+        <div className="flex-shrink-0 flex flex-col panel-glass" style={{ paddingTop: 40, borderRight: '1px solid var(--glass-border)' }}>
+          {sidebarCollapsed && (
+            <CollapsedTab label="Files" icon={ChevronRight} onClick={toggleSidebar} title="Expand sidebar" />
+          )}
+          {graphCollapsed && (
+            <CollapsedTab label="Graph" icon={ChevronRight} onClick={toggleGraphCollapsed} title="Expand graph" />
+          )}
+          {editorCollapsed && (
+            <CollapsedTab label="Notes" icon={ChevronRight} onClick={toggleEditorCollapsed} title="Expand notes" />
+          )}
+          {!chatOpen && (
+            <CollapsedTab label="Chat" icon={ChevronRight} onClick={toggleChat} title="Expand chat" />
+          )}
         </div>
       )}
 
@@ -154,8 +190,11 @@ export function AppShell() {
       {!sidebarCollapsed && (
         <>
           <div
-            className="flex-shrink-0 panel-glass overflow-hidden"
-            style={{ width: sidebarWidth, borderRight: '1px solid var(--glass-border)' }}
+            className="panel-glass overflow-hidden"
+            style={{
+              ...(sidebarFlex ? { flex: '1 1 0%' } : { width: sidebarWidth, flexShrink: 0 }),
+              borderRight: '1px solid var(--glass-border)',
+            }}
           >
             <FileTree />
           </div>
@@ -175,25 +214,17 @@ export function AppShell() {
         </>
       )}
 
-      {/* Graph */}
+      {/* Graph — always flex-grow so layout never breaks */}
       <div
         className="relative min-w-0 transition-all duration-300 ease-in-out"
         style={{
-          flex: graphCollapsed ? '0 0 0px' : '1 1 0%',
+          flex: '1 1 0%',
           overflow: graphCollapsed ? 'hidden' : 'visible',
+          maxWidth: graphCollapsed ? 0 : undefined,
           opacity: graphCollapsed ? 0 : 1,
         }}
       >
         <KnowledgeGraph />
-
-        {/* Collapse graph chevron — top left */}
-        {!graphCollapsed && (
-          <div className="absolute top-12 left-3 z-[60]">
-            <Button variant="ghost" size="icon-xs" onClick={toggleGraphCollapsed} title="Collapse graph" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-              <ChevronLeft className="size-3.5" />
-            </Button>
-          </div>
-        )}
 
         {!graphCollapsed && (
           <div className="absolute top-10 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
@@ -220,17 +251,8 @@ export function AppShell() {
         )}
       </div>
 
-      {/* Expand graph button when collapsed */}
-      {graphCollapsed && (
-        <div className="flex-shrink-0 flex flex-col items-center justify-start relative z-[60]" style={{ width: 32, paddingTop: 48 }}>
-          <Button variant="ghost" size="icon-xs" onClick={toggleGraphCollapsed} title="Expand graph" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-            <ChevronRight className="size-3.5" />
-          </Button>
-        </div>
-      )}
-
       {/* Editor resize divider */}
-      {!editorCollapsed && (
+      {!editorCollapsed && !graphCollapsed && (
         <div
           ref={editorDividerRef}
           onMouseDown={handleEditorDividerDrag}
@@ -247,40 +269,28 @@ export function AppShell() {
       )}
 
       {/* Editor */}
-      {!editorCollapsed ? (
+      {!editorCollapsed && (
         <div
           className="panel-glass overflow-hidden transition-all duration-300 ease-in-out"
           style={{
-            ...(graphCollapsed ? { flex: '1 1 0%' } : { width: editorWidth, flexShrink: 0 }),
+            ...(editorFlex ? { flex: '1 1 0%' } : { width: editorWidth, flexShrink: 0 }),
             borderLeft: '1px solid var(--glass-border)',
           }}
         >
           <EditorPanel />
-        </div>
-      ) : (
-        <div className="flex-shrink-0 flex flex-col items-center justify-start relative z-[60]" style={{ width: 32, paddingTop: 48 }}>
-          <Button variant="ghost" size="icon-xs" onClick={toggleEditorCollapsed} title="Expand notes" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="size-3.5" />
-          </Button>
         </div>
       )}
 
       {/* Chat Panel */}
       {chatOpen && (
         <div
-          className="flex-shrink-0 panel-glass overflow-hidden"
-          style={{ width: chatWidth, borderLeft: '1px solid var(--glass-border)' }}
+          className="panel-glass overflow-hidden"
+          style={{
+            ...(chatFlex ? { flex: '1 1 0%' } : { width: chatWidth, flexShrink: 0 }),
+            borderLeft: '1px solid var(--glass-border)',
+          }}
         >
           <ChatPanel />
-        </div>
-      )}
-
-      {/* Expand chat button */}
-      {!chatOpen && (
-        <div className="flex-shrink-0 flex flex-col items-center justify-start relative z-[60]" style={{ width: 32, paddingTop: 48 }}>
-          <Button variant="ghost" size="icon-xs" onClick={toggleChat} title="Expand chat" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="size-3.5" />
-          </Button>
         </div>
       )}
     </div>

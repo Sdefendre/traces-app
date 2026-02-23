@@ -1,18 +1,21 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
+import { electronAPI } from '@/lib/electron-api';
 import { MarkdownEditor } from './MarkdownEditor';
 import { Button } from '@/components/ui/button';
-import { PanelRightClose, X, Sun, Moon } from 'lucide-react';
+import { ChevronLeft, X, Sun, Moon, Plus } from 'lucide-react';
 
 export function EditorPanel() {
-  const { tabs, activeTabId, closeTab } = useEditorStore();
-  const { activeFile } = useVaultStore();
+  const { tabs, activeTabId, closeTab, openFile } = useEditorStore();
+  const { activeFile, refreshFiles, setActiveFile } = useVaultStore();
   const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed } = useUIStore();
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
 
   // Editor-specific colors based on light/dark mode
   const editorBg = editorLightMode ? '#ffffff' : 'transparent';
@@ -46,20 +49,64 @@ export function EditorPanel() {
     return () => window.removeEventListener('traces:open-note', handler);
   }, []);
 
+  const handleCreateNote = useCallback(async () => {
+    if (!newName.trim()) return;
+    const fileName = newName.endsWith('.md') ? newName : `${newName}.md`;
+    const filePath = `Memory/${fileName}`;
+    await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
+    await refreshFiles();
+    setCreating(false);
+    setNewName('');
+    setActiveFile(filePath);
+    openFile(filePath);
+  }, [newName, refreshFiles, setActiveFile, openFile]);
+
   if (!activeTab) {
     return (
       <div className="flex flex-col h-full">
-        {/* Collapse button even when no file is open */}
-        <div className="flex items-center justify-between px-4 pt-10 pb-2 relative z-[60]" style={{ borderBottom: '1px solid var(--border)' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 pt-12 pb-2 relative z-[60]" style={{ borderBottom: '1px solid var(--border)' }}>
           <span className="text-sm text-muted-foreground">Notes</span>
-          <Button variant="outline" size="icon-xs" onClick={toggleEditorCollapsed} title="Collapse notes" className="titlebar-no-drag">
-            <PanelRightClose className="size-3" />
-          </Button>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground">Select a note to begin editing</div>
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="icon-xs" onClick={() => setCreating(true)} title="New note" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
+              <Plus className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={toggleEditorCollapsed} title="Collapse notes" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="size-3.5" />
+            </Button>
           </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4">
+          {creating ? (
+            <div className="w-full max-w-[240px]">
+              <input
+                type="text"
+                placeholder="Note name..."
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateNote();
+                  if (e.key === 'Escape') { setCreating(false); setNewName(''); }
+                }}
+                autoFocus
+                className="w-full px-3 py-2 text-sm rounded-lg placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[rgba(35,131,226,0.2)]"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text)',
+                }}
+              />
+              <p className="text-[11px] text-muted-foreground mt-2 text-center">Press Enter to create, Esc to cancel</p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground mb-3">Select a note to begin editing</div>
+              <Button variant="outline" size="sm" onClick={() => setCreating(true)} className="gap-1.5">
+                <Plus className="size-3.5" />
+                New Note
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -118,14 +165,13 @@ export function EditorPanel() {
       >
         <div className="flex items-center gap-2 min-w-0">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon-xs"
             onClick={toggleEditorCollapsed}
             title="Collapse notes"
-            className="titlebar-no-drag flex-shrink-0"
-            style={{ borderColor: editorBorder, color: editorSecondary }}
+            className="titlebar-no-drag flex-shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <PanelRightClose className="size-3" />
+            <ChevronLeft className="size-3.5" />
           </Button>
           <span className="text-sm truncate" style={{ color: editorSecondary }}>
             {activeTab.path.replace(/\//g, ' / ')}
