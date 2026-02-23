@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+main/dist/
+dist/
+*.js.map
+.env.local
+.env
+.DS_Store

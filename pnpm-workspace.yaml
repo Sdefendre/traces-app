@@ -1,0 +1,1 @@
+onlyBuiltDependencies: '["electron", "electron-builder", "sharp"]'
