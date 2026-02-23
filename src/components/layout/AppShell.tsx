@@ -5,6 +5,7 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useGraphStore } from '@/stores/graph-store';
 import { electronAPI } from '@/lib/electron-api';
+import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
 import { EditorPanel } from '@/components/editor/EditorPanel';
@@ -33,6 +34,7 @@ export function AppShell() {
     toggleSettings,
   } = useUIStore();
   const { zoomIn, zoomOut } = useGraphStore();
+  const { loadSettings } = useSettingsStore();
   const editorDividerRef = useRef<HTMLDivElement>(null);
   const sidebarDividerRef = useRef<HTMLDivElement>(null);
   const chatDividerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,8 @@ export function AppShell() {
 
   useEffect(() => {
     loadVault();
-  }, [loadVault]);
+    loadSettings();
+  }, [loadVault, loadSettings]);
 
   useEffect(() => {
     const unsubFile = electronAPI.onFileChange((event, filePath) => {
@@ -298,9 +301,9 @@ export function AppShell() {
           pointerEvents: graphCollapsed ? 'none' : 'auto',
         }}
       >
-        <KnowledgeGraph />
+        {!settingsOpen && <KnowledgeGraph />}
 
-        {!graphCollapsed && (
+        {!graphCollapsed && !settingsOpen && (
           <div className="absolute top-10 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
             <Button variant="ghost" size="icon-sm" onClick={zoomOut} title="Zoom out" className="text-muted-foreground hover:text-foreground">
               <Minus className="size-3.5" />
@@ -381,19 +384,8 @@ export function AppShell() {
         </div>
       )}
 
-      {/* Settings panel — slides from right */}
-      {settingsOpen && (
-        <div
-          className="panel-glass overflow-hidden relative z-[45]"
-          style={{
-            width: 300,
-            flexShrink: 0,
-            borderLeft: '1px solid var(--glass-border)',
-          }}
-        >
-          <SettingsPanel />
-        </div>
-      )}
+      {/* Settings overlay — full screen */}
+      {settingsOpen && <SettingsPanel />}
 
       {/* Settings button — fixed bottom-left */}
       <button

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useUIStore } from '@/stores/ui-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Send, ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
@@ -30,17 +31,6 @@ interface OllamaModel {
   model: string;
 }
 
-// Hard-coded cloud model options (use short aliases)
-const OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini'];
-const CLAUDE_MODELS = [
-  'claude-opus-4-6',
-  'claude-sonnet-4-6',
-  'claude-sonnet-4-20250514',
-  'claude-haiku-4-5-20251001',
-];
-const XAI_MODELS = ['grok-3-fast', 'grok-4-1-fast'];
-const GOOGLE_MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'];
-
 // Friendly display names
 const MODEL_LABELS: Record<string, string> = {
   'claude-opus-4-6': 'Opus 4.6',
@@ -56,9 +46,10 @@ const MODEL_LABELS: Record<string, string> = {
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
 };
 
-function buildSystemPrompt(provider: string, model: string): string {
+function buildSystemPrompt(provider: string, model: string, customPrompt: string): string {
   const displayName = MODEL_LABELS[model] || model;
-  return `You are TracesAI, an AI assistant embedded in a knowledge management app called Traces. You are currently running as ${displayName} (model ID: ${model}) from ${provider}. If the user asks what model you are, tell them you are ${displayName}. You can read, write, edit, search, and delete files in the user's vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.`;
+  const base = `You are TracesAI, an AI assistant embedded in a knowledge management app called Traces. You are currently running as ${displayName} (model ID: ${model}) from ${provider}. If the user asks what model you are, tell them you are ${displayName}. You can read, write, edit, search, and delete files in the user's vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.`;
+  return customPrompt ? `${customPrompt}\n\n${base}` : base;
 }
 
 // File-modifying tools that should trigger a refresh
@@ -170,6 +161,7 @@ export function ChatPanel() {
   const { toggleChat } = useUIStore();
   const { refreshFiles } = useVaultStore();
   const { reloadTab } = useEditorStore();
+  const { settings: appSettings } = useSettingsStore();
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -178,49 +170,79 @@ export function ChatPanel() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Model state
-  const [provider, setProvider] = useState<Provider>('ollama');
-  const [model, setModel] = useState('');
+  // Model state — initialize from settings defaults
+  const [provider, setProvider] = useState<Provider>(appSettings.defaultProvider);
+  const [model, setModel] = useState(appSettings.defaultModel);
 
-  // System prompt — includes current model info
-  const systemPrompt = buildSystemPrompt(provider, model);
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [ollamaRunning, setOllamaRunning] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  // Auto-detect Ollama models on mount
+  // Get enabled models from settings
+  const enabledAnthropicModels = appSettings.enabledModels.anthropic;
+  const enabledOpenaiModels = appSettings.enabledModels.openai;
+  const enabledGoogleModels = appSettings.enabledModels.google;
+  const enabledXaiModels = appSettings.enabledModels.xai;
+
+  // System prompt — includes current model info + custom prompt
+  const systemPrompt = buildSystemPrompt(provider, model, appSettings.customSystemPrompt);
+
+  // Get API key for current provider from settings
+  const getApiKey = useCallback(
+    (prov: Provider): string | undefined => {
+      const keyMap: Record<string, string> = {
+        openai: appSettings.apiKeys.openai,
+        anthropic: appSettings.apiKeys.anthropic,
+        xai: appSettings.apiKeys.xai,
+        google: appSettings.apiKeys.google,
+      };
+      return keyMap[prov] || undefined;
+    },
+    [appSettings.apiKeys],
+  );
+
+  // Auto-detect Ollama models on mount, then set defaults
   useEffect(() => {
     let cancelled = false;
+    const ollamaEndpoint = appSettings.ollamaEndpoint || 'http://localhost:11434';
 
     async function detectOllama() {
       try {
-        const res = await fetch('http://localhost:11434/api/tags');
+        const res = await fetch(`${ollamaEndpoint}/api/tags`);
         if (!res.ok) throw new Error('not ok');
         const data = await res.json();
         const models: string[] = (data.models ?? []).map((m: OllamaModel) => m.name);
         if (!cancelled) {
           setOllamaRunning(true);
           setOllamaModels(models);
-          if (models.length > 0) {
-            setProvider('ollama');
-            setModel(models[0]);
-          } else {
-            setProvider('anthropic');
-            setModel(CLAUDE_MODELS[0]);
+          if (!initialized) {
+            // Use settings default if not ollama, otherwise pick first ollama model
+            if (appSettings.defaultProvider === 'ollama' && models.length > 0) {
+              setProvider('ollama');
+              setModel(models[0]);
+            } else {
+              setProvider(appSettings.defaultProvider);
+              setModel(appSettings.defaultModel);
+            }
+            setInitialized(true);
           }
         }
       } catch {
         if (!cancelled) {
           setOllamaRunning(false);
           setOllamaModels([]);
-          setProvider('anthropic');
-          setModel(CLAUDE_MODELS[0]);
+          if (!initialized) {
+            setProvider(appSettings.defaultProvider);
+            setModel(appSettings.defaultModel);
+            setInitialized(true);
+          }
         }
       }
     }
 
     detectOllama();
     return () => { cancelled = true; };
-  }, []);
+  }, [appSettings.ollamaEndpoint, appSettings.defaultProvider, appSettings.defaultModel, initialized]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -266,6 +288,9 @@ export function ChatPanel() {
     setError(null);
 
     try {
+      // Pass API key from settings store if available
+      const apiKey = getApiKey(provider);
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,12 +299,13 @@ export function ChatPanel() {
           provider,
           model,
           systemPrompt,
+          ...(apiKey ? { apiKey } : {}),
         }),
       });
 
       if (res.status === 503) {
         const data = await res.json();
-        setError(data.error || 'API key not configured. Add the required key to .env.local');
+        setError(data.error || 'API key not configured. Add it in Settings > AI & Models');
         setLoading(false);
         return;
       }
@@ -471,26 +497,34 @@ export function ChatPanel() {
                   ))}
                 </optgroup>
               )}
-              <optgroup label="Claude">
-                {CLAUDE_MODELS.map((m) => (
-                  <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
-                ))}
-              </optgroup>
-              <optgroup label="OpenAI">
-                {OPENAI_MODELS.map((m) => (
-                  <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Google Gemini">
-                {GOOGLE_MODELS.map((m) => (
-                  <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
-                ))}
-              </optgroup>
-              <optgroup label="xAI Grok">
-                {XAI_MODELS.map((m) => (
-                  <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                ))}
-              </optgroup>
+              {enabledAnthropicModels.length > 0 && (
+                <optgroup label="Claude">
+                  {enabledAnthropicModels.map((m) => (
+                    <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
+                  ))}
+                </optgroup>
+              )}
+              {enabledOpenaiModels.length > 0 && (
+                <optgroup label="OpenAI">
+                  {enabledOpenaiModels.map((m) => (
+                    <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                  ))}
+                </optgroup>
+              )}
+              {enabledGoogleModels.length > 0 && (
+                <optgroup label="Google Gemini">
+                  {enabledGoogleModels.map((m) => (
+                    <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
+                  ))}
+                </optgroup>
+              )}
+              {enabledXaiModels.length > 0 && (
+                <optgroup label="xAI Grok">
+                  {enabledXaiModels.map((m) => (
+                    <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 

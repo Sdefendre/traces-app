@@ -12,6 +12,7 @@ import { neuralTheme, neuralHighlightStyle } from './extensions/theme';
 import { wikiLinkPlugin } from './extensions/wikiLink';
 import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
+import { useSettingsStore } from '@/stores/settings-store';
 import { electronAPI } from '@/lib/electron-api';
 
 interface MarkdownEditorProps {
@@ -32,6 +33,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
   const renameTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { setTabContent, saveTab } = useEditorStore();
   const { files } = useVaultStore();
+  const { settings: appSettings } = useSettingsStore();
 
   // Wiki-link autocomplete
   const wikiLinkCompletion = useCallback(
@@ -136,6 +138,14 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
       });
     }
   }, [content]);
+
+  // Apply font size from settings
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const el = view.dom;
+    el.style.fontSize = `${appSettings.editorFontSize}px`;
+  }, [appSettings.editorFontSize]);
 
   return <div ref={containerRef} className="h-full overflow-auto" />;
 }

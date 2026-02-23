@@ -1,4 +1,6 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
+import fs from 'fs';
+import path from 'path';
 import {
   setVaultRoot,
   listFiles,
@@ -9,6 +11,10 @@ import {
   deleteFile,
 } from './file-system';
 import { parseVault } from './vault-parser';
+
+function getSettingsPath(): string {
+  return path.join(app.getPath('userData'), 'settings.json');
+}
 
 export function registerIpcHandlers(vaultRoot: string) {
   setVaultRoot(vaultRoot);
@@ -40,5 +46,18 @@ export function registerIpcHandlers(vaultRoot: string) {
   ipcMain.handle('vault:getGraphData', async () => {
     const files = await listFiles();
     return parseVault(vaultRoot, files);
+  });
+
+  ipcMain.handle('settings:load', async () => {
+    try {
+      const data = fs.readFileSync(getSettingsPath(), 'utf-8');
+      return JSON.parse(data);
+    } catch {
+      return {};
+    }
+  });
+
+  ipcMain.handle('settings:save', async (_event, data: Record<string, unknown>) => {
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(data, null, 2), 'utf-8');
   });
 }

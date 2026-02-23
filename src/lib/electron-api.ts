@@ -9,6 +9,8 @@ export interface ElectronAPI {
   deleteFile: (filePath: string) => Promise<void>;
   getGraphData: () => Promise<GraphData>;
   openFolder: () => Promise<string | null>;
+  loadSettings: () => Promise<Record<string, unknown>>;
+  saveSettings: (data: Record<string, unknown>) => Promise<void>;
   onFileChange: (callback: (event: string, filePath: string) => void) => () => void;
   onGraphUpdate: (callback: (data: GraphData) => void) => () => void;
 }
@@ -67,6 +69,18 @@ export const electronAPI = {
     const api = getAPI();
     if (!api) return null;
     return api.openFolder();
+  },
+
+  async loadSettings(): Promise<Record<string, unknown>> {
+    const api = getAPI();
+    if (!api) return {};
+    return api.loadSettings();
+  },
+
+  async saveSettings(data: Record<string, unknown>): Promise<void> {
+    const api = getAPI();
+    if (!api) return;
+    return api.saveSettings(data);
   },
 
   onFileChange(callback: (event: string, filePath: string) => void): () => void {

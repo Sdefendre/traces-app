@@ -38,14 +38,16 @@ The bottom of the editor displays a persistent status bar showing word count, ch
 
 A MessageCircle button in the editor header opens the AI chat panel directly from the notes view, making it easy to invoke the AI assistant while writing. The button appears when the chat panel is closed.
 
-### Dedicated Settings Panel
+### Full Settings Page
 
-Accessed via the gear icon fixed at the bottom-left corner of the window. The settings panel slides in from the right and contains two sections:
+Full-screen settings overlay accessed via the gear icon (bottom-left) or closed with Escape. Sidebar navigation with four sections:
 
-- **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, and line color (via color picker).
-- **Editor** -- light/dark mode toggle.
+- **AI & Models** -- API key management for Anthropic, OpenAI, Google, and xAI. Ollama endpoint configuration. Per-provider model enable/disable checkboxes to control which models appear in the chat picker. Default provider and model selection. Custom system prompt.
+- **Editor** -- font size slider, light/dark mode toggle, spell check.
+- **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, and line color.
+- **General** -- vault path display, startup behavior, clear chat on close.
 
-Graph settings were moved out of the graph popover into this dedicated panel for a cleaner interface.
+Settings persist across app restarts via Electron IPC (`settings.json` in user data directory).
 
 ### AI Chat (TracesAI)
 
@@ -125,7 +127,7 @@ pnpm start
 
 ### API Keys
 
-To use cloud AI providers, create a `.env.local` file in the project root:
+API keys can be configured directly in the app via **Settings > AI & Models**. Alternatively, create a `.env.local` file in the project root:
 
 ```
 OPENAI_API_KEY=sk-...
@@ -205,6 +207,7 @@ traces-app/
 │   │   ├── vault-store.ts
 │   │   ├── editor-store.ts
 │   │   ├── graph-store.ts
+│   │   ├── settings-store.ts      # App settings (AI, editor, general)
 │   │   └── ui-store.ts
 │   ├── lib/
 │   │   ├── electron-api.ts        # Electron API wrapper

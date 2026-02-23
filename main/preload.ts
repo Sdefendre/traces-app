@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getGraphData: () => ipcRenderer.invoke('vault:getGraphData'),
   openFolder: () => ipcRenderer.invoke('vault:openFolder'),
 
+  loadSettings: () => ipcRenderer.invoke('settings:load'),
+  saveSettings: (data: Record<string, unknown>) => ipcRenderer.invoke('settings:save', data),
+
   onFileChange: (callback: (event: string, filePath: string) => void) => {
     const handler = (_: Electron.IpcRendererEvent, event: string, filePath: string) =>
       callback(event, filePath);
