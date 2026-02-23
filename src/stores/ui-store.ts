@@ -8,6 +8,7 @@ interface UIState {
   graphFullscreen: boolean;
   graphCollapsed: boolean;
   sidebarCollapsed: boolean;
+  editorCollapsed: boolean;
   editorLightMode: boolean;
 
   setSidebarWidth: (w: number) => void;
@@ -17,6 +18,7 @@ interface UIState {
   toggleGraphFullscreen: () => void;
   toggleGraphCollapsed: () => void;
   toggleSidebar: () => void;
+  toggleEditorCollapsed: () => void;
   toggleEditorTheme: () => void;
 }
 
@@ -28,6 +30,7 @@ export const useUIStore = create<UIState>((set) => ({
   graphFullscreen: false,
   graphCollapsed: false,
   sidebarCollapsed: false,
+  editorCollapsed: false,
   editorLightMode: false,
 
   setSidebarWidth: (w) => set({ sidebarWidth: w }),
@@ -40,6 +43,8 @@ export const useUIStore = create<UIState>((set) => ({
     set((s) => ({ graphCollapsed: !s.graphCollapsed })),
   toggleSidebar: () =>
     set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  toggleEditorCollapsed: () =>
+    set((s) => ({ editorCollapsed: !s.editorCollapsed })),
   toggleEditorTheme: () =>
     set((s) => ({ editorLightMode: !s.editorLightMode })),
 }));

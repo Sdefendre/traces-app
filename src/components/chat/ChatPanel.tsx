@@ -35,7 +35,7 @@ const CLAUDE_MODELS = [
   'claude-sonnet-4-20250514',
   'claude-haiku-4-5-20251001',
 ];
-const XAI_MODELS = ['grok-3-fast'];
+const XAI_MODELS = ['grok-3-fast', 'grok-4-1-fast'];
 
 // Friendly display names
 const MODEL_LABELS: Record<string, string> = {
@@ -46,6 +46,7 @@ const MODEL_LABELS: Record<string, string> = {
   'gpt-4o': 'GPT-4o',
   'gpt-4o-mini': 'GPT-4o Mini',
   'grok-3-fast': 'Grok 3 Fast',
+  'grok-4-1-fast': 'Grok 4.1 Fast',
 };
 
 const DEFAULT_SYSTEM_PROMPT =

@@ -95,7 +95,7 @@ export function FileTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-2" style={{ paddingTop: '40px', borderBottom: '1px solid var(--border)' }}>
+      <div className="px-5 py-3" style={{ paddingTop: '44px', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>
             {vaultName}
@@ -212,7 +212,7 @@ export function FileTree() {
       </div>
 
       {/* Bottom bar: file count */}
-      <div className="px-3 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="text-xs text-center" style={{ color: 'var(--text-dim)' }}>
           {files.length} notes
         </div>

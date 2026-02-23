@@ -21,9 +21,11 @@ export function AppShell() {
     graphFullscreen,
     graphCollapsed,
     sidebarCollapsed,
+    editorCollapsed,
     toggleGraphFullscreen,
     toggleGraphCollapsed,
     toggleSidebar,
+    toggleEditorCollapsed,
     toggleChat,
   } = useUIStore();
   const { zoomIn, zoomOut } = useGraphStore();
@@ -228,7 +230,7 @@ export function AppShell() {
         </>
       )}
 
-      {/* Graph */}
+      {/* Graph — takes more space when editor is collapsed */}
       <div
         className="relative min-w-0 transition-all duration-300 ease-in-out"
         style={{
@@ -325,37 +327,109 @@ export function AppShell() {
         </div>
       )}
 
-      {/* Editor resize divider */}
-      <div
-        ref={editorDividerRef}
-        onMouseDown={handleEditorDividerDrag}
-        onMouseEnter={() => setEditorDividerHover(true)}
-        onMouseLeave={() => setEditorDividerHover(false)}
-        className="flex-shrink-0 cursor-col-resize transition-colors relative"
-        style={{
-          width: 4,
-          backgroundColor:
-            editorDragging || editorDividerHover
-              ? '#2383e2'
-              : 'rgba(255,255,255,0.06)',
-        }}
-      >
-        {/* Invisible wider hit area */}
-        <div className="absolute inset-y-0 -left-2 -right-2" />
-      </div>
+      {/* Editor resize divider — hide when editor is collapsed */}
+      {!editorCollapsed && (
+        <div
+          ref={editorDividerRef}
+          onMouseDown={handleEditorDividerDrag}
+          onMouseEnter={() => setEditorDividerHover(true)}
+          onMouseLeave={() => setEditorDividerHover(false)}
+          className="flex-shrink-0 cursor-col-resize transition-colors relative"
+          style={{
+            width: 4,
+            backgroundColor:
+              editorDragging || editorDividerHover
+                ? '#2383e2'
+                : 'rgba(255,255,255,0.06)',
+          }}
+        >
+          <div className="absolute inset-y-0 -left-2 -right-2" />
+        </div>
+      )}
 
       {/* Editor */}
-      <div
-        className="panel-glass overflow-hidden transition-all duration-300 ease-in-out"
-        style={{
-          ...(graphCollapsed
-            ? { flex: '1 1 0%' }
-            : { width: editorWidth, flexShrink: 0 }),
-          borderLeft: '1px solid var(--glass-border)',
-        }}
-      >
-        <EditorPanel />
-      </div>
+      {!editorCollapsed ? (
+        <div
+          className="panel-glass overflow-hidden transition-all duration-300 ease-in-out relative"
+          style={{
+            ...(graphCollapsed
+              ? { flex: '1 1 0%' }
+              : { width: editorWidth, flexShrink: 0 }),
+            borderLeft: '1px solid var(--glass-border)',
+          }}
+        >
+          {/* Collapse editor button — top-left of editor */}
+          <button
+            onClick={toggleEditorCollapsed}
+            className="absolute top-10 left-3 z-30 titlebar-no-drag"
+            style={{
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 6,
+              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+            title="Collapse notes"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <EditorPanel />
+        </div>
+      ) : (
+        /* Expand editor button when collapsed */
+        <div
+          className="flex-shrink-0 flex flex-col items-center justify-start"
+          style={{ width: 40, paddingTop: 44, position: 'relative', zIndex: 40 }}
+        >
+          <button
+            onClick={toggleEditorCollapsed}
+            title="Expand notes"
+            className="titlebar-no-drag"
+            style={{
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.06)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+              e.currentTarget.style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Chat Panel */}
       {chatOpen && (

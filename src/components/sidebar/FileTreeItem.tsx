@@ -58,7 +58,7 @@ export function FileTreeItem({ node, depth, activeFile, onSelect, onDelete }: Fi
       <div
         className="flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-colors titlebar-no-drag"
         style={{
-          paddingLeft: `${depth * 16 + 16}px`,
+          paddingLeft: `${depth * 16 + 20}px`,
           fontSize: '14px',
           fontWeight: node.isFile ? 400 : 600,
           borderRadius: '4px',

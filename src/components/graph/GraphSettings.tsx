@@ -262,6 +262,7 @@ export function GraphSettings() {
             <input
               type="color"
               value={settings.lineColor || '#27272a'}
+              onInput={(e) => updateSettings({ lineColor: (e.target as HTMLInputElement).value })}
               onChange={(e) => updateSettings({ lineColor: e.target.value })}
               style={{
                 width: 28,
