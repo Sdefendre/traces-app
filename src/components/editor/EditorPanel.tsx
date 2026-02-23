@@ -1,18 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
 import { MarkdownEditor } from './MarkdownEditor';
+import { MarkdownPreview } from './MarkdownPreview';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, X, Sun, Moon, Plus } from 'lucide-react';
+import { ChevronLeft, X, Sun, Moon, Plus, Eye, EyeOff, MessageCircle } from 'lucide-react';
 
 export function EditorPanel() {
   const { tabs, activeTabId, closeTab, openFile } = useEditorStore();
   const { activeFile, refreshFiles, setActiveFile } = useVaultStore();
-  const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed } = useUIStore();
+  const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed, previewMode, togglePreview, chatOpen, setChatOpen } = useUIStore();
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -23,6 +24,16 @@ export function EditorPanel() {
   const editorSecondary = editorLightMode ? '#71717a' : 'var(--text-secondary)';
   const editorBorder = editorLightMode ? '#e4e4e7' : 'var(--border)';
   const editorHover = editorLightMode ? '#f4f4f5' : 'rgba(255,255,255,0.04)';
+
+  const noteStats = useMemo(() => {
+    const text = activeTab?.content ?? '';
+    const trimmed = text.trim();
+    const characters = text.length;
+    const words = trimmed === '' ? 0 : trimmed.split(/\s+/).length;
+    const lines = text === '' ? 0 : text.split('\n').length;
+    const readingTime = Math.max(1, Math.ceil(words / 200));
+    return { words, characters, lines, readingTime };
+  }, [activeTab?.content]);
 
   // Listen for wiki-link navigation events
   useEffect(() => {
@@ -68,6 +79,11 @@ export function EditorPanel() {
         <div className="flex items-center justify-between px-3 pt-12 pb-2 relative z-[60]" style={{ borderBottom: '1px solid var(--border)' }}>
           <span className="text-sm text-muted-foreground">Notes</span>
           <div className="flex items-center gap-0.5">
+            {!chatOpen && (
+              <Button variant="ghost" size="icon-xs" onClick={() => setChatOpen(true)} title="Open AI Chat" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
+                <MessageCircle className="size-3.5" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon-xs" onClick={() => setCreating(true)} title="New note" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
               <Plus className="size-3.5" />
             </Button>
@@ -177,25 +193,72 @@ export function EditorPanel() {
             {activeTab.path.replace(/\//g, ' / ')}
           </span>
         </div>
-        <Button
-          variant="outline"
-          size="xs"
-          onClick={toggleEditorTheme}
-          title={editorLightMode ? 'Switch to dark editor' : 'Switch to light editor'}
-          style={{ borderColor: editorBorder, color: editorSecondary }}
-          className="gap-1"
-        >
-          {editorLightMode ? <Moon className="size-3" /> : <Sun className="size-3" />}
-          {editorLightMode ? 'Dark' : 'Light'}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {!chatOpen && (
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => setChatOpen(true)}
+              title="Open AI Chat"
+              style={{ borderColor: editorBorder, color: editorSecondary }}
+              className="gap-1"
+            >
+              <MessageCircle className="size-3" />
+              Chat
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={togglePreview}
+            title={previewMode ? 'Switch to editor' : 'Switch to preview'}
+            style={{ borderColor: editorBorder, color: editorSecondary }}
+            className="gap-1"
+          >
+            {previewMode ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+            {previewMode ? 'Edit' : 'Preview'}
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={toggleEditorTheme}
+            title={editorLightMode ? 'Switch to dark editor' : 'Switch to light editor'}
+            style={{ borderColor: editorBorder, color: editorSecondary }}
+            className="gap-1"
+          >
+            {editorLightMode ? <Moon className="size-3" /> : <Sun className="size-3" />}
+            {editorLightMode ? 'Dark' : 'Light'}
+          </Button>
+        </div>
       </div>
 
-      {/* Editor */}
+      {/* Editor / Preview */}
       <div
         className="flex-1 overflow-hidden"
         data-editor-theme={editorLightMode ? 'light' : 'dark'}
       >
-        <MarkdownEditor tabId={activeTab.id} content={activeTab.content} />
+        {previewMode ? (
+          <MarkdownPreview content={activeTab.content} editorLightMode={editorLightMode} />
+        ) : (
+          <MarkdownEditor tabId={activeTab.id} content={activeTab.content} />
+        )}
+      </div>
+
+      {/* Status bar */}
+      <div
+        className="flex items-center gap-3 px-4 py-1 text-[11px] flex-shrink-0"
+        style={{
+          color: editorSecondary,
+          borderTop: `1px solid ${editorBorder}`,
+        }}
+      >
+        <span>{noteStats.words} words</span>
+        <span style={{ opacity: 0.4 }}>&middot;</span>
+        <span>{noteStats.characters} chars</span>
+        <span style={{ opacity: 0.4 }}>&middot;</span>
+        <span>{noteStats.readingTime} min read</span>
+        <span style={{ opacity: 0.4 }}>&middot;</span>
+        <span>{noteStats.lines} lines</span>
       </div>
     </div>
   );
