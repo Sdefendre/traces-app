@@ -29,7 +29,7 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
   const lineColor = useMemo(() => new THREE.Color(darkMode ? '#555555' : '#37352f'), [darkMode]);
 
   // Thickness based on edge type
-  const radius = edge.type === 'wiki-link' ? 0.18 : edge.type === 'folder-sibling' ? 0.12 : 0.08;
+  const radius = edge.type === 'wiki-link' ? 0.35 : edge.type === 'folder-sibling' ? 0.25 : 0.18;
 
   useFrame(() => {
     if (!meshRef.current) return;
@@ -52,7 +52,7 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
 
     // Opacity
     const mat = meshRef.current.material as THREE.MeshBasicMaterial;
-    const targetOpacity = highlighted ? 0.7 : 0.35;
+    const targetOpacity = highlighted ? 0.8 : 0.5;
     mat.opacity += (targetOpacity - mat.opacity) * 0.1;
   });
 
@@ -62,7 +62,7 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
       <meshBasicMaterial
         color={lineColor}
         transparent
-        opacity={0.35}
+        opacity={0.5}
         depthWrite={false}
       />
     </mesh>

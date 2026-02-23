@@ -21,7 +21,7 @@ export function KnowledgeGraph() {
   return (
     <div className="w-full h-full">
       <Canvas
-        camera={{ position: [0, 0, 180], fov: 60, near: 0.1, far: 1000 }}
+        camera={{ position: [0, 0, 120], fov: 60, near: 0.1, far: 1000 }}
         gl={{ antialias: true, alpha: false }}
         scene={{ background: bgColor }}
       >

@@ -8,9 +8,16 @@ import { useUIStore } from '@/stores/ui-store';
 // ---------------------------------------------------------------------------
 type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai';
 
+interface ToolCall {
+  name: string;
+  args: Record<string, string>;
+  result: string;
+}
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  toolCalls?: ToolCall[];
 }
 
 interface OllamaModel {
@@ -20,11 +27,143 @@ interface OllamaModel {
 
 // Hard-coded cloud model options
 const OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini'];
-const CLAUDE_MODELS = ['claude-sonnet-4-6-20250514', 'claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'];
+const CLAUDE_MODELS = [
+  'claude-opus-4-6-20250514',
+  'claude-sonnet-4-6-20250514',
+  'claude-sonnet-4-20250514',
+  'claude-haiku-4-5-20251001',
+];
 const XAI_MODELS = ['grok-3-fast'];
 
+const DEFAULT_SYSTEM_PROMPT =
+  'You are Jarvis, an AI assistant embedded in a knowledge management app. You have tools to read, write, edit, search, and delete files in the user\'s vault. Be proactive and helpful.';
+
 // ---------------------------------------------------------------------------
-// Component
+// Tool color mapping
+// ---------------------------------------------------------------------------
+const TOOL_BORDER_COLORS: Record<string, string> = {
+  read_file: '#3b82f6',    // blue
+  write_file: '#22c55e',   // green
+  edit_file: '#f97316',    // orange
+  delete_file: '#ef4444',  // red
+  search_files: '#a855f7', // purple
+  list_files: '#6b7280',   // gray
+};
+
+function getToolColor(name: string): string {
+  return TOOL_BORDER_COLORS[name] ?? '#6b7280';
+}
+
+// ---------------------------------------------------------------------------
+// ToolCallCard
+// ---------------------------------------------------------------------------
+function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
+  const [expanded, setExpanded] = useState(false);
+  const borderColor = getToolColor(toolCall.name);
+
+  return (
+    <div
+      className="rounded text-xs overflow-hidden"
+      style={{
+        borderLeft: `3px solid ${borderColor}`,
+        backgroundColor: 'var(--bg-secondary, #f5f5f5)',
+        border: `1px solid var(--border, #e0e0e0)`,
+        borderLeftWidth: 3,
+        borderLeftColor: borderColor,
+      }}
+    >
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="flex items-center justify-between w-full px-2 py-1.5 text-left cursor-pointer"
+        style={{ color: 'var(--text, #111)' }}
+      >
+        <span className="flex items-center gap-1.5">
+          <span
+            style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: borderColor,
+              flexShrink: 0,
+            }}
+          />
+          <span className="font-medium" style={{ fontFamily: 'monospace', fontSize: 11 }}>
+            {toolCall.name}
+          </span>
+        </span>
+        <span
+          style={{
+            transition: 'transform 150ms',
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            color: 'var(--text-dim, #bbb)',
+            fontSize: 10,
+          }}
+        >
+          &#9654;
+        </span>
+      </button>
+
+      {expanded && (
+        <div
+          className="px-2 pb-2 space-y-1.5"
+          style={{ borderTop: '1px solid var(--border, #e0e0e0)' }}
+        >
+          {/* Args */}
+          {Object.keys(toolCall.args).length > 0 && (
+            <div className="pt-1.5">
+              <div
+                className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold"
+                style={{ color: 'var(--text-dim, #bbb)' }}
+              >
+                Arguments
+              </div>
+              <pre
+                className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded"
+                style={{
+                  fontFamily: 'monospace',
+                  backgroundColor: 'var(--bg, #fff)',
+                  color: 'var(--text, #111)',
+                  margin: 0,
+                }}
+              >
+                {JSON.stringify(toolCall.args, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Result */}
+          {toolCall.result && (
+            <div>
+              <div
+                className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold"
+                style={{ color: 'var(--text-dim, #bbb)' }}
+              >
+                Result
+              </div>
+              <pre
+                className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded"
+                style={{
+                  fontFamily: 'monospace',
+                  backgroundColor: 'var(--bg, #fff)',
+                  color: 'var(--text, #111)',
+                  margin: 0,
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                }}
+              >
+                {toolCall.result}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ChatPanel
 // ---------------------------------------------------------------------------
 export function ChatPanel() {
   const { toggleChat } = useUIStore();
@@ -35,6 +174,10 @@ export function ChatPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // System prompt
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
+  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
 
   // Model state
   const [provider, setProvider] = useState<Provider>('ollama');
@@ -123,6 +266,7 @@ export function ChatPanel() {
           messages: [...messages, userMessage],
           provider,
           model,
+          systemPrompt,
         }),
       });
 
@@ -144,7 +288,11 @@ export function ChatPanel() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: data.message || 'No response' },
+        {
+          role: 'assistant',
+          content: data.message || 'No response',
+          toolCalls: data.toolCalls || [],
+        },
       ]);
     } catch (err: unknown) {
       const msg =
@@ -292,6 +440,51 @@ export function ChatPanel() {
         </select>
       </div>
 
+      {/* System Prompt (collapsible) */}
+      <div style={{ borderBottom: '1px solid var(--border, #e0e0e0)' }}>
+        <button
+          onClick={() => setShowSystemPrompt((prev) => !prev)}
+          className="flex items-center gap-1.5 px-3 py-1.5 w-full text-left text-xs"
+          style={{ color: 'var(--text-secondary, #888)' }}
+        >
+          <span
+            style={{
+              transition: 'transform 150ms',
+              transform: showSystemPrompt ? 'rotate(90deg)' : 'rotate(0deg)',
+              fontSize: 8,
+              display: 'inline-block',
+            }}
+          >
+            &#9654;
+          </span>
+          System Prompt
+        </button>
+        {showSystemPrompt && (
+          <div className="px-3 pb-2">
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              rows={4}
+              className="w-full text-xs rounded p-2 resize-y focus:outline-none"
+              style={{
+                backgroundColor: 'var(--bg-secondary, #f5f5f5)',
+                border: '1px solid var(--border, #e0e0e0)',
+                color: 'var(--text, #111)',
+                fontFamily: 'monospace',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.1)';
+                e.currentTarget.style.borderColor = '#999';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.borderColor = 'var(--border, #e0e0e0)';
+              }}
+            />
+          </div>
+        )}
+      </div>
+
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
@@ -323,6 +516,15 @@ export function ChatPanel() {
                   }
             }
           >
+            {/* Tool calls rendered before text content */}
+            {msg.toolCalls && msg.toolCalls.length > 0 && (
+              <div className="space-y-1 mb-2">
+                {msg.toolCalls.map((tc, j) => (
+                  <ToolCallCard key={j} toolCall={tc} />
+                ))}
+              </div>
+            )}
+
             <pre
               className="whitespace-pre-wrap font-sans text-sm leading-relaxed"
               style={{ margin: 0 }}
@@ -394,14 +596,14 @@ export function ChatPanel() {
             disabled={loading}
             className="px-3 py-2 text-sm rounded transition-colors disabled:opacity-50"
             style={{
-              backgroundColor: '#111',
-              color: '#fff',
+              backgroundColor: 'var(--text, #111)',
+              color: 'var(--bg, #fff)',
             }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = '#333')
+              (e.currentTarget.style.opacity = '0.8')
             }
             onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = '#111')
+              (e.currentTarget.style.opacity = '1')
             }
           >
             Send
