@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+@import "tw-animate-css";
 
+/* Static theme colors */
 @theme {
   --color-void: #050510;
   --color-void-light: #0a0a14;
@@ -12,14 +14,38 @@
   --color-neon-pink: #e74c6e;
   --color-surface: #0a0a14;
   --color-surface-hover: #16162a;
-  --color-border: #1c1c2e;
   --color-text-primary: #f4f4f5;
   --color-text-secondary: #a1a1aa;
   --color-text-dim: #3f3f46;
+  --radius: 0.5rem;
+}
+
+/* shadcn semantic tokens — resolved from CSS vars at runtime */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 /* ---- Dark-only theme ---- */
 :root {
+  /* Traces custom variables */
   --bg: #050510;
   --bg-secondary: #0a0a14;
   --bg-glass: rgba(5, 5, 16, 0.82);
@@ -29,11 +55,37 @@
   --border: #1c1c2e;
   --border-subtle: #1c1c2e;
   --surface: #0a0a14;
-  --accent: #f4f4f5;
+  --accent-bright: #f4f4f5;
   --accent-fg: #050510;
   --glass-blur: 24px;
   --glass-border: rgba(255, 255, 255, 0.06);
   --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* shadcn semantic tokens */
+  --background: #050510;
+  --foreground: #f4f4f5;
+  --card: #0a0a14;
+  --card-foreground: #f4f4f5;
+  --popover: rgba(10, 10, 20, 0.95);
+  --popover-foreground: #f4f4f5;
+  --primary: #f4f4f5;
+  --primary-foreground: #050510;
+  --secondary: #1c1c2e;
+  --secondary-foreground: #f4f4f5;
+  --muted: #12121f;
+  --muted-foreground: #a1a1aa;
+  --accent: #16162a;
+  --accent-foreground: #f4f4f5;
+  --destructive: #ef4444;
+  --destructive-foreground: #f4f4f5;
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #2383e2;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
 }
 
 * {
