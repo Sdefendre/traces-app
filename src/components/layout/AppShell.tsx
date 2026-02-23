@@ -410,11 +410,11 @@ export function AppShell() {
         </div>
       )}
 
-      {/* Floating AI Chat button (when chat is closed) */}
+      {/* Floating AI Chat button (when chat is closed) — top right */}
       {!chatOpen && (
         <button
           onClick={toggleChat}
-          className="fixed bottom-5 right-5 z-50 rounded-2xl px-4 py-2.5 flex items-center gap-2 transition-all hover:scale-105"
+          className="fixed top-10 right-4 z-50 rounded-xl px-3.5 py-1.5 flex items-center gap-2 transition-all hover:scale-105 titlebar-no-drag"
           style={{
             background: 'linear-gradient(135deg, rgba(35,131,226,0.35), rgba(155,89,182,0.35))',
             backdropFilter: 'blur(20px)',
