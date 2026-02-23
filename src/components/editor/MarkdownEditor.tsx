@@ -12,16 +12,24 @@ import { neuralTheme, neuralHighlightStyle } from './extensions/theme';
 import { wikiLinkPlugin } from './extensions/wikiLink';
 import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
+import { electronAPI } from '@/lib/electron-api';
 
 interface MarkdownEditorProps {
   tabId: string;
   content: string;
 }
 
+/** Extract title from first `# Heading` line */
+function extractTitle(content: string): string | null {
+  const match = content.match(/^#\s+(.+)/m);
+  return match ? match[1].trim() : null;
+}
+
 export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const renameTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { setTabContent, saveTab } = useEditorStore();
   const { files } = useVaultStore();
 
@@ -73,6 +81,31 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
             saveTimerRef.current = setTimeout(() => {
               saveTab(tabId);
             }, 800);
+
+            // Debounced title-based rename
+            if (renameTimerRef.current) clearTimeout(renameTimerRef.current);
+            renameTimerRef.current = setTimeout(() => {
+              const title = extractTitle(newContent);
+              if (!title) return;
+              const sanitized = title.replace(/[<>:"/\\|?*]/g, '').trim();
+              if (!sanitized) return;
+
+              const { tabs } = useEditorStore.getState();
+              const tab = tabs.find((t) => t.id === tabId);
+              if (!tab) return;
+
+              const currentName = tab.path.split('/').pop()?.replace('.md', '') || '';
+              if (sanitized === currentName) return;
+
+              const dir = tab.path.substring(0, tab.path.lastIndexOf('/'));
+              const newPath = dir ? `${dir}/${sanitized}.md` : `${sanitized}.md`;
+
+              electronAPI.renameFile(tab.path, newPath).then(() => {
+                useEditorStore.getState().renameTab(tab.path, newPath);
+                useVaultStore.getState().setActiveFile(newPath);
+                useVaultStore.getState().refreshFiles();
+              });
+            }, 1500);
           }
         }),
       ],
@@ -87,6 +120,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (renameTimerRef.current) clearTimeout(renameTimerRef.current);
       view.destroy();
     };
   }, [tabId]); // Only recreate when tab changes

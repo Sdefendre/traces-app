@@ -5,6 +5,7 @@ import {
   readFile,
   writeFile,
   createFile,
+  renameFile,
   deleteFile,
 } from './file-system';
 import { parseVault } from './vault-parser';
@@ -26,6 +27,10 @@ export function registerIpcHandlers(vaultRoot: string) {
 
   ipcMain.handle('vault:createFile', async (_event, filePath: string, content?: string) => {
     return createFile(filePath, content);
+  });
+
+  ipcMain.handle('vault:renameFile', async (_event, oldPath: string, newPath: string) => {
+    return renameFile(oldPath, newPath);
   });
 
   ipcMain.handle('vault:deleteFile', async (_event, filePath: string) => {

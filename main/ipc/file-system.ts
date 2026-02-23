@@ -55,6 +55,13 @@ export async function createFile(filePath: string, content = ''): Promise<void> 
   await fs.writeFile(resolved, content, 'utf-8');
 }
 
+export async function renameFile(oldPath: string, newPath: string): Promise<void> {
+  const resolvedOld = safePath(oldPath);
+  const resolvedNew = safePath(newPath);
+  await fs.mkdir(path.dirname(resolvedNew), { recursive: true });
+  await fs.rename(resolvedOld, resolvedNew);
+}
+
 export async function deleteFile(filePath: string): Promise<void> {
   const resolved = safePath(filePath);
   await fs.unlink(resolved);

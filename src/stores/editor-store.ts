@@ -12,6 +12,7 @@ interface EditorState {
   markClean: (id: string) => void;
   saveTab: (id: string) => Promise<void>;
   getActiveTab: () => EditorTab | null;
+  renameTab: (oldPath: string, newPath: string) => void;
   reloadTab: (path: string) => Promise<void>;
 }
 
@@ -87,6 +88,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   getActiveTab: () => {
     const { tabs, activeTabId } = get();
     return tabs.find((t) => t.id === activeTabId) || null;
+  },
+
+  renameTab: (oldPath, newPath) => {
+    const oldId = pathToId(oldPath);
+    const newId = pathToId(newPath);
+    set((state) => ({
+      tabs: state.tabs.map((t) =>
+        t.id === oldId ? { ...t, id: newId, path: newPath, name: nameFromPath(newPath) } : t
+      ),
+      activeTabId: state.activeTabId === oldId ? newId : state.activeTabId,
+    }));
   },
 
   reloadTab: async (path) => {

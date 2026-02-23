@@ -5,6 +5,7 @@ export interface ElectronAPI {
   readFile: (filePath: string) => Promise<string>;
   writeFile: (filePath: string, content: string) => Promise<void>;
   createFile: (filePath: string, content?: string) => Promise<void>;
+  renameFile: (oldPath: string, newPath: string) => Promise<void>;
   deleteFile: (filePath: string) => Promise<void>;
   getGraphData: () => Promise<GraphData>;
   openFolder: () => Promise<string | null>;
@@ -42,6 +43,12 @@ export const electronAPI = {
     const api = getAPI();
     if (!api) return;
     return api.createFile(filePath, content);
+  },
+
+  async renameFile(oldPath: string, newPath: string): Promise<void> {
+    const api = getAPI();
+    if (!api) return;
+    return api.renameFile(oldPath, newPath);
   },
 
   async deleteFile(filePath: string): Promise<void> {
