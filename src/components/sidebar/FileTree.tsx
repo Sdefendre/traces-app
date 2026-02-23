@@ -95,7 +95,7 @@ export function FileTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-2" style={{ paddingTop: '40px', borderBottom: '1px solid #e0e0e0' }}>
+      <div className="px-3 py-2" style={{ paddingTop: '40px', borderBottom: '1px solid var(--border, #c0c0c0)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-bold truncate" style={{ color: 'var(--text, #111)' }}>
             {vaultName}
@@ -146,9 +146,9 @@ export function FileTree() {
                      placeholder:text-gray-400
                      focus:outline-none"
           style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #e0e0e0',
-            color: '#111',
+            backgroundColor: 'var(--bg-secondary, #f5f5f5)',
+            border: '1px solid var(--border, #c0c0c0)',
+            color: 'var(--text, #111)',
           }}
           onFocus={(e) => {
             e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.1)';
@@ -156,14 +156,14 @@ export function FileTree() {
           }}
           onBlur={(e) => {
             e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.borderColor = '#e0e0e0';
+            e.currentTarget.style.borderColor = 'var(--border, #c0c0c0)';
           }}
         />
       </div>
 
       {/* New file input */}
       {creating && (
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid #e8e8e8' }}>
+        <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border, #c0c0c0)' }}>
           <input
             type="text"
             placeholder="Note name..."
@@ -207,7 +207,7 @@ export function FileTree() {
       </div>
 
       {/* Bottom bar: Dark mode + AI Chat + file count */}
-      <div className="px-3 py-3 space-y-2" style={{ borderTop: '1px solid var(--border, #e0e0e0)' }}>
+      <div className="px-3 py-3 space-y-2" style={{ borderTop: '1px solid var(--border, #c0c0c0)' }}>
         {/* Dark mode toggle */}
         <button
           onClick={toggleDarkMode}
@@ -215,7 +215,7 @@ export function FileTree() {
             width: '100%',
             padding: '6px 12px',
             borderRadius: 8,
-            border: '1px solid var(--border, #e0e0e0)',
+            border: '1px solid var(--border, #c0c0c0)',
             background: 'var(--bg-secondary, #f5f5f5)',
             color: 'var(--text, #111)',
             fontSize: 12,
@@ -228,7 +228,7 @@ export function FileTree() {
             transition: 'background 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--border, #e0e0e0)';
+            e.currentTarget.style.background = 'var(--border, #c0c0c0)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'var(--bg-secondary, #f5f5f5)';

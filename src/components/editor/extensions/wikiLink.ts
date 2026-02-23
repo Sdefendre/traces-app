@@ -28,7 +28,7 @@ class WikiLinkWidget extends WidgetType {
     span.style.textUnderlineOffset = '3px';
     span.addEventListener('click', () => {
       window.dispatchEvent(
-        new CustomEvent('jarvis:open-note', { detail: { target: this.target } })
+        new CustomEvent('traces:open-note', { detail: { target: this.target } })
       );
     });
     return span;

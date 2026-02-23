@@ -8,6 +8,7 @@ import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
 import { EditorPanel } from '@/components/editor/EditorPanel';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { GraphSettings } from '@/components/graph/GraphSettings';
 
 export function AppShell() {
   const { loadVault, setGraphData, refreshFiles, loading } = useVaultStore();
@@ -110,9 +111,9 @@ export function AppShell() {
       <div className="flex items-center justify-center h-screen" style={{ backgroundColor: 'var(--bg, #fff)' }}>
         <div className="text-center">
           <div className="text-2xl font-semibold mb-4" style={{ color: 'var(--text, #111)' }}>
-            JARVIS
+            TRACES
           </div>
-          <div className="text-sm" style={{ color: 'var(--text-secondary, #888)' }}>Initializing neural network...</div>
+          <div className="text-sm" style={{ color: 'var(--text-secondary, #888)' }}>Loading your knowledge graph...</div>
         </div>
       </div>
     );
@@ -129,8 +130,7 @@ export function AppShell() {
 
         {/* Floating toolbar — exit fullscreen only */}
         <div
-          className="fixed top-10 right-3 z-[120] flex gap-1 rounded-lg px-1.5 py-1 shadow-sm"
-          style={{ border: '1px solid var(--border, #e0e0e0)', backgroundColor: 'var(--bg, #fff)' }}
+          className="fixed top-10 right-3 z-[120] flex gap-1 rounded-xl px-2 py-1.5 glass"
         >
           <button
             onClick={toggleGraphFullscreen}
@@ -169,7 +169,7 @@ export function AppShell() {
           backgroundColor:
             sidebarDragging || sidebarDividerHover
               ? '#2383e2'
-              : 'var(--border, #e0e0e0)',
+              : 'var(--border, #c0c0c0)',
         }}
       >
         {/* Invisible wider hit area */}
@@ -187,26 +187,28 @@ export function AppShell() {
       >
         <KnowledgeGraph />
 
-        {/* Floating toolbar — collapse & fullscreen */}
+        {/* Floating toolbar — collapse, fullscreen, settings */}
         {!graphCollapsed && (
           <div
-            className="absolute top-10 right-3 z-30 flex gap-1 rounded-lg px-1.5 py-1 shadow-sm"
-            style={{ border: '1px solid var(--border, #e0e0e0)', backgroundColor: 'var(--bg, #fff)' }}
+            className="absolute top-10 right-3 z-30 flex items-center gap-1 rounded-xl px-2 py-1.5 glass"
           >
             <button
               onClick={toggleGraphCollapsed}
-              className="flex h-6 w-6 items-center justify-center rounded text-sm text-gray-400 hover:text-gray-800 transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded text-sm transition-colors"
+              style={{ color: 'var(--text-secondary, #888)' }}
               title="Collapse graph"
             >
               −
             </button>
             <button
               onClick={toggleGraphFullscreen}
-              className="flex h-6 w-6 items-center justify-center rounded text-sm text-gray-400 hover:text-gray-800 transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded text-sm transition-colors"
+              style={{ color: 'var(--text-secondary, #888)' }}
               title="Fullscreen"
             >
               ⛶
             </button>
+            <GraphSettings />
           </div>
         )}
       </div>
@@ -261,7 +263,7 @@ export function AppShell() {
           backgroundColor:
             editorDragging || editorDividerHover
               ? '#2383e2'
-              : 'var(--border, #e0e0e0)',
+              : 'var(--border, #c0c0c0)',
         }}
       >
         {/* Invisible wider hit area */}

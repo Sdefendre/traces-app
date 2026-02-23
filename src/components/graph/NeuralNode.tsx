@@ -15,52 +15,62 @@ interface NeuralNodeProps {
   position: [number, number, number];
   isConnected: boolean;
   onSelect: (node: GraphNode) => void;
+  nodeSize: number;
+  showLabels: boolean;
 }
 
-export function NeuralNode({ node, position, isConnected, onSelect }: NeuralNodeProps) {
+export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, showLabels }: NeuralNodeProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const { hoveredNode, setHoveredNode } = useGraphStore();
   const { darkMode } = useUIStore();
 
   const categoryColor = CATEGORY_COLORS[node.category as NodeCategory] || CATEGORY_COLORS.archive;
   const catColor = useMemo(() => new THREE.Color(categoryColor), [categoryColor]);
+  // Slightly lighter version for the ring
+  const ringColor = useMemo(() => new THREE.Color(categoryColor).lerp(new THREE.Color('#ffffff'), 0.3), [categoryColor]);
 
   const isHighlighted = hoveredNode === node.id || isConnected;
 
-  // Scale targets
-  const targetScale = hovered ? 1.4 : isHighlighted ? 1.15 : 1;
+  const targetScale = hovered ? 1.3 : isHighlighted ? 1.1 : 1;
+  const radius = nodeSize;
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!meshRef.current) return;
+
+    const t = clock.getElapsedTime();
 
     // Smooth scale transition
     const currentScale = meshRef.current.scale.x;
-    const newScale = currentScale + (targetScale - currentScale) * 0.12;
+    const newScale = currentScale + (targetScale - currentScale) * 0.1;
     meshRef.current.scale.setScalar(newScale);
 
-    // Emissive intensity — strong glow
+    // Gentle breathing pulse
+    const breathe = 1 + Math.sin(t * 1.5 + position[0]) * 0.03;
+    meshRef.current.scale.setScalar(newScale * breathe);
+
+    // Emissive intensity
     const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-    const targetEmissive = hovered ? 1.8 : isHighlighted ? 1.2 : 0.8;
+    const targetEmissive = hovered ? 1.0 : isHighlighted ? 0.6 : 0.3;
     mat.emissiveIntensity += (targetEmissive - mat.emissiveIntensity) * 0.1;
 
     // Position update
     meshRef.current.position.set(...position);
 
-    // Outer glow shell
-    if (glowRef.current) {
-      glowRef.current.position.set(...position);
-      glowRef.current.scale.setScalar(newScale);
-      const glowMat = glowRef.current.material as THREE.MeshStandardMaterial;
-      const targetGlowOpacity = hovered ? 0.25 : isHighlighted ? 0.15 : 0.08;
-      glowMat.opacity += (targetGlowOpacity - glowMat.opacity) * 0.1;
+    // Ring
+    if (ringRef.current) {
+      ringRef.current.position.set(...position);
+      ringRef.current.scale.setScalar(newScale * breathe);
+      const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
+      const targetRingOpacity = hovered ? 0.5 : isHighlighted ? 0.3 : 0.15;
+      ringMat.opacity += (targetRingOpacity - ringMat.opacity) * 0.1;
     }
   });
 
   return (
     <>
-      {/* Core sphere — colorful and vibrant */}
+      {/* Core node — clean sphere */}
       <mesh
         ref={meshRef}
         position={position}
@@ -80,50 +90,49 @@ export function NeuralNode({ node, position, isConnected, onSelect }: NeuralNode
           onSelect(node);
         }}
       >
-        <sphereGeometry args={[2.2, 32, 32]} />
+        <sphereGeometry args={[radius, 32, 32]} />
         <meshStandardMaterial
           color={catColor}
           emissive={catColor}
-          emissiveIntensity={0.8}
-          roughness={0.3}
-          metalness={0.1}
+          emissiveIntensity={0.3}
+          roughness={0.5}
+          metalness={0.2}
         />
       </mesh>
 
-      {/* Outer glow shell — larger transparent sphere for bloom to pick up */}
-      <mesh ref={glowRef} position={position}>
-        <sphereGeometry args={[3.5, 24, 24]} />
-        <meshStandardMaterial
-          color={catColor}
-          emissive={catColor}
-          emissiveIntensity={1.5}
+      {/* Subtle ring outline */}
+      <mesh ref={ringRef} position={position}>
+        <ringGeometry args={[radius * 1.3, radius * 1.5, 32]} />
+        <meshBasicMaterial
+          color={ringColor}
           transparent
-          opacity={0.08}
-          roughness={1}
-          metalness={0}
+          opacity={0.15}
+          side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>
 
-      {/* Always-visible label */}
-      <Html position={position} center style={{ pointerEvents: 'none' }}>
-        <div
-          style={{
-            color: darkMode ? '#e5e5e5' : '#111',
-            fontFamily:
-              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            fontSize: '11px',
-            fontWeight: hovered ? 600 : 400,
-            letterSpacing: '0.01em',
-            whiteSpace: 'nowrap',
-            transform: 'translateY(-28px)',
-            textAlign: 'center',
-            opacity: hovered ? 1 : 0.75,
-          }}
-        >
-          {node.label}
-        </div>
-      </Html>
+      {/* Label */}
+      {showLabels && (
+        <Html position={position} center style={{ pointerEvents: 'none' }}>
+          <div
+            style={{
+              color: darkMode ? '#e5e5e5' : '#333',
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+              fontSize: '10px',
+              fontWeight: hovered ? 600 : 400,
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+              transform: `translateY(-${radius * 8 + 14}px)`,
+              textAlign: 'center',
+              opacity: hovered ? 1 : 0.7,
+              textShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 2px rgba(255,255,255,0.8)',
+            }}
+          >
+            {node.label}
+          </div>
+        </Html>
+      )}
     </>
   );
 }

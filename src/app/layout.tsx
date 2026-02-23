@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Jarvis',
-  description: 'Neural Knowledge Management System',
+  title: 'Traces',
+  description: 'Knowledge Management System',
 };
 
 export default function RootLayout({

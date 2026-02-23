@@ -69,7 +69,7 @@ const TOOLS = [
 // ---------------------------------------------------------------------------
 
 const SYSTEM_PROMPT =
-  'You are Jarvis, an AI assistant embedded in a knowledge management app. ' +
+  'You are Traces, an AI assistant embedded in a knowledge management app called Traces. ' +
   'You can read, write, edit, search, and delete files in the user\'s vault. ' +
   'Use tools to help the user manage their notes and knowledge base. ' +
   'Always be helpful and proactive.';
@@ -743,7 +743,7 @@ export async function POST(req: Request) {
     const vaultRoot =
       vaultPath ||
       process.env.VAULT_PATH ||
-      path.join(process.env.HOME || '', 'Desktop/Jarvis-Obsidian-Vault');
+      path.join(process.env.HOME || '', 'Desktop/Traces Notes');
 
     // ----- Ollama (no key needed) -----
     if (provider === 'ollama') {

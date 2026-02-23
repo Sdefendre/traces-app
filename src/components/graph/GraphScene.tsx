@@ -15,7 +15,7 @@ import * as THREE from 'three';
 export function GraphScene() {
   const { graphData } = useVaultStore();
   const { openFile } = useEditorStore();
-  const { hoveredNode, selectedNode, setSelectedNode } = useGraphStore();
+  const { hoveredNode, selectedNode, setSelectedNode, settings } = useGraphStore();
   const { setActiveFile } = useVaultStore();
   const { getPositions, tickRef } = useForceGraph(graphData.nodes, graphData.edges);
   const [, setRenderTick] = useState(0);
@@ -108,6 +108,7 @@ export function GraphScene() {
             targetPos={[tPos.x, tPos.y, tPos.z]}
             sourceCategory={categoryMap.get(edge.source) || 'archive'}
             highlighted={highlighted}
+            lineThickness={settings.lineThickness}
           />
         );
       })}
@@ -124,6 +125,8 @@ export function GraphScene() {
             position={[pos.x, pos.y, pos.z]}
             isConnected={connectedToHovered(node.id)}
             onSelect={handleSelect}
+            nodeSize={settings.nodeSize}
+            showLabels={settings.showLabels}
           />
         );
       })}

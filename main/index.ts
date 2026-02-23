@@ -7,7 +7,7 @@ import { startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
 let vaultPath = path.join(
   app.getPath('home'),
   'Desktop',
-  'Jarvis-Obsidian-Vault'
+  'Traces Notes'
 );
 
 let mainWindow: BrowserWindow | null = null;

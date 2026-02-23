@@ -121,7 +121,7 @@ export function FileTreeItem({ node, depth, activeFile, onSelect, onDelete }: Fi
               left: contextMenu.x,
               top: contextMenu.y,
               backgroundColor: '#ffffff',
-              border: '1px solid #e8e8e8',
+              border: '1px solid var(--border, #c0c0c0)',
               boxShadow: '0 1px 6px rgba(0,0,0,0.09), 0 2px 12px rgba(0,0,0,0.05)',
             }}
           >

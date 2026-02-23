@@ -36,7 +36,7 @@ const CLAUDE_MODELS = [
 const XAI_MODELS = ['grok-3-fast'];
 
 const DEFAULT_SYSTEM_PROMPT =
-  'You are Jarvis, an AI assistant embedded in a knowledge management app. You have tools to read, write, edit, search, and delete files in the user\'s vault. Be proactive and helpful.';
+  'You are Traces, an AI assistant embedded in a knowledge management app called Traces. You can read, write, edit, search, and delete files in the user\'s vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.';
 
 // ---------------------------------------------------------------------------
 // Tool color mapping
@@ -67,7 +67,7 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
       style={{
         borderLeft: `3px solid ${borderColor}`,
         backgroundColor: 'var(--bg-secondary, #f5f5f5)',
-        border: `1px solid var(--border, #e0e0e0)`,
+        border: `1px solid var(--border, #c0c0c0)`,
         borderLeftWidth: 3,
         borderLeftColor: borderColor,
       }}
@@ -107,7 +107,7 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
       {expanded && (
         <div
           className="px-2 pb-2 space-y-1.5"
-          style={{ borderTop: '1px solid var(--border, #e0e0e0)' }}
+          style={{ borderTop: '1px solid var(--border, #c0c0c0)' }}
         >
           {/* Args */}
           {Object.keys(toolCall.args).length > 0 && (
@@ -327,7 +327,7 @@ export function ChatPanel() {
       {/* Header */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: '1px solid var(--border, #e0e0e0)' }}
+        style={{ borderBottom: '1px solid var(--border, #c0c0c0)' }}
       >
         <div className="flex flex-col">
           <span className="text-sm font-semibold" style={{ color: 'var(--text, #111)' }}>
@@ -364,7 +364,7 @@ export function ChatPanel() {
       {/* Model Selector */}
       <div
         className="px-3 py-2 flex items-center gap-2"
-        style={{ borderBottom: '1px solid var(--border, #e0e0e0)' }}
+        style={{ borderBottom: '1px solid var(--border, #c0c0c0)' }}
       >
         {ollamaRunning && (
           <span
@@ -386,7 +386,7 @@ export function ChatPanel() {
           className="flex-1 text-sm rounded px-2 py-1.5 appearance-none cursor-pointer"
           style={{
             backgroundColor: 'var(--bg, #fff)',
-            border: '1px solid var(--border, #e0e0e0)',
+            border: '1px solid var(--border, #c0c0c0)',
             color: 'var(--text, #111)',
             outline: 'none',
             backgroundImage:
@@ -401,7 +401,7 @@ export function ChatPanel() {
           }}
           onBlur={(e) => {
             e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.borderColor = 'var(--border, #e0e0e0)';
+            e.currentTarget.style.borderColor = 'var(--border, #c0c0c0)';
           }}
         >
           {ollamaModels.length > 0 && (
@@ -441,7 +441,7 @@ export function ChatPanel() {
       </div>
 
       {/* System Prompt (collapsible) */}
-      <div style={{ borderBottom: '1px solid var(--border, #e0e0e0)' }}>
+      <div style={{ borderBottom: '1px solid var(--border, #c0c0c0)' }}>
         <button
           onClick={() => setShowSystemPrompt((prev) => !prev)}
           className="flex items-center gap-1.5 px-3 py-1.5 w-full text-left text-xs"
@@ -468,7 +468,7 @@ export function ChatPanel() {
               className="w-full text-xs rounded p-2 resize-y focus:outline-none"
               style={{
                 backgroundColor: 'var(--bg-secondary, #f5f5f5)',
-                border: '1px solid var(--border, #e0e0e0)',
+                border: '1px solid var(--border, #c0c0c0)',
                 color: 'var(--text, #111)',
                 fontFamily: 'monospace',
               }}
@@ -478,7 +478,7 @@ export function ChatPanel() {
               }}
               onBlur={(e) => {
                 e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.borderColor = 'var(--border, #e0e0e0)';
+                e.currentTarget.style.borderColor = 'var(--border, #c0c0c0)';
               }}
             />
           </div>
@@ -490,7 +490,7 @@ export function ChatPanel() {
         {messages.length === 0 && (
           <div className="text-sm text-center mt-8">
             <p className="mb-2" style={{ color: 'var(--text-secondary, #888)' }}>
-              Jarvis AI Assistant
+              Traces AI Assistant
             </p>
             <p style={{ color: 'var(--text-dim, #bbb)', maxWidth: 260, margin: '0 auto' }}>
               {emptyStateText}
@@ -507,7 +507,7 @@ export function ChatPanel() {
                 ? {
                     color: 'var(--text, #111)',
                     backgroundColor: 'var(--bg, #fff)',
-                    border: '1px solid var(--border, #e0e0e0)',
+                    border: '1px solid var(--border, #c0c0c0)',
                   }
                 : {
                     color: 'var(--text, #111)',
@@ -568,18 +568,18 @@ export function ChatPanel() {
       </div>
 
       {/* Input */}
-      <div className="p-3" style={{ borderTop: '1px solid var(--border, #e0e0e0)' }}>
+      <div className="p-3" style={{ borderTop: '1px solid var(--border, #c0c0c0)' }}>
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="Ask Jarvis..."
+            placeholder="Ask Traces..."
             className="flex-1 px-3 py-2 text-sm rounded placeholder:text-gray-400 focus:outline-none"
             style={{
               backgroundColor: 'var(--bg-secondary, #f5f5f5)',
-              border: '1px solid var(--border, #e0e0e0)',
+              border: '1px solid var(--border, #c0c0c0)',
               color: 'var(--text, #111)',
             }}
             onFocus={(e) => {
@@ -588,7 +588,7 @@ export function ChatPanel() {
             }}
             onBlur={(e) => {
               e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.borderColor = 'var(--border, #e0e0e0)';
+              e.currentTarget.style.borderColor = 'var(--border, #c0c0c0)';
             }}
           />
           <button

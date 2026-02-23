@@ -21,7 +21,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   graphData: { nodes: [], edges: [] },
   activeFile: null,
   loading: true,
-  vaultName: 'Jarvis Vault',
+  vaultName: 'Traces Vault',
 
   loadVault: async () => {
     set({ loading: true });

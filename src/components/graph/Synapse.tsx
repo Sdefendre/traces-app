@@ -13,6 +13,7 @@ interface SynapseProps {
   targetPos: [number, number, number];
   sourceCategory: string;
   highlighted: boolean;
+  lineThickness: number;
 }
 
 // Reusable vectors to avoid allocations per frame
@@ -23,13 +24,14 @@ const _dir = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 const _quat = new THREE.Quaternion();
 
-export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighted }: SynapseProps) {
+export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighted, lineThickness }: SynapseProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const { darkMode } = useUIStore();
   const lineColor = useMemo(() => new THREE.Color(darkMode ? '#555555' : '#37352f'), [darkMode]);
 
   // Thickness based on edge type
-  const radius = edge.type === 'wiki-link' ? 0.35 : edge.type === 'folder-sibling' ? 0.25 : 0.18;
+  const baseRadius = edge.type === 'wiki-link' ? 0.25 : edge.type === 'folder-sibling' ? 0.18 : 0.12;
+  const radius = baseRadius * lineThickness;
 
   useFrame(() => {
     if (!meshRef.current) return;

@@ -28,8 +28,8 @@ export function EditorPanel() {
         }
       }
     };
-    window.addEventListener('jarvis:open-note', handler);
-    return () => window.removeEventListener('jarvis:open-note', handler);
+    window.addEventListener('traces:open-note', handler);
+    return () => window.removeEventListener('traces:open-note', handler);
   }, []);
 
   if (!activeTab) {
@@ -46,7 +46,7 @@ export function EditorPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex items-center h-9 overflow-x-auto pt-10" style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
+      <div className="flex items-center h-9 overflow-x-auto pt-10" style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border, #c0c0c0)' }}>
         {tabs.map((tab) => {
           const isActiveTab = tab.id === activeTabId;
           return (
@@ -92,7 +92,7 @@ export function EditorPanel() {
       </div>
 
       {/* Breadcrumb */}
-      <div className="px-5 py-2 text-sm" style={{ color: '#999', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff' }}>
+      <div className="px-5 py-2 text-sm" style={{ color: '#999', borderBottom: '1px solid var(--border, #c0c0c0)', backgroundColor: '#fff' }}>
         {activeTab.path.replace(/\//g, ' / ')}
       </div>
 
