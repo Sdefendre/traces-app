@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
+import { useGraphStore } from '@/stores/graph-store';
 import { electronAPI } from '@/lib/electron-api';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
@@ -25,6 +26,7 @@ export function AppShell() {
     toggleSidebar,
     toggleChat,
   } = useUIStore();
+  const { zoomIn, zoomOut } = useGraphStore();
   const editorDividerRef = useRef<HTMLDivElement>(null);
   const sidebarDividerRef = useRef<HTMLDivElement>(null);
   const [editorDividerHover, setEditorDividerHover] = useState(false);
@@ -151,14 +153,42 @@ export function AppShell() {
       {/* Title bar drag region */}
       <div className="fixed top-0 left-0 right-0 h-8 titlebar-drag z-50" />
 
-      {/* Sidebar collapse expand button (shown when sidebar is collapsed) */}
+      {/* Sidebar expand button (shown when sidebar is collapsed) */}
       {sidebarCollapsed && (
-        <div className="flex-shrink-0 flex items-start pt-10 px-1">
+        <div
+          className="flex-shrink-0 flex flex-col items-center justify-start"
+          style={{
+            width: 40,
+            paddingTop: 44,
+            position: 'relative',
+            zIndex: 40,
+          }}
+        >
           <button
             onClick={toggleSidebar}
             title="Expand sidebar"
-            className="glass rounded-lg p-1.5 transition-all hover:scale-105"
-            style={{ color: 'var(--text-secondary)' }}
+            className="titlebar-no-drag"
+            style={{
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.06)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+              e.currentTarget.style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
@@ -209,25 +239,72 @@ export function AppShell() {
       >
         <KnowledgeGraph />
 
-        {/* Floating toolbar — collapse, fullscreen, settings */}
+        {/* Floating toolbar — zoom, collapse, fullscreen, settings */}
         {!graphCollapsed && (
-          <div className="absolute top-10 right-3 z-30 flex items-center gap-1 rounded-xl px-2 py-1.5 glass">
+          <div className="absolute top-10 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
+            {/* Zoom out */}
+            <button
+              onClick={zoomOut}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-sm transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="Zoom out"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            {/* Zoom in */}
+            <button
+              onClick={zoomIn}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-sm transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="Zoom in"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+
+            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />
+
+            {/* Collapse graph panel */}
             <button
               onClick={toggleGraphCollapsed}
-              className="flex h-6 w-6 items-center justify-center rounded text-sm transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-sm transition-colors"
               style={{ color: 'var(--text-secondary)' }}
-              title="Collapse graph"
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="Collapse graph panel"
             >
-              −
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
             </button>
+            {/* Fullscreen */}
             <button
               onClick={toggleGraphFullscreen}
-              className="flex h-6 w-6 items-center justify-center rounded text-sm transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-sm transition-colors"
               style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
               title="Fullscreen"
             >
-              ⛶
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
             </button>
+
+            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />
+
             <GraphSettings />
           </div>
         )}

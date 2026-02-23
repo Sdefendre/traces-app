@@ -1,14 +1,29 @@
 // @ts-nocheck — R3F JSX intrinsics not typed with React 19
 'use client';
 
-import { useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { GraphScene } from './GraphScene';
 import { BackgroundField } from './BackgroundField';
 import { useGraphStore } from '@/stores/graph-store';
 import * as THREE from 'three';
+
+/** Reads zoomDistance from store and smoothly moves the camera */
+function ZoomController() {
+  const { zoomDistance } = useGraphStore();
+  const { camera } = useThree();
+
+  useFrame(() => {
+    const dir = camera.position.clone().normalize();
+    const currentDist = camera.position.length();
+    const newDist = currentDist + (zoomDistance - currentDist) * 0.08;
+    camera.position.copy(dir.multiplyScalar(newDist));
+  });
+
+  return null;
+}
 
 export function KnowledgeGraph() {
   const { settings } = useGraphStore();
@@ -42,6 +57,7 @@ export function KnowledgeGraph() {
           autoRotateSpeed={settings.rotateSpeed}
         />
 
+        <ZoomController />
         <GraphScene />
 
         <EffectComposer>
