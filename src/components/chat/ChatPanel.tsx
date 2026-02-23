@@ -4,11 +4,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useUIStore } from '@/stores/ui-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Send, ChevronRight, Eraser } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai';
+type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
 
 interface ToolCall {
   name: string;
@@ -30,23 +33,27 @@ interface OllamaModel {
 // Hard-coded cloud model options (use short aliases)
 const OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini'];
 const CLAUDE_MODELS = [
-  'claude-opus-4-6-20250514',
-  'claude-sonnet-4-6-20250514',
+  'claude-opus-4-6',
+  'claude-sonnet-4-6',
   'claude-sonnet-4-20250514',
   'claude-haiku-4-5-20251001',
 ];
 const XAI_MODELS = ['grok-3-fast', 'grok-4-1-fast'];
+const GOOGLE_MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'];
 
 // Friendly display names
 const MODEL_LABELS: Record<string, string> = {
-  'claude-opus-4-6-20250514': 'Opus 4.6',
-  'claude-sonnet-4-6-20250514': 'Sonnet 4.6',
+  'claude-opus-4-6': 'Opus 4.6',
+  'claude-sonnet-4-6': 'Sonnet 4.6',
   'claude-sonnet-4-20250514': 'Sonnet 4',
   'claude-haiku-4-5-20251001': 'Haiku 4.5',
   'gpt-4o': 'GPT-4o',
   'gpt-4o-mini': 'GPT-4o Mini',
   'grok-3-fast': 'Grok 3 Fast',
   'grok-4-1-fast': 'Grok 4.1 Fast',
+  'gemini-3.1-pro-preview': 'Gemini 3.1 Pro',
+  'gemini-2.5-flash': 'Gemini 2.5 Flash',
+  'gemini-2.5-pro': 'Gemini 2.5 Pro',
 };
 
 const DEFAULT_SYSTEM_PROMPT =
@@ -79,99 +86,78 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
   const borderColor = getToolColor(toolCall.name);
 
   return (
-    <div
-      className="rounded-lg text-xs overflow-hidden"
-      style={{
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderLeftWidth: 3,
-        borderLeftColor: borderColor,
-      }}
-    >
-      <button
-        onClick={() => setExpanded((prev) => !prev)}
-        className="flex items-center justify-between w-full px-2.5 py-1.5 text-left cursor-pointer"
-        style={{ color: 'var(--text)' }}
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <div
+        className="rounded-lg text-xs overflow-hidden"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderLeftWidth: 3,
+          borderLeftColor: borderColor,
+        }}
       >
-        <span className="flex items-center gap-1.5">
-          <span
-            style={{
-              display: 'inline-block',
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              backgroundColor: borderColor,
-              flexShrink: 0,
-            }}
-          />
-          <span className="font-medium" style={{ fontFamily: 'monospace', fontSize: 11 }}>
-            {toolCall.name}
-          </span>
-          {toolCall.args.path && (
-            <span style={{ color: 'var(--text-dim)', fontFamily: 'monospace', fontSize: 10 }}>
-              {toolCall.args.path}
+        <CollapsibleTrigger asChild>
+          <button
+            className="flex items-center justify-between w-full px-2.5 py-1.5 text-left cursor-pointer"
+            style={{ color: 'var(--text)' }}
+          >
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: borderColor }}
+              />
+              <span className="font-medium font-mono text-[11px]">
+                {toolCall.name}
+              </span>
+              {toolCall.args.path && (
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {toolCall.args.path}
+                </span>
+              )}
             </span>
-          )}
-        </span>
-        <span
-          style={{
-            transition: 'transform 150ms',
-            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            color: 'var(--text-dim)',
-            fontSize: 10,
-          }}
-        >
-          &#9654;
-        </span>
-      </button>
+            <ChevronRight
+              className="size-2.5 text-muted-foreground transition-transform duration-150"
+              style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+            />
+          </button>
+        </CollapsibleTrigger>
 
-      {expanded && (
-        <div
-          className="px-2.5 pb-2 space-y-1.5"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-        >
-          {Object.keys(toolCall.args).length > 0 && (
-            <div className="pt-1.5">
-              <div className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold" style={{ color: 'var(--text-dim)' }}>
-                Arguments
+        <CollapsibleContent>
+          <div
+            className="px-2.5 pb-2 space-y-1.5"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            {Object.keys(toolCall.args).length > 0 && (
+              <div className="pt-1.5">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold text-muted-foreground">
+                  Arguments
+                </div>
+                <pre
+                  className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded font-mono m-0"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.02)', color: 'var(--text)' }}
+                >
+                  {JSON.stringify(toolCall.args, null, 2)}
+                </pre>
               </div>
-              <pre
-                className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded"
-                style={{
-                  fontFamily: 'monospace',
-                  backgroundColor: 'rgba(255,255,255,0.02)',
-                  color: 'var(--text)',
-                  margin: 0,
-                }}
-              >
-                {JSON.stringify(toolCall.args, null, 2)}
-              </pre>
-            </div>
-          )}
+            )}
 
-          {toolCall.result && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold" style={{ color: 'var(--text-dim)' }}>
-                Result
+            {toolCall.result && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider mb-0.5 font-semibold text-muted-foreground">
+                  Result
+                </div>
+                <pre
+                  className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded font-mono m-0 max-h-[200px] overflow-y-auto"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.02)', color: 'var(--text)' }}
+                >
+                  {toolCall.result}
+                </pre>
               </div>
-              <pre
-                className="whitespace-pre-wrap text-[11px] leading-relaxed p-1.5 rounded"
-                style={{
-                  fontFamily: 'monospace',
-                  backgroundColor: 'rgba(255,255,255,0.02)',
-                  color: 'var(--text)',
-                  margin: 0,
-                  maxHeight: 200,
-                  overflowY: 'auto',
-                }}
-              >
-                {toolCall.result}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }
 
@@ -190,9 +176,8 @@ export function ChatPanel() {
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // System prompt
-  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
-  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
+  // System prompt (always use default, not user-editable)
+  const systemPrompt = DEFAULT_SYSTEM_PROMPT;
 
   // Model state
   const [provider, setProvider] = useState<Provider>('ollama');
@@ -324,7 +309,6 @@ export function ChatPanel() {
   };
 
   const selectValue = `${provider}::${model}`;
-  const modelLabel = MODEL_LABELS[model] || model;
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -341,193 +325,52 @@ export function ChatPanel() {
         }
       `}</style>
 
-      {/* Header */}
+      {/* Header — collapse + clear */}
       <div
-        className="flex items-center justify-between px-4 py-2.5"
+        className="flex items-center justify-between px-3 py-2 relative z-[60]"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>AI Chat</span>
-          <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
-            {modelLabel}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Chat</span>
+        <div className="flex items-center gap-0.5">
           {messages.length > 0 && (
-            <button
-              onClick={clearChat}
-              className="transition-colors text-xs"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-            >
-              Clear
-            </button>
+            <Button variant="ghost" size="icon-xs" onClick={clearChat} title="Clear chat" className="text-muted-foreground hover:text-foreground">
+              <Eraser className="size-3" />
+            </Button>
           )}
-          <button
-            onClick={toggleChat}
-            className="transition-colors text-sm"
-            style={{ color: 'var(--text-dim)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
-          >
-            &times;
-          </button>
+          <Button variant="ghost" size="icon-xs" onClick={toggleChat} title="Collapse chat" className="titlebar-no-drag text-muted-foreground hover:text-foreground">
+            <ChevronRight className="size-3.5" />
+          </Button>
         </div>
       </div>
 
-      {/* Model Selector */}
-      <div
-        className="px-4 py-2 flex items-center gap-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        {ollamaRunning && (
-          <span
-            title="Ollama is running"
-            style={{
-              display: 'inline-block',
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              backgroundColor: '#22c55e',
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        <select
-          value={selectValue}
-          onChange={handleModelChange}
-          className="flex-1 text-xs rounded px-2 py-1.5 appearance-none cursor-pointer"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid var(--border)',
-            color: 'var(--text)',
-            outline: 'none',
-            backgroundImage:
-              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23a1a1aa\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 8px center',
-            paddingRight: 28,
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)';
-          }}
-        >
-          {ollamaModels.length > 0 && (
-            <optgroup label="Ollama (local)">
-              {ollamaModels.map((m) => (
-                <option key={`ollama::${m}`} value={`ollama::${m}`}>
-                  {m}
-                </option>
-              ))}
-            </optgroup>
-          )}
-
-          <optgroup label="Claude">
-            {CLAUDE_MODELS.map((m) => (
-              <option key={`anthropic::${m}`} value={`anthropic::${m}`}>
-                {MODEL_LABELS[m] || m}
-              </option>
-            ))}
-          </optgroup>
-
-          <optgroup label="OpenAI">
-            {OPENAI_MODELS.map((m) => (
-              <option key={`openai::${m}`} value={`openai::${m}`}>
-                {MODEL_LABELS[m] || m}
-              </option>
-            ))}
-          </optgroup>
-
-          <optgroup label="xAI Grok">
-            {XAI_MODELS.map((m) => (
-              <option key={`xai::${m}`} value={`xai::${m}`}>
-                {MODEL_LABELS[m] || m}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-      </div>
-
-      {/* System Prompt (collapsible) */}
-      <div style={{ borderBottom: '1px solid var(--border)' }}>
-        <button
-          onClick={() => setShowSystemPrompt((prev) => !prev)}
-          className="flex items-center gap-1.5 px-4 py-1.5 w-full text-left text-xs"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          <span
-            style={{
-              transition: 'transform 150ms',
-              transform: showSystemPrompt ? 'rotate(90deg)' : 'rotate(0deg)',
-              fontSize: 8,
-              display: 'inline-block',
-            }}
-          >
-            &#9654;
-          </span>
-          System Prompt
-        </button>
-        {showSystemPrompt && (
-          <div className="px-4 pb-2">
-            <textarea
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              rows={4}
-              className="w-full text-xs rounded p-2 resize-y focus:outline-none"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-                fontFamily: 'monospace',
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border)';
-              }}
-            />
-          </div>
-        )}
-      </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
         {messages.length === 0 && (
           <div className="text-center mt-12">
-            <div className="text-lg font-semibold mb-2" style={{ color: 'var(--text)' }}>
+            <div className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
               Traces AI
             </div>
-            <p className="text-xs" style={{ color: 'var(--text-dim)', maxWidth: 260, margin: '0 auto' }}>
-              {ollamaRunning
-                ? 'Select a model and start chatting. I can read, write, and manage your notes.'
-                : 'Ollama is not running. Use Claude, OpenAI, or Grok (requires API keys in .env.local).'}
-            </p>
           </div>
         )}
 
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className="text-sm leading-relaxed rounded-2xl max-w-[85%]"
+              className="text-sm leading-relaxed max-w-[80%]"
               style={
                 msg.role === 'user'
                   ? {
                       color: '#fff',
-                      background: 'linear-gradient(135deg, rgba(35,131,226,0.4), rgba(155,89,182,0.4))',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      padding: '8px 14px',
+                      background: '#2383e2',
+                      padding: '10px 16px',
+                      borderRadius: '20px 20px 4px 20px',
                     }
                   : {
                       color: 'var(--text)',
-                      backgroundColor: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      padding: '10px 14px',
+                      backgroundColor: 'rgba(255,255,255,0.08)',
+                      padding: '10px 16px',
+                      borderRadius: '20px 20px 20px 4px',
                     }
               }
             >
@@ -585,43 +428,80 @@ export function ChatPanel() {
         )}
       </div>
 
-      {/* Input area */}
-      <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="flex gap-2 items-end">
+      {/* Input area + model picker — single row */}
+      <div className="px-4 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <div
+          className="flex items-center gap-2 rounded-xl px-3 py-2 transition-shadow focus-within:ring-2 focus-within:ring-[rgba(35,131,226,0.2)] focus-within:border-white/15"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          {/* Model picker */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {ollamaRunning && (
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" title="Ollama is running" />
+            )}
+            <select
+              value={selectValue}
+              onChange={handleModelChange}
+              className="text-xs rounded-md px-2 py-1.5 appearance-none cursor-pointer bg-white/[0.06] border border-white/[0.08] text-muted-foreground outline-none hover:bg-white/[0.1] hover:text-foreground transition-colors"
+              style={{
+                backgroundImage:
+                  'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23a1a1aa\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                paddingRight: 22,
+              }}
+            >
+              {ollamaModels.length > 0 && (
+                <optgroup label="Ollama (local)">
+                  {ollamaModels.map((m) => (
+                    <option key={`ollama::${m}`} value={`ollama::${m}`}>{m}</option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Claude">
+                {CLAUDE_MODELS.map((m) => (
+                  <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
+                ))}
+              </optgroup>
+              <optgroup label="OpenAI">
+                {OPENAI_MODELS.map((m) => (
+                  <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Google Gemini">
+                {GOOGLE_MODELS.map((m) => (
+                  <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
+                ))}
+              </optgroup>
+              <optgroup label="xAI Grok">
+                {XAI_MODELS.map((m) => (
+                  <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-white/[0.08] flex-shrink-0" />
+
+          {/* Input */}
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder="Ask Traces..."
-            className="flex-1 px-4 py-2.5 text-sm rounded-xl placeholder:text-gray-500 focus:outline-none"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.04)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(35,131,226,0.15)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="flex-1 min-w-0 bg-transparent text-sm placeholder:text-gray-500 focus:outline-none"
+            style={{ color: 'var(--text)' }}
           />
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2.5 text-sm rounded-xl transition-all disabled:opacity-50"
-            style={{
-              background: 'linear-gradient(135deg, rgba(35,131,226,0.5), rgba(155,89,182,0.5))',
-              color: '#fff',
-              fontWeight: 500,
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            Send
-          </button>
+
+          {/* Send */}
+          <Button variant="gradient" size="icon-sm" onClick={handleSubmit} disabled={loading} title="Send" className="flex-shrink-0 rounded-lg">
+            <Send className="size-3.5" />
+          </Button>
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
 import { FileTreeItem, TreeNode } from './FileTreeItem';
 import { electronAPI } from '@/lib/electron-api';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, FolderOpen, Plus } from 'lucide-react';
 
 function buildTree(files: string[]): TreeNode[] {
   const root: TreeNode[] = [];
@@ -69,6 +71,9 @@ export function FileTree() {
     (path: string) => {
       setActiveFile(path);
       openFile(path);
+      // Auto-expand editor if it's collapsed
+      const { editorCollapsed, setEditorCollapsed } = useUIStore.getState();
+      if (editorCollapsed) setEditorCollapsed(false);
     },
     [setActiveFile, openFile]
   );
@@ -95,57 +100,21 @@ export function FileTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 py-3" style={{ paddingTop: '44px', borderBottom: '1px solid var(--border)' }}>
+      <div className="py-3" style={{ paddingTop: '48px', paddingLeft: 28, paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>
             {vaultName}
           </span>
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Collapse sidebar */}
-            <button
-              onClick={toggleSidebar}
-              className="transition-colors text-xs leading-none px-1"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              title="Collapse sidebar"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              onClick={openFolder}
-              className="transition-colors text-xs leading-none px-1"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              title="Open Folder"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setCreating(true)}
-              className="transition-colors text-lg leading-none"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              title="New Note"
-            >
-              +
-            </button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="icon-xs" onClick={toggleSidebar} title="Collapse sidebar" className="text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={openFolder} title="Open Folder" className="text-muted-foreground hover:text-foreground">
+              <FolderOpen className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={() => setCreating(true)} title="New Note" className="text-muted-foreground hover:text-foreground">
+              <Plus className="size-3.5" />
+            </Button>
           </div>
         </div>
 
@@ -174,7 +143,7 @@ export function FileTree() {
 
       {/* New file input */}
       {creating && (
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="py-2" style={{ paddingLeft: 28, paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
           <input
             type="text"
             placeholder="Note name..."
@@ -212,7 +181,7 @@ export function FileTree() {
       </div>
 
       {/* Bottom bar: file count */}
-      <div className="px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="py-3" style={{ paddingLeft: 28, paddingRight: 20, borderTop: '1px solid var(--border)' }}>
         <div className="text-xs text-center" style={{ color: 'var(--text-dim)' }}>
           {files.length} notes
         </div>

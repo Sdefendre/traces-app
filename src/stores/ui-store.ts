@@ -19,6 +19,7 @@ interface UIState {
   toggleGraphCollapsed: () => void;
   toggleSidebar: () => void;
   toggleEditorCollapsed: () => void;
+  setEditorCollapsed: (v: boolean) => void;
   toggleEditorTheme: () => void;
 }
 
@@ -45,6 +46,7 @@ export const useUIStore = create<UIState>((set) => ({
     set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   toggleEditorCollapsed: () =>
     set((s) => ({ editorCollapsed: !s.editorCollapsed })),
+  setEditorCollapsed: (v) => set({ editorCollapsed: v }),
   toggleEditorTheme: () =>
     set((s) => ({ editorLightMode: !s.editorLightMode })),
 }));
