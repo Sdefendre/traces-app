@@ -1,5 +1,10 @@
 import type { GraphData } from '@/types';
 
+export interface RealtimeSessionResult {
+  clientSecret: string;
+  sessionId: string;
+}
+
 export interface ElectronAPI {
   listFiles: () => Promise<string[]>;
   readFile: (filePath: string) => Promise<string>;
@@ -11,6 +16,8 @@ export interface ElectronAPI {
   openFolder: () => Promise<string | null>;
   loadSettings: () => Promise<Record<string, unknown>>;
   saveSettings: (data: Record<string, unknown>) => Promise<void>;
+  createRealtimeSession: (opts: { apiKey: string; voice?: string; instructions?: string }) => Promise<RealtimeSessionResult>;
+  executeRealtimeTool: (opts: { toolName: string; args: Record<string, string> }) => Promise<string>;
   onFileChange: (callback: (event: string, filePath: string) => void) => () => void;
   onGraphUpdate: (callback: (data: GraphData) => void) => () => void;
 }
@@ -81,6 +88,52 @@ export const electronAPI = {
     const api = getAPI();
     if (!api) return;
     return api.saveSettings(data);
+  },
+
+  async createRealtimeSession(opts: { apiKey: string; voice?: string; instructions?: string }): Promise<RealtimeSessionResult> {
+    // Always use the API route — it has access to .env.local (OPENAI_API_KEY).
+    // Falls back to IPC only if the fetch fails (e.g. production static export).
+    try {
+      const res = await fetch('/api/realtime/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Realtime session error (${res.status}): ${text}`);
+      }
+      return await res.json();
+    } catch (fetchErr) {
+      // If API route is unavailable (production), try IPC
+      const api = getAPI();
+      if (api) {
+        return api.createRealtimeSession(opts);
+      }
+      throw fetchErr;
+    }
+  },
+
+  async executeRealtimeTool(opts: { toolName: string; args: Record<string, string> }): Promise<string> {
+    try {
+      const res = await fetch('/api/realtime/tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || `Tool execution failed (${res.status})`);
+      }
+      const data = await res.json();
+      return data.result;
+    } catch (fetchErr) {
+      const api = getAPI();
+      if (api) {
+        return api.executeRealtimeTool(opts);
+      }
+      throw fetchErr;
+    }
   },
 
   onFileChange(callback: (event: string, filePath: string) => void): () => void {

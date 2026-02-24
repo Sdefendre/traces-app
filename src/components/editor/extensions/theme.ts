@@ -11,7 +11,7 @@ export const neuralTheme = EditorView.theme(
     '.cm-content': {
       caretColor: '#2383e2',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-      padding: '16px 0',
+      padding: '16px 24px',
     },
     '.cm-cursor, .cm-dropCursor': {
       borderLeftColor: '#2383e2',

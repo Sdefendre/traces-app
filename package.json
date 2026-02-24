@@ -5,7 +5,7 @@
   "main": "main/dist/index.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build:next": "next build",
+    "build:next": "BUILD_STATIC=1 next build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "pnpm build:next && pnpm build:electron",
     "start": "electron .",

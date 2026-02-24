@@ -110,7 +110,7 @@ export function MarkdownPreview({ content, editorLightMode }: MarkdownPreviewPro
     <div
       className="h-full overflow-auto"
       onClick={handleClick}
-      style={{ padding: '16px 24px' }}
+      style={{ padding: '20px 28px' }}
     >
       <style>{`
         .md-preview h1.md-h1 {

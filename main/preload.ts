@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadSettings: () => ipcRenderer.invoke('settings:load'),
   saveSettings: (data: Record<string, unknown>) => ipcRenderer.invoke('settings:save', data),
 
+  createRealtimeSession: (opts: { apiKey: string; voice?: string; instructions?: string }) =>
+    ipcRenderer.invoke('realtime:createSession', opts),
+  executeRealtimeTool: (opts: { toolName: string; args: Record<string, string> }) =>
+    ipcRenderer.invoke('realtime:executeTool', opts),
+
   onFileChange: (callback: (event: string, filePath: string) => void) => {
     const handler = (_: Electron.IpcRendererEvent, event: string, filePath: string) =>
       callback(event, filePath);

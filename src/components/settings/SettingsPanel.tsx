@@ -9,7 +9,9 @@ import {
   ALL_ANTHROPIC_MODELS,
   ALL_XAI_MODELS,
   ALL_GOOGLE_MODELS,
+  ALL_VOICE_OPTIONS,
 } from '@/stores/settings-store';
+import type { VoiceOption } from '@/stores/settings-store';
 import type { Provider } from '@/stores/settings-store';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -67,7 +69,7 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex justify-between items-center py-0.5">
+    <div className="flex justify-between items-center py-2">
       <span className="text-sm text-zinc-300">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
@@ -106,7 +108,7 @@ function ApiKeyInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={`Enter ${label} API key`}
-          className="flex-1 text-sm rounded-lg px-3.5 py-2.5 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all"
+          className="flex-1 text-sm rounded-lg px-4 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all"
         />
         <button
           onClick={() => setVisible(!visible)}
@@ -128,10 +130,12 @@ const MODEL_LABELS: Record<string, string> = {
   'claude-sonnet-4-6': 'Sonnet 4.6',
   'claude-sonnet-4-20250514': 'Sonnet 4',
   'claude-haiku-4-5-20251001': 'Haiku 4.5',
+  'gpt-5.2': 'GPT-5.2',
   'gpt-4o': 'GPT-4o',
   'gpt-4o-mini': 'GPT-4o Mini',
   'grok-3-fast': 'Grok 3 Fast',
   'grok-4-1-fast': 'Grok 4.1 Fast',
+  'gemini-3-flash-preview': 'Gemini 3 Flash',
   'gemini-3.1-pro-preview': 'Gemini 3.1 Pro',
   'gemini-2.5-flash': 'Gemini 2.5 Flash',
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
@@ -187,10 +191,10 @@ function ModelChecklist({
 // Styled input wrapper
 // ---------------------------------------------------------------------------
 const inputClass =
-  'w-full text-sm rounded-lg px-3.5 py-2.5 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all';
+  'w-full text-sm rounded-lg px-4 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all';
 
 const selectClass =
-  'w-full text-sm rounded-lg px-3.5 py-2.5 bg-white/[0.05] border border-white/[0.1] text-zinc-100 outline-none focus:border-[#6366f1]/60 cursor-pointer appearance-none';
+  'w-full text-sm rounded-lg px-4 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 outline-none focus:border-[#6366f1]/60 cursor-pointer appearance-none';
 
 // ---------------------------------------------------------------------------
 // SettingsPanel (full-screen overlay)
@@ -287,7 +291,7 @@ export function SettingsPanel() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header bar */}
         <div
-          className="flex items-center justify-between pl-10 pr-6 pb-5"
+          className="flex items-center justify-between pl-12 pr-6 pb-5"
           style={{ paddingTop: 52, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
           <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">
@@ -306,7 +310,7 @@ export function SettingsPanel() {
 
         {/* Scrollable content — centered with max-w */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl pl-24 pr-16 py-10 space-y-10">
+          <div className="max-w-2xl px-12 py-10 space-y-10">
             {/* ============ AI & Models ============ */}
             {activeSection === 'ai' && (
               <>
@@ -458,7 +462,47 @@ export function SettingsPanel() {
                       onChange={(e) => updateSettings({ customSystemPrompt: e.target.value })}
                       placeholder="e.g. Always respond in French..."
                       rows={4}
-                      className="w-full text-sm rounded-lg px-3.5 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all resize-y leading-relaxed"
+                      className="w-full text-sm rounded-lg px-4 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all resize-y leading-relaxed"
+                    />
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-white/[0.04]" />
+
+                {/* Voice settings */}
+                <div>
+                  <SectionHeader>Voice</SectionHeader>
+                  <p className="text-sm text-zinc-500 mb-5 -mt-2">
+                    Requires an OpenAI API key. Uses the Realtime API.
+                  </p>
+                  <div className="space-y-5">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-sm text-zinc-400">Voice</span>
+                      <select
+                        value={settings.voice.voice}
+                        onChange={(e) =>
+                          updateSettings({
+                            voice: { ...settings.voice, voice: e.target.value as VoiceOption },
+                          })
+                        }
+                        className={selectClass}
+                      >
+                        {ALL_VOICE_OPTIONS.map((v) => (
+                          <option key={v} value={v}>
+                            {v.charAt(0).toUpperCase() + v.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <ToggleRow
+                      label="Auto-play audio responses"
+                      checked={settings.voice.autoPlayResponses}
+                      onChange={(v) =>
+                        updateSettings({
+                          voice: { ...settings.voice, autoPlayResponses: v },
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -541,7 +585,7 @@ export function SettingsPanel() {
                     step={0.05}
                     onChange={(v) => updateGraphSettings({ rotateSpeed: v })}
                   />
-                  <div className="flex justify-between items-center py-0.5">
+                  <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-zinc-300">Line Color</span>
                     <input
                       type="color"
@@ -566,7 +610,7 @@ export function SettingsPanel() {
                     <div className="flex flex-col gap-1.5">
                       <span className="text-sm text-zinc-400">Vault Path</span>
                       <div className="flex items-center gap-3">
-                        <span className="flex-1 text-sm text-zinc-300 font-mono bg-white/[0.05] border border-white/[0.1] rounded-lg px-3.5 py-2.5 truncate">
+                        <span className="flex-1 text-sm text-zinc-300 font-mono bg-white/[0.05] border border-white/[0.1] rounded-lg px-4 py-3 truncate">
                           {vaultPath}
                         </span>
                         <Button

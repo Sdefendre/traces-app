@@ -132,7 +132,7 @@ export function EditorPanel() {
     <div className="flex flex-col h-full" style={{ backgroundColor: editorBg, color: editorText, transition: 'background-color 0.3s, color 0.3s' }}>
       {/* Tab bar */}
       <div
-        className="flex items-center overflow-x-auto pt-8 min-h-[68px] titlebar-drag"
+        className="flex items-center overflow-x-auto pt-8 min-h-[68px] px-5 titlebar-drag"
         style={{ borderBottom: `1px solid ${editorBorder}` }}
       >
         {tabs.map((tab) => {
@@ -176,7 +176,7 @@ export function EditorPanel() {
 
       {/* Breadcrumb + collapse + theme toggle */}
       <div
-        className="flex items-center justify-between px-4 py-2 gap-2 relative z-[60] titlebar-drag"
+        className="flex items-center justify-between px-5 py-2 gap-2 relative z-[60] titlebar-drag"
         style={{ borderBottom: `1px solid ${editorBorder}` }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -193,7 +193,7 @@ export function EditorPanel() {
             {activeTab.path.replace(/\//g, ' / ')}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 titlebar-no-drag">
           {!chatOpen && (
             <Button
               variant="outline"
@@ -246,7 +246,7 @@ export function EditorPanel() {
 
       {/* Status bar */}
       <div
-        className="flex items-center gap-3 px-4 py-1 text-[11px] flex-shrink-0"
+        className="flex items-center gap-3 px-5 py-1 text-[11px] flex-shrink-0"
         style={{
           color: editorSecondary,
           borderTop: `1px solid ${editorBorder}`,

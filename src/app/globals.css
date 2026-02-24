@@ -228,7 +228,7 @@ body::after {
 
 .cm-editor .cm-content {
   color: var(--text);
-  padding: 4px 0;
+  padding: 16px 24px;
 }
 
 .cm-editor .cm-cursor {
@@ -251,6 +251,7 @@ body::after {
 
 [data-editor-theme="light"] .cm-editor .cm-content {
   color: #09090b;
+  padding: 16px 24px;
 }
 
 [data-editor-theme="light"] .cm-editor .cm-gutters {

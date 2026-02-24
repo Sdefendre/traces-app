@@ -3,6 +3,15 @@ import { electronAPI } from '@/lib/electron-api';
 
 export type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
 
+export type VoiceOption = 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo' | 'sage' | 'shimmer' | 'verse';
+
+export const ALL_VOICE_OPTIONS: VoiceOption[] = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
+
+export interface VoiceSettings {
+  voice: VoiceOption;
+  autoPlayResponses: boolean;
+}
+
 export interface AppSettings {
   // AI
   apiKeys: { openai: string; anthropic: string; xai: string; google: string };
@@ -17,6 +26,9 @@ export interface AppSettings {
   ollamaEndpoint: string;
   customSystemPrompt: string;
 
+  // Voice
+  voice: VoiceSettings;
+
   // Editor
   editorFontSize: number;
   spellCheck: boolean;
@@ -26,7 +38,7 @@ export interface AppSettings {
   clearChatOnClose: boolean;
 }
 
-const ALL_OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini'];
+const ALL_OPENAI_MODELS = ['gpt-5.2', 'gpt-4o', 'gpt-4o-mini'];
 const ALL_ANTHROPIC_MODELS = [
   'claude-opus-4-6',
   'claude-sonnet-4-6',
@@ -34,7 +46,7 @@ const ALL_ANTHROPIC_MODELS = [
   'claude-haiku-4-5-20251001',
 ];
 const ALL_XAI_MODELS = ['grok-3-fast', 'grok-4-1-fast'];
-const ALL_GOOGLE_MODELS = ['gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+const ALL_GOOGLE_MODELS = ['gemini-3-flash-preview', 'gemini-3.1-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro'];
 
 export const DEFAULT_SETTINGS: AppSettings = {
   apiKeys: { openai: '', anthropic: '', xai: '', google: '' },
@@ -48,6 +60,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultModel: 'claude-opus-4-6',
   ollamaEndpoint: 'http://localhost:11434',
   customSystemPrompt: '',
+
+  voice: { voice: 'verse', autoPlayResponses: true },
 
   editorFontSize: 14,
   spellCheck: false,
@@ -81,6 +95,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       }
       if (saved.enabledModels) {
         merged.enabledModels = { ...DEFAULT_SETTINGS.enabledModels, ...(saved as Record<string, unknown>).enabledModels as Record<string, string[]> };
+      }
+      if (saved.voice) {
+        merged.voice = { ...DEFAULT_SETTINGS.voice, ...(saved as Record<string, unknown>).voice as VoiceSettings };
       }
       set({ settings: merged, loaded: true });
     } else {

@@ -7,7 +7,9 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Send, ChevronLeft, ChevronRight, Eraser } from 'lucide-react';
+import { Send, ChevronLeft, ChevronRight, Eraser, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { useRealtimeVoice, type TranscriptEvent, type VoiceToolCallEvent } from '@/hooks/useRealtimeVoice';
+import { VoiceWaveform } from './VoiceWaveform';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,6 +26,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   toolCalls?: ToolCall[];
+  source?: 'voice';
 }
 
 interface OllamaModel {
@@ -37,10 +40,12 @@ const MODEL_LABELS: Record<string, string> = {
   'claude-sonnet-4-6': 'Sonnet 4.6',
   'claude-sonnet-4-20250514': 'Sonnet 4',
   'claude-haiku-4-5-20251001': 'Haiku 4.5',
+  'gpt-5.2': 'GPT-5.2',
   'gpt-4o': 'GPT-4o',
   'gpt-4o-mini': 'GPT-4o Mini',
   'grok-3-fast': 'Grok 3 Fast',
   'grok-4-1-fast': 'Grok 4.1 Fast',
+  'gemini-3-flash-preview': 'Gemini 3 Flash',
   'gemini-3.1-pro-preview': 'Gemini 3.1 Pro',
   'gemini-2.5-flash': 'Gemini 2.5 Flash',
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
@@ -177,6 +182,103 @@ export function ChatPanel() {
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [ollamaRunning, setOllamaRunning] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  // Voice mode state
+  const [voiceMode, setVoiceMode] = useState(false);
+  const streamingTranscriptRef = useRef('');
+
+  const handleTranscript = useCallback((event: TranscriptEvent) => {
+    if (event.role === 'user' && event.final) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: event.content, source: 'voice' },
+      ]);
+      streamingTranscriptRef.current = '';
+    } else if (event.role === 'assistant') {
+      if (event.final) {
+        // Replace the last streaming voice message with the final transcript
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.source === 'voice') {
+            return [...prev.slice(0, -1), { role: 'assistant', content: event.content, source: 'voice' as const }];
+          }
+          return [...prev, { role: 'assistant', content: event.content, source: 'voice' as const }];
+        });
+        streamingTranscriptRef.current = '';
+      } else {
+        // Streaming delta — accumulate and update last message
+        streamingTranscriptRef.current += event.content;
+        const accumulated = streamingTranscriptRef.current;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.source === 'voice') {
+            return [...prev.slice(0, -1), { role: 'assistant', content: accumulated, source: 'voice' as const }];
+          }
+          return [...prev, { role: 'assistant', content: accumulated, source: 'voice' as const }];
+        });
+      }
+    }
+  }, []);
+
+  const handleVoiceError = useCallback((errorMsg: string) => {
+    setError(errorMsg);
+    setVoiceMode(false);
+  }, []);
+
+  const handleVoiceToolCall = useCallback((event: VoiceToolCallEvent) => {
+    // Append tool call as an assistant message with toolCalls array
+    setMessages((prev) => {
+      const toolCall: ToolCall = { name: event.name, args: event.args, result: event.result };
+      // If the last message is a voice assistant message, attach tool call to it
+      const last = prev[prev.length - 1];
+      if (last?.role === 'assistant' && last.source === 'voice') {
+        const updated = { ...last, toolCalls: [...(last.toolCalls || []), toolCall] };
+        return [...prev.slice(0, -1), updated];
+      }
+      // Otherwise create a new assistant message with just the tool call
+      return [...prev, { role: 'assistant', content: '', toolCalls: [toolCall], source: 'voice' as const }];
+    });
+
+    // Refresh files/editor for file-modifying tools
+    if (FILE_MODIFYING_TOOLS.has(event.name)) {
+      refreshFiles();
+      if (event.args.path) {
+        reloadTab(event.args.path);
+      }
+    }
+  }, [refreshFiles, reloadTab]);
+
+  // Build voice instructions — always include TracesAI identity + tool info + any custom prompt
+  const voiceInstructions = (() => {
+    const base = 'You are TracesAI, a voice AI assistant embedded in a knowledge management app called Traces. You are running on the gpt-realtime model from OpenAI. Be conversational, helpful, and concise in your spoken responses. If the user asks what you are, tell them you are TracesAI. You have tools to manage the user\'s vault: list_files, read_file, write_file, edit_file, delete_file, and search_files. Use these tools when the user asks about their notes, wants to create or edit files, or search their vault.';
+    const custom = appSettings.customSystemPrompt?.trim();
+    return custom ? `${custom}\n\n${base}` : base;
+  })();
+
+  const { state: voiceState, connect: voiceConnect, disconnect: voiceDisconnect, audioLevel } = useRealtimeVoice({
+    apiKey: appSettings.apiKeys.openai,
+    voice: appSettings.voice.voice,
+    instructions: voiceInstructions,
+    onTranscript: handleTranscript,
+    onToolCall: handleVoiceToolCall,
+    onError: handleVoiceError,
+  });
+
+
+  const toggleVoice = useCallback(() => {
+    if (voiceMode) {
+      voiceDisconnect();
+      setVoiceMode(false);
+    } else {
+      setVoiceMode(true);
+      setError(null);
+      voiceConnect().catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Voice connection failed';
+        setError(msg);
+        setVoiceMode(false);
+      });
+    }
+  }, [voiceMode, voiceConnect, voiceDisconnect]);
 
   // Get enabled models from settings
   const enabledAnthropicModels = appSettings.enabledModels.anthropic;
@@ -423,6 +525,9 @@ export function ChatPanel() {
                 className="whitespace-pre-wrap font-sans text-sm leading-relaxed"
                 style={{ margin: 0 }}
               >
+                {msg.source === 'voice' && (
+                  <Mic className="inline size-3 mr-1 opacity-50 align-text-bottom" />
+                )}
                 {msg.content}
               </pre>
             </div>
@@ -464,89 +569,136 @@ export function ChatPanel() {
         )}
       </div>
 
-      {/* Input area + model picker — single row */}
+      {/* Input area */}
       <div className="px-4 py-4" style={{ borderTop: '1px solid var(--border)' }}>
-        <div
-          className="flex items-center gap-2 rounded-xl px-3 py-2 transition-shadow focus-within:ring-2 focus-within:ring-[rgba(35,131,226,0.2)] focus-within:border-white/15"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          {/* Model picker */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {ollamaRunning && (
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" title="Ollama is running" />
-            )}
-            <select
-              value={selectValue}
-              onChange={handleModelChange}
-              className="text-xs rounded-md px-2 py-1.5 appearance-none cursor-pointer bg-white/[0.06] border border-white/[0.08] text-muted-foreground outline-none hover:bg-white/[0.1] hover:text-foreground transition-colors"
+        {voiceMode ? (
+          /* ── Voice call UI ── */
+          <div
+            className="flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: 'rgba(35,131,226,0.06)',
+              border: '1px solid rgba(35,131,226,0.15)',
+            }}
+          >
+            {/* Waveform + status */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <VoiceWaveform audioLevel={audioLevel} />
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-medium" style={{ color: voiceState === 'connected' ? '#2383e2' : 'var(--text-secondary)' }}>
+                  {voiceState === 'connecting' ? 'Connecting...' : voiceState === 'connected' ? 'Listening...' : 'Voice mode'}
+                </span>
+                <span className="text-[10px] text-muted-foreground">gpt-realtime</span>
+              </div>
+            </div>
+
+            {/* End call button */}
+            <button
+              onClick={toggleVoice}
+              title="End call"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all hover:brightness-110"
               style={{
-                backgroundImage:
-                  'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23a1a1aa\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 6px center',
-                paddingRight: 22,
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                boxShadow: '0 2px 8px rgba(239,68,68,0.3)',
               }}
             >
-              {ollamaModels.length > 0 && (
-                <optgroup label="Ollama (local)">
-                  {ollamaModels.map((m) => (
-                    <option key={`ollama::${m}`} value={`ollama::${m}`}>{m}</option>
-                  ))}
-                </optgroup>
-              )}
-              {enabledAnthropicModels.length > 0 && (
-                <optgroup label="Claude">
-                  {enabledAnthropicModels.map((m) => (
-                    <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
-                  ))}
-                </optgroup>
-              )}
-              {enabledOpenaiModels.length > 0 && (
-                <optgroup label="OpenAI">
-                  {enabledOpenaiModels.map((m) => (
-                    <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                  ))}
-                </optgroup>
-              )}
-              {enabledGoogleModels.length > 0 && (
-                <optgroup label="Google Gemini">
-                  {enabledGoogleModels.map((m) => (
-                    <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
-                  ))}
-                </optgroup>
-              )}
-              {enabledXaiModels.length > 0 && (
-                <optgroup label="xAI Grok">
-                  {enabledXaiModels.map((m) => (
-                    <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+              <PhoneOff className="size-3" />
+              End
+            </button>
           </div>
+        ) : (
+          /* ── Text input UI ── */
+          <div
+            className="flex items-center gap-2 rounded-xl px-3 py-2 transition-shadow focus-within:ring-2 focus-within:ring-[rgba(35,131,226,0.2)] focus-within:border-white/15"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {/* Model picker */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {ollamaRunning && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" title="Ollama is running" />
+              )}
+              <select
+                value={selectValue}
+                onChange={handleModelChange}
+                className="text-xs rounded-md px-2 py-1.5 appearance-none cursor-pointer bg-white/[0.06] border border-white/[0.08] text-muted-foreground outline-none hover:bg-white/[0.1] hover:text-foreground transition-colors"
+                style={{
+                  backgroundImage:
+                    'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23a1a1aa\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 6px center',
+                  paddingRight: 22,
+                }}
+              >
+                {ollamaModels.length > 0 && (
+                  <optgroup label="Ollama (local)">
+                    {ollamaModels.map((m) => (
+                      <option key={`ollama::${m}`} value={`ollama::${m}`}>{m}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {enabledAnthropicModels.length > 0 && (
+                  <optgroup label="Claude">
+                    {enabledAnthropicModels.map((m) => (
+                      <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {enabledOpenaiModels.length > 0 && (
+                  <optgroup label="OpenAI">
+                    {enabledOpenaiModels.map((m) => (
+                      <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {enabledGoogleModels.length > 0 && (
+                  <optgroup label="Google Gemini">
+                    {enabledGoogleModels.map((m) => (
+                      <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {enabledXaiModels.length > 0 && (
+                  <optgroup label="xAI Grok">
+                    {enabledXaiModels.map((m) => (
+                      <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
 
-          {/* Divider */}
-          <div className="w-px h-5 bg-white/[0.08] flex-shrink-0" />
+            {/* Divider */}
+            <div className="w-px h-5 bg-white/[0.08] flex-shrink-0" />
 
-          {/* Input */}
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="Chat with your Traces..."
-            className="flex-1 min-w-0 bg-transparent text-sm placeholder:text-gray-500 focus:outline-none"
-            style={{ color: 'var(--text)' }}
-          />
+            {/* Text input */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="Chat with your Traces..."
+              className="flex-1 min-w-0 bg-transparent text-sm placeholder:text-gray-500 focus:outline-none"
+              style={{ color: 'var(--text)' }}
+            />
 
-          {/* Send */}
-          <Button variant="gradient" size="icon-sm" onClick={handleSubmit} disabled={loading} title="Send" className="flex-shrink-0 rounded-lg">
-            <Send className="size-3.5" />
-          </Button>
-        </div>
+            {/* Mic button */}
+            <button
+              onClick={toggleVoice}
+              title="Start voice conversation"
+              className="flex-shrink-0 flex items-center justify-center size-7 rounded-lg transition-colors hover:bg-white/[0.1]"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
+            >
+              <Mic className="size-3.5 text-muted-foreground" />
+            </button>
+
+            {/* Send */}
+            <Button variant="gradient" size="icon-sm" onClick={handleSubmit} disabled={loading} title="Send" className="flex-shrink-0 rounded-lg">
+              <Send className="size-3.5" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

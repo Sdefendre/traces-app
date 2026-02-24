@@ -1,6 +1,7 @@
 node_modules/
 .next/
 out/
+out 2/
 main/dist/
 dist/
 *.js.map
