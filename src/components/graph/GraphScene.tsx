@@ -20,7 +20,6 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
   const { setActiveFile } = useVaultStore();
   const { getPositions, tickRef } = useForceGraph(graphData.nodes, graphData.edges);
   const [, setRenderTick] = useState(0);
-  const { camera } = useThree();
   const cameraTargetPosRef = useRef<THREE.Vector3 | null>(null);
   const cameraLerpFrames = useRef(0);
 
@@ -67,7 +66,8 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
   );
 
   // Trigger re-render when force simulation updates + smooth camera animation
-  useFrame(() => {
+  useFrame((state) => {
+    const { camera } = state;
     setRenderTick(tickRef.current);
 
     // When a node is selected, smoothly animate the camera toward it

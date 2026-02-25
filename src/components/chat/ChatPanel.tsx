@@ -4,7 +4,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useUIStore } from '@/stores/ui-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
-import { useSettingsStore } from '@/stores/settings-store';
+import {
+  useSettingsStore,
+  ALL_VOICE_OPTIONS,
+  ALL_GROK_VOICE_OPTIONS,
+  type VoiceOption,
+  type GrokVoiceOption,
+} from '@/stores/settings-store';
 import { electronAPI } from '@/lib/electron-api';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
@@ -72,6 +78,8 @@ const TOOL_COLORS: Record<string, string> = {
   delete_file: '#ef4444',
   search_files: '#a855f7',
   list_files: '#6b7280',
+  list_voices: '#ec4899',
+  change_voice: '#ec4899',
 };
 
 function getToolColor(name: string): string {
@@ -168,7 +176,7 @@ export function ChatPanel() {
   const { toggleChat } = useUIStore();
   const { refreshFiles, vaultName, files } = useVaultStore();
   const { reloadTab } = useEditorStore();
-  const { settings: appSettings } = useSettingsStore();
+  const { settings: appSettings, updateSettings } = useSettingsStore();
 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -263,12 +271,55 @@ export function ChatPanel() {
     const providerName = voiceProvider === 'grok' ? 'xAI' : 'OpenAI';
     const base = `You are TracesAI, a voice AI assistant embedded in a knowledge management app called Traces. You are running on the ${modelName} model from ${providerName}. Be conversational, helpful, and concise in your spoken responses. If the user asks what you are, tell them you are TracesAI. You have tools to manage the user's vault: list_files, read_file, write_file, edit_file, delete_file, and search_files. Use these tools when the user asks about their notes, wants to create or edit files, or search their vault.
 
+You also have voice tools: list_voices (to show available voices) and change_voice (to switch your voice). Use list_voices when the user asks what voices you have or what options are available. Use change_voice when the user asks you to change your voice, sound different, or switch to another voice.
+
 The user's current vault is called "${vaultName}" and contains ${files.length} note${files.length === 1 ? '' : 's'}.
 
 The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}.`;
     const custom = appSettings.customSystemPrompt?.trim();
     return custom ? `${custom}\n\n${base}` : base;
   })();
+
+  // Custom tool executor: handle voice tools in renderer (for correct provider + settings sync), delegate rest to main process
+  const executeVoiceTool = useCallback(
+    async (toolName: string, args: Record<string, string>): Promise<string> => {
+      if (toolName === 'list_voices') {
+        const voices = voiceProvider === 'grok' ? ALL_GROK_VOICE_OPTIONS : ALL_VOICE_OPTIONS;
+        const current =
+          voiceProvider === 'grok'
+            ? appSettings.voice.grokVoice ?? 'Ara'
+            : appSettings.voice.voice;
+        return JSON.stringify({
+          provider: voiceProvider === 'grok' ? 'Grok' : 'OpenAI',
+          voices,
+          current,
+        });
+      }
+      if (toolName === 'change_voice') {
+        const requested = args.voice?.trim();
+        if (!requested) return 'Error: voice is required';
+        const voices = voiceProvider === 'grok' ? ALL_GROK_VOICE_OPTIONS : ALL_VOICE_OPTIONS;
+        if (!(voices as readonly string[]).includes(requested)) {
+          return `Error: Invalid voice "${requested}". Available: ${voices.join(', ')}`;
+        }
+        updateSettings({
+          voice: {
+            ...appSettings.voice,
+            ...(voiceProvider === 'grok'
+              ? { grokVoice: requested as GrokVoiceOption }
+              : { voice: requested as VoiceOption }),
+          },
+        });
+        return `Voice changed to ${requested}. The new voice will apply to your next response.`;
+      }
+      return electronAPI.executeRealtimeTool({ toolName, args });
+    },
+    [
+      voiceProvider,
+      appSettings.voice,
+      updateSettings,
+    ]
+  );
 
   // Both hooks are always called (React rules of hooks), but only the active one connects
   const openaiVoice = useRealtimeVoice({
@@ -278,6 +329,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
     onTranscript: handleTranscript,
     onToolCall: handleVoiceToolCall,
     onError: handleVoiceError,
+    executeTool: executeVoiceTool,
   });
 
   const grokVoice = useGrokVoice({
@@ -287,6 +339,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
     onTranscript: handleTranscript,
     onToolCall: handleVoiceToolCall,
     onError: handleVoiceError,
+    executeTool: executeVoiceTool,
   });
 
   const activeVoice = voiceProvider === 'grok' ? grokVoice : openaiVoice;

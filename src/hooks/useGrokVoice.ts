@@ -2,6 +2,8 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { electronAPI } from '@/lib/electron-api';
 import type { VoiceState, UseRealtimeVoiceReturn, TranscriptEvent, VoiceToolCallEvent } from './useRealtimeVoice';
 
+import type { ExecuteToolFn } from './useRealtimeVoice';
+
 interface UseGrokVoiceOptions {
   apiKey: string;
   voice?: string;
@@ -9,6 +11,8 @@ interface UseGrokVoiceOptions {
   onTranscript: (event: TranscriptEvent) => void;
   onToolCall?: (event: VoiceToolCallEvent) => void;
   onError?: (error: string) => void;
+  /** Optional: override tool execution (e.g. for voice tools that need renderer state) */
+  executeTool?: ExecuteToolFn;
 }
 
 function toErrorMessage(err: unknown): string {
@@ -82,6 +86,24 @@ const REALTIME_TOOLS = [
       required: ['query'],
     },
   },
+  {
+    type: 'function' as const,
+    name: 'list_voices',
+    description: 'List the available voices for the current voice provider. Use when the user asks what voices you have or what options are available.',
+    parameters: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    type: 'function' as const,
+    name: 'change_voice',
+    description: 'Change your voice. Use when the user asks you to change your voice. Call list_voices first to see available options.',
+    parameters: {
+      type: 'object',
+      properties: {
+        voice: { type: 'string', description: 'Voice name from list_voices' },
+      },
+      required: ['voice'],
+    },
+  },
 ];
 
 export function useGrokVoice({
@@ -91,6 +113,7 @@ export function useGrokVoice({
   onTranscript,
   onToolCall,
   onError,
+  executeTool: executeToolOverride,
 }: UseGrokVoiceOptions): UseRealtimeVoiceReturn {
   const [state, _setState] = useState<VoiceState>('idle');
   const [audioLevel, setAudioLevel] = useState(0);
@@ -117,6 +140,8 @@ export function useGrokVoice({
   onToolCallRef.current = onToolCall;
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const executeToolRef = useRef(executeToolOverride);
+  executeToolRef.current = executeToolOverride;
 
   const stopPlayback = useCallback(() => {
     for (const src of activeSourcesRef.current) {
@@ -397,7 +422,10 @@ export function useGrokVoice({
 
                 let result: string;
                 try {
-                  result = await electronAPI.executeRealtimeTool({ toolName, args });
+                  const fn = executeToolRef.current;
+                  result = fn
+                    ? await fn(toolName, args)
+                    : await electronAPI.executeRealtimeTool({ toolName, args });
                 } catch (err) {
                   result = `Error: ${err instanceof Error ? err.message : 'Tool execution failed'}`;
                 }
@@ -431,15 +459,20 @@ export function useGrokVoice({
     }
   }, [apiKey, voice, instructions, cleanup, disconnect, setState, stopPlayback]);
 
-  // Update session instructions when they change mid-session (e.g. vault switch)
+  // Update session instructions and voice when they change mid-session (e.g. vault switch, voice change)
   useEffect(() => {
-    if (stateRef.current === 'connected' && wsRef.current?.readyState === WebSocket.OPEN && instructions) {
-      wsRef.current.send(JSON.stringify({
-        type: 'session.update',
-        session: { instructions: instructions },
-      }));
+    if (stateRef.current === 'connected' && wsRef.current?.readyState === WebSocket.OPEN) {
+      const payload: { instructions?: string; voice?: string } = {};
+      if (instructions) payload.instructions = instructions;
+      if (voice) payload.voice = voice;
+      if (Object.keys(payload).length > 0) {
+        wsRef.current.send(JSON.stringify({
+          type: 'session.update',
+          session: payload,
+        }));
+      }
     }
-  }, [instructions]);
+  }, [instructions, voice]);
 
   // Cleanup on unmount
   useEffect(() => {

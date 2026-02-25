@@ -15,6 +15,8 @@ export interface VoiceToolCallEvent {
   result: string;
 }
 
+export type ExecuteToolFn = (toolName: string, args: Record<string, string>) => Promise<string>;
+
 interface UseRealtimeVoiceOptions {
   apiKey: string;
   voice?: string;
@@ -22,6 +24,8 @@ interface UseRealtimeVoiceOptions {
   onTranscript: (event: TranscriptEvent) => void;
   onToolCall?: (event: VoiceToolCallEvent) => void;
   onError?: (error: string) => void;
+  /** Optional: override tool execution (e.g. for voice tools that need renderer state) */
+  executeTool?: ExecuteToolFn;
 }
 
 export interface UseRealtimeVoiceReturn {
@@ -50,6 +54,7 @@ export function useRealtimeVoice({
   onTranscript,
   onToolCall,
   onError,
+  executeTool: executeToolOverride,
 }: UseRealtimeVoiceOptions): UseRealtimeVoiceReturn {
   const [state, _setState] = useState<VoiceState>('idle');
   const [audioLevel, setAudioLevel] = useState(0);
@@ -75,6 +80,8 @@ export function useRealtimeVoice({
   onToolCallRef.current = onToolCall;
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const executeToolRef = useRef(executeToolOverride);
+  executeToolRef.current = executeToolOverride;
 
   const cleanup = useCallback(() => {
     if (timeoutRef.current) {
@@ -241,7 +248,9 @@ export function useRealtimeVoice({
                   final: true,
                 });
                 break;
+              // OpenAI Realtime API uses output_audio_transcript (not audio_transcript)
               case 'response.audio_transcript.delta':
+              case 'response.output_audio_transcript.delta':
                 onTranscriptRef.current({
                   role: 'assistant',
                   content: event.delta ?? '',
@@ -249,6 +258,7 @@ export function useRealtimeVoice({
                 });
                 break;
               case 'response.audio_transcript.done':
+              case 'response.output_audio_transcript.done':
                 onTranscriptRef.current({
                   role: 'assistant',
                   content: event.transcript ?? '',
@@ -267,7 +277,10 @@ export function useRealtimeVoice({
 
                 let result: string;
                 try {
-                  result = await electronAPI.executeRealtimeTool({ toolName, args });
+                  const fn = executeToolRef.current;
+                  result = fn
+                    ? await fn(toolName, args)
+                    : await electronAPI.executeRealtimeTool({ toolName, args });
                 } catch (err) {
                   result = `Error: ${err instanceof Error ? err.message : 'Tool execution failed'}`;
                 }
@@ -334,15 +347,20 @@ export function useRealtimeVoice({
     }
   }, [apiKey, voice, instructions, cleanup, disconnect, setState]);
 
-  // Update session instructions when they change mid-session (e.g. vault switch)
+  // Update session instructions and voice when they change mid-session (e.g. vault switch, voice change)
   useEffect(() => {
-    if (stateRef.current === 'connected' && dcRef.current?.readyState === 'open' && instructions) {
-      dcRef.current.send(JSON.stringify({
-        type: 'session.update',
-        session: { instructions },
-      }));
+    if (stateRef.current === 'connected' && dcRef.current?.readyState === 'open') {
+      const payload: { instructions?: string; audio?: { output: { voice: string } } } = {};
+      if (instructions) payload.instructions = instructions;
+      if (voice) payload.audio = { output: { voice } };
+      if (Object.keys(payload).length > 0) {
+        dcRef.current.send(JSON.stringify({
+          type: 'session.update',
+          session: payload,
+        }));
+      }
     }
-  }, [instructions]);
+  }, [instructions, voice]);
 
   // Cleanup on unmount
   useEffect(() => {

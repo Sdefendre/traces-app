@@ -64,6 +64,22 @@ const REALTIME_TOOLS = [
       required: ['query'],
     },
   },
+  {
+    type: 'function' as const,
+    name: 'list_voices',
+    description: 'List the available voices for the current voice provider. Use when the user asks what voices you have or what options are available.',
+    parameters: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    type: 'function' as const,
+    name: 'change_voice',
+    description: 'Change your voice. Use when the user asks you to change your voice. Call list_voices first to see available options.',
+    parameters: {
+      type: 'object',
+      properties: { voice: { type: 'string', description: 'Voice name from list_voices' } },
+      required: ['voice'],
+    },
+  },
 ];
 
 export async function POST(req: Request) {

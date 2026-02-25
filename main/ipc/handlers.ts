@@ -15,8 +15,20 @@ import { parseVault } from './vault-parser';
 import { REALTIME_TOOLS } from './realtime-tools';
 import { handleChat } from './chat-handler';
 
+const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
+const GROK_VOICES = ['Ara', 'Rex', 'Sal', 'Eve', 'Leo'];
+
 function getSettingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json');
+}
+
+function loadSettings(): Record<string, unknown> {
+  try {
+    const data = fs.readFileSync(getSettingsPath(), 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return {};
+  }
 }
 
 export function registerIpcHandlers(vaultRoot: string) {
@@ -176,6 +188,36 @@ export function registerIpcHandlers(vaultRoot: string) {
             }
           }
           return JSON.stringify(results);
+        }
+        case 'list_voices': {
+          const settings = loadSettings();
+          const voiceSettings = (settings.voice as Record<string, unknown>) ?? {};
+          const provider = (voiceSettings.voiceProvider as string) ?? 'openai';
+          const voices = provider === 'grok' ? GROK_VOICES : OPENAI_VOICES;
+          const current = provider === 'grok'
+            ? (voiceSettings.grokVoice as string) ?? 'Ara'
+            : (voiceSettings.voice as string) ?? 'verse';
+          return JSON.stringify({ provider, voices, current });
+        }
+        case 'change_voice': {
+          const settings = loadSettings();
+          const voiceSettings = (settings.voice as Record<string, unknown>) ?? {};
+          const provider = (voiceSettings.voiceProvider as string) ?? 'openai';
+          const voices = provider === 'grok' ? GROK_VOICES : OPENAI_VOICES;
+          const requested = args.voice?.trim();
+          if (!requested) return 'Error: voice is required';
+          if (!voices.includes(requested)) {
+            return `Error: Invalid voice "${requested}". Available: ${voices.join(', ')}`;
+          }
+          const updated = {
+            ...settings,
+            voice: {
+              ...voiceSettings,
+              ...(provider === 'grok' ? { grokVoice: requested } : { voice: requested }),
+            },
+          };
+          fs.writeFileSync(getSettingsPath(), JSON.stringify(updated, null, 2), 'utf-8');
+          return `Voice changed to ${requested}. The new voice will apply to your next response.`;
         }
         default:
           return `Unknown tool: ${toolName}`;

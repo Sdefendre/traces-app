@@ -76,4 +76,26 @@ export const REALTIME_TOOLS = [
       required: ['query'],
     },
   },
+  {
+    type: 'function' as const,
+    name: 'list_voices',
+    description: 'List the available voices for the current voice provider. Use this when the user asks what voices you have, what voice options are available, or similar.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    type: 'function' as const,
+    name: 'change_voice',
+    description: 'Change your voice to a different one. Use when the user asks you to change your voice, sound different, or switch to another voice. Call list_voices first if you need to know the available options.',
+    parameters: {
+      type: 'object',
+      properties: {
+        voice: { type: 'string', description: 'The voice name to switch to (must be one of the available voices from list_voices)' },
+      },
+      required: ['voice'],
+    },
+  },
 ];
