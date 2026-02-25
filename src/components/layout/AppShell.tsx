@@ -12,7 +12,7 @@ import { EditorPanel } from '@/components/editor/EditorPanel';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Minus, Plus, PanelLeftClose, Maximize, X, Settings } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Minus, Plus, Maximize, X, Settings } from 'lucide-react';
 
 export function AppShell() {
   const { loadVault, setGraphData, refreshFiles, loading } = useVaultStore();
@@ -315,7 +315,7 @@ export function AppShell() {
             <div className="w-px h-4 bg-white/10 mx-0.5" />
 
             <Button variant="ghost" size="icon-sm" onClick={toggleGraphCollapsed} title="Collapse graph panel" className="text-muted-foreground hover:text-foreground">
-              <PanelLeftClose className="size-3.5" />
+              <ChevronLeft className="size-3.5" />
             </Button>
             <Button variant="ghost" size="icon-sm" onClick={toggleGraphFullscreen} title="Fullscreen" className="text-muted-foreground hover:text-foreground">
               <Maximize className="size-3.5" />
