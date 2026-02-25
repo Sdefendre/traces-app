@@ -4,18 +4,21 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useGraphStore } from '@/stores/graph-store';
 
 // --- Layer 1: dense dim starfield ---
 const STAR_COUNT = 8000;
+const STAR_COUNT_LOW = 2000;
 const SPREAD = 6000;
 const DRIFT_SPEED = 0.0008;
 
 // --- Layer 2: bright accent stars ---
 const BRIGHT_COUNT = 800;
+const BRIGHT_COUNT_LOW = 200;
 const BRIGHT_SPREAD = 6000;
 const BRIGHT_DRIFT_SPEED = 0.0004;
 
-// --- Layer 3: shooting stars ---
+// --- Layer 3: shooting stars (disabled in low power) ---
 const SHOOTING_COUNT = 10;
 const TRAIL_LENGTH = 20;
 
@@ -210,39 +213,44 @@ function ShootingStarTrail({ star, starTexture }: { star: ShootingStar; starText
 export function BackgroundField() {
   const starsRef = useRef<THREE.Points>(null);
   const brightRef = useRef<THREE.Points>(null);
+  const lowPowerMode = useGraphStore((s) => s.settings.lowPowerMode);
 
   const starTexture = useMemo(() => createStarTexture(), []);
 
+  const starCount = lowPowerMode ? STAR_COUNT_LOW : STAR_COUNT;
+  const brightCount = lowPowerMode ? BRIGHT_COUNT_LOW : BRIGHT_COUNT;
+  const shootingCount = lowPowerMode ? 0 : SHOOTING_COUNT;
+
   // Dense starfield
   const { positions: starPositions, sizes: starSizes } = useMemo(() => {
-    const pos = new Float32Array(STAR_COUNT * 3);
-    const sz = new Float32Array(STAR_COUNT);
-    for (let i = 0; i < STAR_COUNT; i++) {
+    const pos = new Float32Array(starCount * 3);
+    const sz = new Float32Array(starCount);
+    for (let i = 0; i < starCount; i++) {
       pos[i * 3] = (Math.random() - 0.5) * SPREAD;
       pos[i * 3 + 1] = (Math.random() - 0.5) * SPREAD;
       pos[i * 3 + 2] = (Math.random() - 0.5) * SPREAD;
       sz[i] = 0.15 + Math.random() * 0.45;
     }
     return { positions: pos, sizes: sz };
-  }, []);
+  }, [starCount]);
 
   // Bright accent stars
   const { positions: brightPositions, sizes: brightSizes } = useMemo(() => {
-    const pos = new Float32Array(BRIGHT_COUNT * 3);
-    const sz = new Float32Array(BRIGHT_COUNT);
-    for (let i = 0; i < BRIGHT_COUNT; i++) {
+    const pos = new Float32Array(brightCount * 3);
+    const sz = new Float32Array(brightCount);
+    for (let i = 0; i < brightCount; i++) {
       pos[i * 3] = (Math.random() - 0.5) * BRIGHT_SPREAD;
       pos[i * 3 + 1] = (Math.random() - 0.5) * BRIGHT_SPREAD;
       pos[i * 3 + 2] = (Math.random() - 0.5) * BRIGHT_SPREAD;
       sz[i] = 0.8 + Math.random() * 0.8;
     }
     return { positions: pos, sizes: sz };
-  }, []);
+  }, [brightCount]);
 
-  // Shooting stars — persistent across frames
+  // Shooting stars — disabled in low power mode
   const shootingStars = useMemo(() => {
-    return Array.from({ length: SHOOTING_COUNT }, () => spawnShootingStar());
-  }, []);
+    return Array.from({ length: shootingCount }, () => spawnShootingStar());
+  }, [shootingCount]);
 
   useFrame(() => {
     if (starsRef.current) {

@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getElevation, TerrainConfig } from './useTerrainLayout';
+import { useGraphStore } from '@/stores/graph-store';
 
 interface TerrainMeshProps {
   config: TerrainConfig;
@@ -13,10 +14,11 @@ interface TerrainMeshProps {
 export function TerrainMesh({ config }: TerrainMeshProps) {
   const wireRef = useRef<THREE.Mesh>(null);
   const mousePos = useRef(new THREE.Vector3(0, -9999, 0));
+  const lowPowerMode = useGraphStore((s) => s.settings.lowPowerMode);
 
   const { geometry, colors, originalPositions, currentY } = useMemo(() => {
     const size = config.maxRadius * 2.5; // Scale grid to encompass mountain
-    const segments = 120; // High resolution grid for wireframe
+    const segments = lowPowerMode ? 50 : 120; // Lower resolution in low power mode
     const geo = new THREE.PlaneGeometry(size, size, segments, segments);
     geo.rotateX(-Math.PI / 2); // Lay flat on XZ plane
 
@@ -63,18 +65,19 @@ export function TerrainMesh({ config }: TerrainMeshProps) {
     geo.computeVertexNormals();
 
     return { geometry: geo, colors: colorAttr, originalPositions, currentY };
-  }, [config]);
+  }, [config, lowPowerMode]);
 
-  // Liquid hover physics + scanning wireframe effect
+  // Liquid hover physics + scanning wireframe effect (simplified in low power mode)
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
-    let needsUpdate = false;
 
     if (wireRef.current && wireRef.current.material) {
-      // Fade opacity creating a breathing neon grid
-      wireRef.current.material.opacity = 0.45 + Math.sin(t * 1.5) * 0.15;
+      wireRef.current.material.opacity = lowPowerMode ? 0.5 : 0.45 + Math.sin(t * 1.5) * 0.15;
     }
 
+    if (lowPowerMode) return; // Skip expensive per-vertex ripple updates
+
+    let needsUpdate = false;
     const posArr = geometry.attributes.position;
     const isHovering = mousePos.current.y > -9000;
 

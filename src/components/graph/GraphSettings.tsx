@@ -117,6 +117,14 @@ export function GraphSettings() {
             className="w-7 h-5 border border-white/10 rounded cursor-pointer p-0 bg-transparent"
           />
         </div>
+        <ToggleRow
+          label="Low Power Mode"
+          checked={settings.lowPowerMode}
+          onChange={(v) => updateSettings({ lowPowerMode: v })}
+        />
+        <p className="text-[10px] text-muted-foreground leading-tight">
+          Reduces stars, disables bloom, and simplifies terrain to save CPU/GPU.
+        </p>
       </PopoverContent>
     </Popover>
   );

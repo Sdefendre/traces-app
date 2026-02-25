@@ -306,7 +306,8 @@ export function AppShell() {
           pointerEvents: graphCollapsed ? 'none' : 'auto',
         }}
       >
-        {!settingsOpen && (
+        {/* Only mount 3D canvas when graph is visible — saves CPU/GPU when collapsed */}
+        {!graphCollapsed && !settingsOpen && (
           <ErrorBoundary>
             <KnowledgeGraph />
           </ErrorBoundary>

@@ -11,6 +11,8 @@ interface GraphSettings {
   lineColor: string;
   terrainOpacity: number;
   terrainWireframe: boolean;
+  /** When true, reduces 3D complexity (fewer stars, simpler terrain) to save CPU/GPU */
+  lowPowerMode: boolean;
 }
 
 interface GraphState {
@@ -45,6 +47,7 @@ export const useGraphStore = create<GraphState>((set) => ({
     lineColor: '#27272a',
     terrainOpacity: 0.12,
     terrainWireframe: true,
+    lowPowerMode: false,
   },
 
   setViewMode: (mode) => set({ viewMode: mode }),

@@ -18,7 +18,7 @@ export function startVaultWatcher(
     ignoreInitial: true,
     awaitWriteFinish: {
       stabilityThreshold: 500,
-      pollInterval: 100,
+      pollInterval: 200,
     },
   });
 

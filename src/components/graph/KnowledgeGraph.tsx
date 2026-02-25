@@ -54,7 +54,8 @@ export function KnowledgeGraph() {
     <div className="w-full h-full relative">
       <Canvas
         camera={{ position: [0, 0, 160], fov: 60, near: 0.1, far: 2000 }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: !settings.lowPowerMode, alpha: false }}
+        dpr={settings.lowPowerMode ? [1, 1] : undefined}
         scene={{ background: bgColor }}
       >
         <ambientLight intensity={0.3} />
@@ -82,14 +83,17 @@ export function KnowledgeGraph() {
         {viewMode === 'terrain' && <TerrainScene controlsRef={controlsRef} />}
         {viewMode === 'cluster' && <ClusterScene controlsRef={controlsRef} />}
 
-        <EffectComposer>
-          <Bloom
-            luminanceThreshold={0.1}
-            luminanceSmoothing={0.9}
-            intensity={1.0}
-            mipmapBlur
-          />
-        </EffectComposer>
+        {/* Bloom disabled in low power mode — post-processing is GPU-intensive */}
+        {!settings.lowPowerMode && (
+          <EffectComposer>
+            <Bloom
+              luminanceThreshold={0.1}
+              luminanceSmoothing={0.9}
+              intensity={1.0}
+              mipmapBlur
+            />
+          </EffectComposer>
+        )}
       </Canvas>
 
     </div>
