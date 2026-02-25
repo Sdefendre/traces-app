@@ -577,7 +577,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
       </div>
 
       {/* Input area */}
-      <div className="px-4 pb-6 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="px-6 pb-8 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
         {voiceMode ? (
           /* ── Voice call UI ── */
           <div
@@ -615,112 +615,113 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
         ) : (
           /* ── Text input UI ── */
           <div
-            className="flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 focus-within:ring-4 focus-within:ring-[rgba(35,131,226,0.15)] focus-within:border-white/20 shadow-sm"
+            className="flex flex-col gap-2 rounded-2xl px-3 py-3 transition-all duration-200 focus-within:ring-2 focus-within:ring-[rgba(35,131,226,0.15)] focus-within:border-white/20"
             style={{
               backgroundColor: 'rgba(255,255,255,0.05)',
               border: '1px solid var(--border)',
             }}
           >
-            {/* Model picker */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {ollamaRunning && (
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" title="Ollama is active" />
-              )}
-              <select
-                value={selectValue}
-                onChange={handleModelChange}
-                className="text-xs font-medium rounded-lg px-3 py-2 appearance-none cursor-pointer bg-white/[0.08] border border-white/[0.1] text-foreground outline-none hover:bg-white/[0.12] transition-all"
-                style={{
-                  backgroundImage:
-                    'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23ffffff\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 8px center',
-                  paddingRight: 26,
-                }}
+            {/* Text input row */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                placeholder="Message your Traces..."
+                className="flex-1 min-w-0 bg-transparent text-[14px] placeholder:text-muted-foreground/60 focus:outline-none px-1"
+                style={{ color: 'var(--text)' }}
+              />
+              <Button
+                variant="gradient"
+                size="icon-sm"
+                onClick={handleSubmit}
+                disabled={loading || !input.trim()}
+                title="Send message"
+                className="flex-shrink-0 rounded-lg"
               >
-                {ollamaModels.length > 0 && (
-                  <optgroup label="Ollama (local)">
-                    {ollamaModels.map((m) => (
-                      <option key={`ollama::${m}`} value={`ollama::${m}`}>{m}</option>
-                    ))}
-                  </optgroup>
-                )}
-                {enabledAnthropicModels.length > 0 && (
-                  <optgroup label="Claude">
-                    {enabledAnthropicModels.map((m) => (
-                      <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
-                    ))}
-                  </optgroup>
-                )}
-                {enabledOpenaiModels.length > 0 && (
-                  <optgroup label="OpenAI">
-                    {enabledOpenaiModels.map((m) => (
-                      <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                    ))}
-                  </optgroup>
-                )}
-                {enabledGoogleModels.length > 0 && (
-                  <optgroup label="Google Gemini">
-                    {enabledGoogleModels.map((m) => (
-                      <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
-                    ))}
-                  </optgroup>
-                )}
-                {enabledXaiModels.length > 0 && (
-                  <optgroup label="xAI Grok">
-                    {enabledXaiModels.map((m) => (
-                      <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+                <Send className="size-3.5" />
+              </Button>
             </div>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-white/[0.1] flex-shrink-0" />
+            {/* Bottom bar: model picker + voice controls */}
+            <div className="flex items-center gap-2">
+              {/* Model picker */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {ollamaRunning && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" title="Ollama is active" />
+                )}
+                <select
+                  value={selectValue}
+                  onChange={handleModelChange}
+                  className="text-[11px] font-medium rounded-md px-2 py-1 appearance-none cursor-pointer bg-white/[0.06] border border-white/[0.08] text-muted-foreground outline-none hover:bg-white/[0.1] hover:text-foreground transition-colors"
+                  style={{
+                    backgroundImage:
+                      'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'10\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23a1a1aa\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 6px center',
+                    paddingRight: 20,
+                  }}
+                >
+                  {ollamaModels.length > 0 && (
+                    <optgroup label="Ollama (local)">
+                      {ollamaModels.map((m) => (
+                        <option key={`ollama::${m}`} value={`ollama::${m}`}>{m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {enabledAnthropicModels.length > 0 && (
+                    <optgroup label="Claude">
+                      {enabledAnthropicModels.map((m) => (
+                        <option key={`anthropic::${m}`} value={`anthropic::${m}`}>{MODEL_LABELS[m] || m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {enabledOpenaiModels.length > 0 && (
+                    <optgroup label="OpenAI">
+                      {enabledOpenaiModels.map((m) => (
+                        <option key={`openai::${m}`} value={`openai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {enabledGoogleModels.length > 0 && (
+                    <optgroup label="Google Gemini">
+                      {enabledGoogleModels.map((m) => (
+                        <option key={`google::${m}`} value={`google::${m}`}>{MODEL_LABELS[m] || m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {enabledXaiModels.length > 0 && (
+                    <optgroup label="xAI Grok">
+                      {enabledXaiModels.map((m) => (
+                        <option key={`xai::${m}`} value={`xai::${m}`}>{MODEL_LABELS[m] || m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
 
-            {/* Text input */}
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="Message your Traces..."
-              className="flex-1 min-w-0 bg-transparent text-[14px] placeholder:text-muted-foreground/60 focus:outline-none"
-              style={{ color: 'var(--text)' }}
-            />
+              <div className="flex-1" />
 
-            {/* Voice provider toggle + mic */}
-            <div className="flex items-center gap-1 flex-shrink-0 bg-white/[0.06] rounded-xl p-1 border border-white/[0.05]">
-              <button
-                onClick={() => setVoiceProvider(voiceProvider === 'openai' ? 'grok' : 'openai')}
-                title={`Voice: ${voiceProvider === 'openai' ? 'OpenAI' : 'Grok'} (click to switch)`}
-                className="flex items-center justify-center h-8 px-2.5 rounded-lg text-[10px] font-bold transition-all hover:bg-white/[0.1] active:bg-white/[0.15]"
-                style={{ color: voiceProvider === 'openai' ? '#2383e2' : 'var(--text-secondary)' }}
-              >
-                {voiceProvider === 'openai' ? 'GPT' : 'Grok'}
-              </button>
-              <div className="w-px h-3 bg-white/[0.1]" />
-              <button
-                onClick={toggleVoice}
-                title="Start voice conversation"
-                className="flex items-center justify-center size-8 rounded-lg transition-all hover:bg-white/[0.1] active:bg-white/[0.15] hover:text-white"
-              >
-                <Mic className="size-4 text-muted-foreground" />
-              </button>
+              {/* Voice provider toggle + mic */}
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button
+                  onClick={() => setVoiceProvider(voiceProvider === 'openai' ? 'grok' : 'openai')}
+                  title={`Voice: ${voiceProvider === 'openai' ? 'OpenAI' : 'Grok'} (click to switch)`}
+                  className="flex items-center justify-center h-6 px-1.5 rounded-md text-[10px] font-medium transition-colors hover:bg-white/[0.1]"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {voiceProvider === 'openai' ? 'GPT' : 'Grok'}
+                </button>
+                <button
+                  onClick={toggleVoice}
+                  title="Start voice conversation"
+                  className="flex items-center justify-center size-6 rounded-md transition-colors hover:bg-white/[0.1]"
+                >
+                  <Mic className="size-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
-
-            {/* Send */}
-            <Button 
-              variant="gradient" 
-              size="icon-md" 
-              onClick={handleSubmit} 
-              disabled={loading || !input.trim()} 
-              title="Send message" 
-              className="flex-shrink-0 rounded-xl shadow-md transition-transform active:scale-95"
-            >
-              <Send className="size-4" />
-            </Button>
           </div>
         )}
       </div>
