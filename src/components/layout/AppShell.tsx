@@ -209,7 +209,7 @@ export function AppShell() {
         <ErrorBoundary>
           <KnowledgeGraph />
         </ErrorBoundary>
-        <ViewToggle />
+        <ViewToggle useSafeArea />
         <div className="fixed top-12 right-3 z-[120] flex gap-1 rounded-xl px-2 py-1.5 glass">
           <Button variant="ghost" size="icon-xs" onClick={toggleGraphFullscreen} title="Exit fullscreen" className="titlebar-no-drag">
             <X className="size-3.5" />
@@ -228,18 +228,17 @@ export function AppShell() {
   const editorFlex = editorVisible && !graphVisible;
   const chatFlex = chatVisible && !graphVisible && !editorVisible;
 
-  // Collapsed tab strip — vertical label with icon
+  // Collapsed tab strip — horizontal label with icon
   const CollapsedTab = ({ label, icon: Icon, onClick, title }: { label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void; title: string }) => (
     <button
       onClick={onClick}
       title={title}
-      className="flex-shrink-0 flex items-center gap-1.5 cursor-pointer titlebar-no-drag relative z-[60] px-2 py-3 hover:bg-white/[0.04] transition-colors"
+      className="flex-shrink-0 flex items-center gap-1.5 cursor-pointer titlebar-no-drag relative z-[60] px-2 py-4 hover:bg-white/[0.04] transition-colors"
       style={{
-        writingMode: 'vertical-lr',
         borderRight: '1px solid var(--glass-border)',
       }}
     >
-      <Icon className="size-3.5 text-muted-foreground rotate-90" />
+      <Icon className="size-3.5 text-muted-foreground shrink-0" />
       <span className="text-[11px] text-muted-foreground tracking-wider uppercase whitespace-nowrap">{label}</span>
     </button>
   );
@@ -248,9 +247,9 @@ export function AppShell() {
     <div className="flex h-screen overflow-hidden relative z-10">
       <div className="fixed top-0 left-0 right-0 h-8 titlebar-drag z-40" />
 
-      {/* Collapsed panel strip — all collapsed tabs grouped on the left */}
+      {/* Collapsed panel strip — vertical tabs on the left, aligned to the edge */}
       {(sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen) && (
-        <div className="flex-shrink-0 flex flex-col panel-glass" style={{ paddingTop: 40, borderRight: '1px solid var(--glass-border)' }}>
+        <div className="flex-shrink-0 flex flex-col items-stretch gap-3 panel-glass" style={{ paddingTop: 52, minWidth: 75, borderRight: '1px solid var(--glass-border)' }}>
           {sidebarCollapsed && (
             <CollapsedTab label="Files" icon={ChevronRight} onClick={toggleSidebar} title="Expand sidebar" />
           )}

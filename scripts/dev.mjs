@@ -3,7 +3,7 @@ import concurrently from 'concurrently';
 concurrently(
   [
     {
-      command: 'npx next dev -p 3333',
+      command: 'npx next dev -p 3333 --turbo',
       name: 'next',
       prefixColor: 'cyan',
     },

@@ -55,11 +55,11 @@ export function FileTreeItem({ node, depth, activeFile, onSelect, onDelete }: Fi
 
   const row = (
     <div
-      className={`flex items-center gap-1.5 px-2 py-1.5 cursor-pointer transition-colors titlebar-no-drag rounded mx-1 ${
+      className={`flex items-center justify-start gap-1.5 px-2 py-1.5 cursor-pointer transition-colors titlebar-no-drag rounded mx-1 text-left ${
         isActive ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'
       }`}
       style={{
-        paddingLeft: `${depth * 16 + 28}px`,
+        paddingLeft: `calc(var(--titlebar-safe-left) + ${depth * 16}px)`,
         fontSize: '14px',
         fontWeight: node.isFile ? 400 : 600,
         color: 'var(--text)',
@@ -78,7 +78,7 @@ export function FileTreeItem({ node, depth, activeFile, onSelect, onDelete }: Fi
         </span>
       )}
 
-      <span className="truncate">
+      <span className="truncate text-left block">
         {node.isFile ? node.name.replace('.md', '') : node.name}
       </span>
     </div>

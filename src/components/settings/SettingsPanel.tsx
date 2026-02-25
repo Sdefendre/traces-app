@@ -272,7 +272,7 @@ export function SettingsPanel() {
       {/* ---- Sidebar nav ---- */}
       <div
         className="flex flex-col w-[260px] flex-shrink-0 pb-6"
-        style={{ borderRight: '1px solid rgba(255,255,255,0.06)', paddingLeft: 24 }}
+        style={{ borderRight: '1px solid rgba(255,255,255,0.06)', paddingLeft: 'var(--titlebar-safe-left)' }}
       >
         {/* Title — well below macOS traffic lights */}
         <div className="pr-4 mb-8" style={{ marginTop: 52 }}>
@@ -305,7 +305,7 @@ export function SettingsPanel() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header bar */}
         <div
-          className="flex items-center justify-between pl-12 pr-6 pb-5"
+          className="flex items-center justify-between pl-[var(--titlebar-safe-left)] pr-6 pb-5"
           style={{ paddingTop: 52, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
           <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">

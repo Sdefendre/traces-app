@@ -125,7 +125,7 @@ export function FileTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="py-3 titlebar-drag" style={{ paddingTop: '48px', paddingLeft: 28, paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
+      <div className="py-3 titlebar-drag" style={{ paddingTop: '48px', paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>
             {vaultName}
@@ -151,7 +151,7 @@ export function FileTree() {
           placeholder="Search files..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2.5 py-1.5 text-sm rounded
+          className="w-full px-2.5 py-1.5 text-sm rounded text-left
                      placeholder:text-gray-500
                      focus:outline-none"
           style={{
@@ -170,7 +170,7 @@ export function FileTree() {
 
       {/* New file input */}
       {creating && (
-        <div className="py-2" style={{ paddingLeft: 28, paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
+        <div className="py-2" style={{ paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
           <input
             type="text"
             placeholder="Note name..."
@@ -194,7 +194,7 @@ export function FileTree() {
       )}
 
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto py-1">
+      <div className="flex-1 overflow-y-auto py-1 text-left flex flex-col items-start">
         {tree.map((node) => (
           <FileTreeItem
             key={node.path}
@@ -208,8 +208,8 @@ export function FileTree() {
       </div>
 
       {/* Bottom bar: file count */}
-      <div className="py-3" style={{ paddingLeft: 28, paddingRight: 20, borderTop: '1px solid var(--border)' }}>
-        <div className="text-xs text-center" style={{ color: 'var(--text-dim)' }}>
+      <div className="py-3" style={{ paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderTop: '1px solid var(--border)' }}>
+        <div className="text-xs text-left" style={{ color: 'var(--text-dim)' }}>
           {files.length} notes
         </div>
       </div>

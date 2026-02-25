@@ -5,7 +5,12 @@ import { Network, Mountain, Cuboid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function ViewToggle() {
+interface ViewToggleProps {
+  /** When true, adds left padding to avoid macOS traffic lights (e.g. in fullscreen) */
+  useSafeArea?: boolean;
+}
+
+export function ViewToggle({ useSafeArea }: ViewToggleProps) {
   const { viewMode, setViewMode } = useGraphStore();
 
   const modes: { id: ViewMode; label: string; icon: any }[] = [
@@ -15,7 +20,10 @@ export function ViewToggle() {
   ];
 
   return (
-    <div className="absolute top-12 left-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
+    <div
+      className="absolute top-12 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag"
+      style={{ left: useSafeArea ? 'var(--titlebar-safe-left)' : '0.75rem' }}
+    >
       {modes.map((m) => {
         const active = viewMode === m.id;
         const Icon = m.icon;
