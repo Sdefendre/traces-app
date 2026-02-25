@@ -1,0 +1,46 @@
+
+> traces@0.1.0 dev /Users/stevedefendre/Desktop/traces-app
+> node scripts/dev.mjs
+
+[next] npm warn Unknown env config "npm-globalconfig". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "npm-globalconfig". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "only-built-dependencies". This will stop working in the next major version of npm.
+[electron] npm warn Unknown project config "onlyBuiltDependencies". This will stop working in the next major version of npm.
+[next] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+[next] npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+[next] npm warn Unknown env config "only-built-dependencies". This will stop working in the next major version of npm.
+[next] npm warn Unknown project config "onlyBuiltDependencies". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "npm-globalconfig". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm.
+[electron] npm warn Unknown env config "only-built-dependencies". This will stop working in the next major version of npm.
+[electron] npm warn Unknown project config "onlyBuiltDependencies". This will stop working in the next major version of npm.
+[next]  ⨯ Failed to start server
+[next] Error: listen EADDRINUSE: address already in use :::3333
+[next]     at <unknown> (Error: listen EADDRINUSE: address already in use :::3333)
+[next]     at new Promise (<anonymous>) {
+[next]   code: 'EADDRINUSE',
+[next]   errno: -48,
+[next]   syscall: 'listen',
+[next]   address: '::',
+[next]   port: 3333
+[next] }
+[next] [?25h
+[next] npx next dev -p 3333 exited with code 0
+--> Sending SIGTERM to other processes..
+[electron] npx wait-on http://localhost:3333 && npx tsc -p tsconfig.electron.json && npx electron . exited with code SIGTERM
+node:internal/process/promises:330
+      new UnhandledPromiseRejection(reason);
+      ^
+
+UnhandledPromiseRejection: This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). The promise rejected with the reason "[object Array]".
+    at throwUnhandledRejectionsMode (node:internal/process/promises:330:7)
+    at processPromiseRejections (node:internal/process/promises:413:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:32) {
+  code: 'ERR_UNHANDLED_REJECTION'
+}
+
+Node.js v25.6.1
+ ELIFECYCLE  Command failed with exit code 1.
