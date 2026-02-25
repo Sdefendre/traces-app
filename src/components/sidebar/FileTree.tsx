@@ -125,11 +125,29 @@ export function FileTree() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="py-3 titlebar-drag" style={{ paddingTop: '48px', paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>
-            {vaultName}
-          </span>
+      <div className="titlebar-drag" style={{ paddingTop: '48px', paddingLeft: 12, paddingRight: 12, paddingBottom: 10, borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2">
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded text-left
+                       placeholder:text-gray-500
+                       focus:outline-none titlebar-no-drag"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.04)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)';
+            }}
+          />
           <div className="flex items-center gap-0.5 shrink-0 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
             <Button variant="ghost" size="icon-sm" onClick={toggleSidebar} title="Collapse sidebar" className="text-muted-foreground hover:text-foreground transition-colors">
               <ChevronLeft className="size-3.5" />
@@ -143,34 +161,11 @@ export function FileTree() {
             </Button>
           </div>
         </div>
-
-        {/* Search */}
-        <input
-          ref={searchInputRef}
-          type="text"
-          placeholder="Search files..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2.5 py-1.5 text-sm rounded text-left
-                     placeholder:text-gray-500
-                     focus:outline-none"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid var(--border)',
-            color: 'var(--text)',
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)';
-          }}
-        />
       </div>
 
       {/* New file input */}
       {creating && (
-        <div className="py-2" style={{ paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderBottom: '1px solid var(--border)' }}>
+        <div className="py-2" style={{ paddingLeft: 12, paddingRight: 12, borderBottom: '1px solid var(--border)' }}>
           <input
             type="text"
             placeholder="Note name..."
@@ -193,8 +188,15 @@ export function FileTree() {
         </div>
       )}
 
+      {/* Vault name */}
+      <div className="px-3 pt-3 pb-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-dim)' }}>
+          {vaultName}
+        </span>
+      </div>
+
       {/* Tree */}
-      <div className="flex-1 overflow-y-auto py-1 text-left flex flex-col items-start">
+      <div className="flex-1 overflow-y-auto py-1 text-left flex flex-col">
         {tree.map((node) => (
           <FileTreeItem
             key={node.path}
@@ -208,7 +210,7 @@ export function FileTree() {
       </div>
 
       {/* Bottom bar: file count */}
-      <div className="py-3" style={{ paddingLeft: 'var(--titlebar-safe-left)', paddingRight: 20, borderTop: '1px solid var(--border)' }}>
+      <div className="py-3" style={{ paddingLeft: 12, paddingRight: 20, borderTop: '1px solid var(--border)' }}>
         <div className="text-xs text-left" style={{ color: 'var(--text-dim)' }}>
           {files.length} notes
         </div>

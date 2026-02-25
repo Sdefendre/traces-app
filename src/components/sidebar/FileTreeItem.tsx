@@ -59,7 +59,7 @@ export function FileTreeItem({ node, depth, activeFile, onSelect, onDelete }: Fi
         isActive ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'
       }`}
       style={{
-        paddingLeft: `calc(var(--titlebar-safe-left) + ${depth * 16}px)`,
+        paddingLeft: `${12 + depth * 16}px`,
         fontSize: '14px',
         fontWeight: node.isFile ? 400 : 600,
         color: 'var(--text)',
