@@ -104,6 +104,7 @@ export function useGrokVoice({
   const stateRef = useRef<VoiceState>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playbackTimeRef = useRef(0);
+  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
   const setState = useCallback((s: VoiceState) => {
     stateRef.current = s;
@@ -117,7 +118,17 @@ export function useGrokVoice({
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
 
+  const stopPlayback = useCallback(() => {
+    for (const src of activeSourcesRef.current) {
+      try { src.stop(); } catch {}
+    }
+    activeSourcesRef.current = [];
+    playbackTimeRef.current = 0;
+  }, []);
+
   const cleanup = useCallback(() => {
+    stopPlayback();
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -299,6 +310,11 @@ export function useGrokVoice({
             }
 
             switch (event.type) {
+              // User started speaking — interrupt assistant audio
+              case 'input_audio_buffer.speech_started':
+                stopPlayback();
+                break;
+
               // User speech transcription
               case 'conversation.item.input_audio_transcription.completed':
                 onTranscriptRef.current({
@@ -359,6 +375,12 @@ export function useGrokVoice({
                 const startTime = Math.max(now, playbackTimeRef.current);
                 sourceNode.start(startTime);
                 playbackTimeRef.current = startTime + buffer.duration;
+
+                // Track for interruption cleanup
+                activeSourcesRef.current.push(sourceNode);
+                sourceNode.onended = () => {
+                  activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== sourceNode);
+                };
                 break;
               }
 
@@ -409,7 +431,7 @@ export function useGrokVoice({
       onErrorRef.current?.(msg);
       cleanup();
     }
-  }, [apiKey, voice, instructions, cleanup, disconnect, setState]);
+  }, [apiKey, voice, instructions, cleanup, disconnect, setState, stopPlayback]);
 
   // Update session instructions when they change mid-session (e.g. vault switch)
   useEffect(() => {

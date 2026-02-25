@@ -14,7 +14,7 @@ export function ViewToggle() {
   ];
 
   return (
-    <div className="absolute top-4 left-4 z-50 flex bg-zinc-900/80 backdrop-blur-md rounded-md p-1 border border-zinc-800 shadow-xl titlebar-no-drag">
+    <div className="absolute top-12 left-3 z-30 flex bg-zinc-900/80 backdrop-blur-md rounded-md p-1 border border-zinc-800 shadow-xl titlebar-no-drag">
       {modes.map((m) => {
         const active = viewMode === m.id;
         const Icon = m.icon;

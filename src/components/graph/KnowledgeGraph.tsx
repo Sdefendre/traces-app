@@ -8,7 +8,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { GraphScene } from './GraphScene';
 import { ClusterScene } from './ClusterScene';
 import { TerrainScene } from './TerrainScene';
-import { ViewToggle } from './ViewToggle';
+
 import { BackgroundField } from './BackgroundField';
 import { useGraphStore } from '@/stores/graph-store';
 import * as THREE from 'three';
@@ -52,7 +52,6 @@ export function KnowledgeGraph() {
 
   return (
     <div className="w-full h-full relative">
-      <ViewToggle />
       <Canvas
         camera={{ position: [0, 0, 160], fov: 60, near: 0.1, far: 2000 }}
         gl={{ antialias: true, alpha: false }}

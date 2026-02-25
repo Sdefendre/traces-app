@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import {
   setVaultRoot,
+  getVaultRoot,
   listFiles,
   readFile,
   writeFile,
@@ -19,6 +20,10 @@ function getSettingsPath(): string {
 
 export function registerIpcHandlers(vaultRoot: string) {
   setVaultRoot(vaultRoot);
+
+  ipcMain.handle('vault:getVaultPath', async () => {
+    return getVaultRoot();
+  });
 
   ipcMain.handle('vault:listFiles', async () => {
     return listFiles();

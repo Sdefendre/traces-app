@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  getVaultPath: () => ipcRenderer.invoke('vault:getVaultPath'),
   listFiles: () => ipcRenderer.invoke('vault:listFiles'),
   readFile: (filePath: string) => ipcRenderer.invoke('vault:readFile', filePath),
   writeFile: (filePath: string, content: string) =>

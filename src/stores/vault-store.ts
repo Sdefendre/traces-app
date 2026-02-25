@@ -27,11 +27,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   loadVault: async () => {
     set({ loading: true });
     try {
-      const [files, graphData] = await Promise.all([
+      const [files, graphData, vaultPath] = await Promise.all([
         electronAPI.listFiles(),
         electronAPI.getGraphData(),
+        electronAPI.getVaultPath(),
       ]);
-      set({ files, graphData, loading: false });
+      const vaultName = vaultPath ? (vaultPath.split('/').pop() || 'Traces Vault') : 'Traces Vault';
+      set({ files, graphData, vaultName, loading: false });
     } catch (err) {
       console.error('Failed to load vault:', err);
       set({ loading: false });

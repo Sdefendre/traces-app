@@ -10,6 +10,7 @@ export interface GrokSessionResult {
 }
 
 export interface ElectronAPI {
+  getVaultPath: () => Promise<string>;
   listFiles: () => Promise<string[]>;
   readFile: (filePath: string) => Promise<string>;
   writeFile: (filePath: string, content: string) => Promise<void>;
@@ -35,6 +36,12 @@ function getAPI(): ElectronAPI | null {
 }
 
 export const electronAPI = {
+  async getVaultPath(): Promise<string> {
+    const api = getAPI();
+    if (!api || typeof api.getVaultPath !== 'function') return '';
+    return api.getVaultPath();
+  },
+
   async listFiles(): Promise<string[]> {
     const api = getAPI();
     if (!api) return [];

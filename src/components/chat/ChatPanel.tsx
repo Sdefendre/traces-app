@@ -257,7 +257,9 @@ export function ChatPanel() {
     const providerName = voiceProvider === 'grok' ? 'xAI' : 'OpenAI';
     const base = `You are TracesAI, a voice AI assistant embedded in a knowledge management app called Traces. You are running on the ${modelName} model from ${providerName}. Be conversational, helpful, and concise in your spoken responses. If the user asks what you are, tell them you are TracesAI. You have tools to manage the user's vault: list_files, read_file, write_file, edit_file, delete_file, and search_files. Use these tools when the user asks about their notes, wants to create or edit files, or search their vault.
 
-The user's current vault is called "${vaultName}" and contains ${files.length} note${files.length === 1 ? '' : 's'}.`;
+The user's current vault is called "${vaultName}" and contains ${files.length} note${files.length === 1 ? '' : 's'}.
+
+The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}.`;
     const custom = appSettings.customSystemPrompt?.trim();
     return custom ? `${custom}\n\n${base}` : base;
   })();
@@ -476,7 +478,7 @@ The user's current vault is called "${vaultName}" and contains ${files.length} n
 
       {/* Header — collapse + clear */}
       <div
-        className="flex items-center justify-between px-3 pt-10 pb-2 relative z-[60] titlebar-drag"
+        className="flex items-center justify-between px-3 pt-12 pb-2 relative z-[60] titlebar-drag"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <span className="text-sm text-muted-foreground">Chat</span>

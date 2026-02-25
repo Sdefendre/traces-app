@@ -8,6 +8,7 @@ import { electronAPI } from '@/lib/electron-api';
 import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
+import { ViewToggle } from '@/components/graph/ViewToggle';
 import { EditorPanel } from '@/components/editor/EditorPanel';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
@@ -205,7 +206,8 @@ export function AppShell() {
       <div className="fixed inset-0 z-[100]">
         <div className="fixed top-0 left-0 right-0 h-8 titlebar-drag z-[110]" />
         <KnowledgeGraph />
-        <div className="fixed top-10 right-3 z-[120] flex gap-1 rounded-xl px-2 py-1.5 glass">
+        <ViewToggle />
+        <div className="fixed top-12 right-3 z-[120] flex gap-1 rounded-xl px-2 py-1.5 glass">
           <Button variant="ghost" size="icon-xs" onClick={toggleGraphFullscreen} title="Exit fullscreen" className="titlebar-no-drag">
             <X className="size-3.5" />
           </Button>
@@ -303,8 +305,10 @@ export function AppShell() {
       >
         {!settingsOpen && <KnowledgeGraph />}
 
+        {!graphCollapsed && !settingsOpen && <ViewToggle />}
+
         {!graphCollapsed && !settingsOpen && (
-          <div className="absolute top-10 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
+          <div className="absolute top-12 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">
             <Button variant="ghost" size="icon-sm" onClick={zoomOut} title="Zoom out" className="text-muted-foreground hover:text-foreground">
               <Minus className="size-3.5" />
             </Button>

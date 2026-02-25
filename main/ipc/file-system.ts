@@ -7,6 +7,10 @@ export function setVaultRoot(root: string) {
   vaultRoot = root;
 }
 
+export function getVaultRoot(): string {
+  return vaultRoot;
+}
+
 /** Validate path is within vault — prevents path traversal attacks */
 function safePath(filePath: string): string {
   const resolved = path.resolve(vaultRoot, filePath);
