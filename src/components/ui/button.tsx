@@ -23,6 +23,8 @@ const buttonVariants = cva(
           "glass rounded-2xl font-semibold transition-all hover:scale-105",
         gradient:
           "rounded-xl text-white font-medium border border-white/10 bg-gradient-to-br from-[rgba(35,131,226,0.5)] to-[rgba(155,89,182,0.5)] shadow-[0_4px_20px_rgba(35,131,226,0.25)] hover:shadow-[0_4px_24px_rgba(35,131,226,0.35)]",
+        cta:
+          "rounded-full h-11 min-w-[148px] px-5 gap-2.5 text-[13px] leading-none font-medium text-white/90 border border-white/[0.08] bg-white/[0.03] backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.25)] hover:bg-white/[0.06] hover:border-[rgba(35,131,226,0.35)] hover:text-white hover:shadow-[0_4px_20px_rgba(35,131,226,0.12)] active:bg-white/[0.04] transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[rgba(35,131,226,0.35)]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
