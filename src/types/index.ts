@@ -30,6 +30,13 @@ export interface EditorTab {
   name: string;
   content: string;
   isDirty: boolean;
+  /** Set when a save-on-close attempt fails; cleared on edit or successful save. */
+  saveError?: string | null;
+}
+
+export interface CloseTabOptions {
+  /** Skip save attempt and remove the tab (e.g. file already deleted on disk). */
+  discard?: boolean;
 }
 
 export type NodeCategory = 'journal' | 'personal' | 'business' | 'workspace' | 'archive';

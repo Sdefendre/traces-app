@@ -85,7 +85,7 @@ export function FileTree() {
         await refreshFiles();
         const { tabs } = useEditorStore.getState();
         const tab = tabs.find((t) => t.path === path);
-        if (tab) void closeTab(tab.id);
+        if (tab) void closeTab(tab.id, { discard: true });
         if (useVaultStore.getState().activeFile === path) {
           useVaultStore.getState().setActiveFile(null);
         }

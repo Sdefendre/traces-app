@@ -22,7 +22,7 @@ export function ClusterCard({ node, position, isConnected, onSelect, nodeSize }:
 
   useFrame(() => {
     if (groupRef.current) {
-      // Make cards always face the camera
+      // Billboard: face camera each frame without React state
       groupRef.current.quaternion.copy(camera.quaternion);
     }
   });

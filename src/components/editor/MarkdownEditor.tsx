@@ -110,6 +110,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
                 useVaultStore.getState().refreshFiles();
               }).catch((err: unknown) => {
                 console.error('Failed to rename note from title:', err);
+                // Title reverts on next reload; tab path unchanged until rename succeeds.
               });
             }, 1500);
           }

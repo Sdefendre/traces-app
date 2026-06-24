@@ -1,4 +1,4 @@
-// Exercises real createEditorStore (open/save/close dirty tabs).
+// Exercises real createEditorStore (open/save/close dirty tabs + save-failure recovery).
 import { createEditorStore, pathToId } from '../src/stores/create-editor-store';
 
 const files: Record<string, string> = {};
@@ -12,7 +12,7 @@ const store = createEditorStore({
   },
 });
 
-async function runOnce(label: string) {
+async function runOnce(label: string, includeSaveFailureRecovery: boolean) {
   const path = 'Memory/test.md';
   files[path] = '# Test\n\ninitial';
   writes.length = 0;
@@ -31,7 +31,7 @@ async function runOnce(label: string) {
   store.getState().setTabContent(id, '# Test\n\nclose me');
   const dirtyBeforeClose = store.getState().tabs[0]?.isDirty === true;
 
-  await store.getState().closeTab(id);
+  const closedOk = await store.getState().closeTab(id);
   const tabsAfterClose = store.getState().tabs.length;
   const writtenOnClose = files[path] === '# Test\n\nclose me';
 
@@ -40,46 +40,66 @@ async function runOnce(label: string) {
   console.log(`[${label}] cleanAfterSave:`, cleanAfterSave);
   console.log(`[${label}] savedOnce:`, savedOnce);
   console.log(`[${label}] dirtyBeforeClose:`, dirtyBeforeClose);
+  console.log(`[${label}] closedOk:`, closedOk);
   console.log(`[${label}] writtenOnClose:`, writtenOnClose);
   console.log(`[${label}] tabsAfterClose:`, tabsAfterClose);
 
-  const ok =
+  let ok =
     opened &&
     dirtyAfterEdit &&
     cleanAfterSave &&
     savedOnce &&
     dirtyBeforeClose &&
+    closedOk &&
     writtenOnClose &&
     tabsAfterClose === 0;
+
+  if (includeSaveFailureRecovery) {
+    const failPath = 'Memory/fail.md';
+    files[failPath] = 'initial';
+    const failStore = createEditorStore({
+      readFile: async (p) => files[p] ?? '',
+      writeFile: async () => {
+        throw new Error('disk full');
+      },
+    });
+
+    await failStore.getState().openFile(failPath);
+    const failId = pathToId(failPath);
+    failStore.getState().setTabContent(failId, 'dirty but cannot save');
+
+    const keptOpen = (await failStore.getState().closeTab(failId)) === false;
+    const tabKept = failStore.getState().tabs.length === 1;
+    const contentPreserved =
+      failStore.getState().tabs[0]?.content === 'dirty but cannot save';
+    const hasSaveError = Boolean(failStore.getState().tabs[0]?.saveError);
+
+    const discarded = await failStore.getState().closeTab(failId, { discard: true });
+    const tabsAfterDiscard = failStore.getState().tabs.length;
+
+    console.log(`[${label}] keptOpenOnFail:`, keptOpen);
+    console.log(`[${label}] tabKept:`, tabKept);
+    console.log(`[${label}] contentPreserved:`, contentPreserved);
+    console.log(`[${label}] hasSaveError:`, hasSaveError);
+    console.log(`[${label}] discarded:`, discarded);
+    console.log(`[${label}] tabsAfterDiscard:`, tabsAfterDiscard);
+
+    ok =
+      ok &&
+      keptOpen &&
+      tabKept &&
+      contentPreserved &&
+      hasSaveError &&
+      discarded &&
+      tabsAfterDiscard === 0;
+  }
 
   if (!ok) process.exit(1);
 }
 
-async function testCloseDespiteWriteFailure() {
-  const failingStore = createEditorStore({
-    readFile: async (path) => files[path] ?? '',
-    writeFile: async () => {
-      throw new Error('disk full');
-    },
-  });
-
-  const path = 'Memory/fail.md';
-  files[path] = 'initial';
-  await failingStore.getState().openFile(path);
-  const id = pathToId(path);
-  failingStore.getState().setTabContent(id, 'dirty but cannot save');
-
-  await failingStore.getState().closeTab(id);
-  const tabsAfterFailedSave = failingStore.getState().tabs.length;
-  console.log('[failSave] tabsAfterClose:', tabsAfterFailedSave);
-
-  if (tabsAfterFailedSave !== 0) process.exit(1);
-}
-
 async function main() {
-  await runOnce('run1');
-  await runOnce('run2');
-  await testCloseDespiteWriteFailure();
+  await runOnce('run1', false);
+  await runOnce('run2', true);
   console.log('editor-store verification passed');
 }
 

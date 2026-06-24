@@ -37,7 +37,7 @@ export function Synapse({ edge, getPositions, sourcePos, targetPos, sourceCatego
   useFrame(() => {
     if (!meshRef.current) return;
 
-    // Positions read from simulation ref each frame (no parent re-render).
+    // Positions from simulation ref each frame — no React setState in useFrame.
     if (getPositions) {
       const s = getPositions().get(edge.source);
       const t = getPositions().get(edge.target);

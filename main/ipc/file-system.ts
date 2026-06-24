@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { normalizeRelativePath } from './path-utils';
 
-/** Directories to ignore when walking the vault. */
+/** Directories skipped during vault walks and watcher events. */
 export const IGNORE_DIRS = ['Google-Drive', 'node_modules'];
 
 let vaultRoot = '';

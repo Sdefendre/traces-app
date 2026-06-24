@@ -203,7 +203,7 @@ export const electronAPI = {
   },
 
   onBeforeQuit(callback: () => void | Promise<void>): () => void {
-    // Renderer hook for app:before-quit flush.
+    // Flushes dirty tabs via saveAllDirty before main process quits.
     const api = getAPI();
     if (!api || typeof api.onBeforeQuit !== 'function') return () => {};
     return api.onBeforeQuit(callback);

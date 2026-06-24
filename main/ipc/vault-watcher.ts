@@ -103,6 +103,12 @@ export async function startVaultWatcher(
   pendingChanges.clear();
   await bootstrapKnownFiles();
 
+  const win = getWindow();
+  if (win && !win.isDestroyed()) {
+    const graphData = await parseVault(resolvedRoot, knownFiles, contentCache);
+    win.webContents.send('vault:graphUpdate', graphData);
+  }
+
   watcher = watch(resolvedRoot, {
     ignored: [
       /(^|[\/\\])\./,

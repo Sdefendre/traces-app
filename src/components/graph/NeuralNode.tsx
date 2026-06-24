@@ -38,6 +38,7 @@ export function NeuralNode({ node, getPositions, isConnected, onSelect, nodeSize
 
   useEffect(() => () => { document.body.style.cursor = ''; }, []);
 
+  // Mesh position/scale driven in useFrame via refs — avoids per-frame React updates.
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
 

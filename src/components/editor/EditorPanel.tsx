@@ -184,8 +184,12 @@ export function EditorPanel() {
                   useVaultStore.getState().setActiveFile(tab.path);
                 }}
               >
-                {tab.isDirty && (
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: editorSecondary }} />
+                {(tab.isDirty || tab.saveError) && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: tab.saveError ? '#f97316' : editorSecondary }}
+                    title={tab.saveError ?? undefined}
+                  />
                 )}
                 <span className="truncate max-w-[120px]">{tab.name}</span>
                 <Button
@@ -197,6 +201,7 @@ export function EditorPanel() {
                     e.stopPropagation();
                     void closeTab(tab.id);
                   }}
+                  title={tab.saveError ? `Save failed: ${tab.saveError}` : 'Close tab'}
                 >
                   <X className="size-2.5" />
                 </Button>

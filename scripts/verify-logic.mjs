@@ -1,6 +1,6 @@
 /**
  * Direct verification of shipped pure logic (no React/Electron runtime).
- * Run after: pnpm build:electron
+ * Plan step 2: run after `pnpm build:electron`.
  * Loads: main/dist/main/ipc/vault-parser.js, main/dist/shared/build-tree.js
  */
 import { createRequire } from 'node:module';

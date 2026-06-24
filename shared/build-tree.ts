@@ -1,4 +1,4 @@
-// Shared file-tree builder (main + renderer).
+// Shared file-tree builder (main + renderer). Paths are normalized before splitting.
 import { normalizeRelativePath } from './paths';
 
 export interface TreeNode {

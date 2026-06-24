@@ -8,6 +8,6 @@ import {
 export { normalizeRelativePath, basenameWithoutExt, dirnameRelative };
 
 export function toRelativeVaultPath(vaultRoot: string, absolutePath: string): string {
-  // path.relative + forward-slash normalization
-  return normalizeRelativePath(path.relative(path.resolve(vaultRoot), path.resolve(absolutePath)));
+  const rel = path.relative(path.resolve(vaultRoot), path.resolve(absolutePath));
+  return normalizeRelativePath(rel);
 }

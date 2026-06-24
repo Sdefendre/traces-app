@@ -38,7 +38,8 @@ function getCategory(filePath: string): string {
 }
 
 function fileId(filePath: string): string {
-  return normalizeRelativePath(filePath); // full relative path as unique id
+  // Full normalized relative path — prevents basename collisions in the graph.
+  return normalizeRelativePath(filePath);
 }
 
 export async function parseVault(

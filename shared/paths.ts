@@ -1,4 +1,4 @@
-// Shared path utilities (main + renderer).
+// Shared path utilities (main + renderer). Single source for vault-relative paths.
 /** Normalize vault-relative paths to forward slashes for cross-platform use. */
 export function normalizeRelativePath(filePath: string): string {
   return filePath.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\/+/, '');

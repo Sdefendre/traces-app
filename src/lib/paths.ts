@@ -1,4 +1,4 @@
-// Re-export shared path utilities for the renderer.
+// Re-export shared path utilities for the renderer (no duplicate logic).
 export {
   normalizeRelativePath,
   basenameWithoutExt,

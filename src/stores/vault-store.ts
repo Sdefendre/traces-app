@@ -30,7 +30,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       const [files, graphData, vaultPath] = await Promise.all([
         electronAPI.listFiles(),
-        electronAPI.getGraphData(),
+        electronAPI.getGraphData(), // watcher also pushes vault:graphUpdate after bootstrap
         electronAPI.getVaultPath(),
       ]);
       const vaultName = vaultPath ? (vaultPath.split('/').pop() || 'Traces Vault') : 'Traces Vault';

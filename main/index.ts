@@ -82,6 +82,7 @@ app.whenReady().then(() => {
   });
 });
 
+// Defer quit until renderer flushes dirty editor tabs via onBeforeQuit.
 app.on('before-quit', (event) => {
   if (isQuitting) return;
   const win = mainWindow;

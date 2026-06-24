@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { EditorTab } from '../types';
+import type { CloseTabOptions, EditorTab } from '../types';
 import { basenameWithoutExt, normalizeRelativePath } from '../lib/paths';
 
 export interface EditorStoreDeps {
@@ -12,7 +12,7 @@ interface EditorState {
   activeTabId: string | null;
 
   openFile: (path: string) => Promise<void>;
-  closeTab: (id: string) => Promise<void>;
+  closeTab: (id: string, options?: CloseTabOptions) => Promise<boolean>;
   clearTabs: () => void;
   setTabContent: (id: string, content: string) => void;
   markClean: (id: string) => void;
@@ -29,6 +29,15 @@ export function pathToId(p: string) {
 
 function nameFromPath(p: string) {
   return basenameWithoutExt(p);
+}
+
+function removeTab(state: { tabs: EditorTab[]; activeTabId: string | null }, id: string) {
+  const tabs = state.tabs.filter((t) => t.id !== id);
+  let activeTabId = state.activeTabId;
+  if (activeTabId === id) {
+    activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
+  }
+  return { tabs, activeTabId };
 }
 
 export function createEditorStore(deps: EditorStoreDeps) {
@@ -53,6 +62,7 @@ export function createEditorStore(deps: EditorStoreDeps) {
           name: nameFromPath(normalizedPath),
           content,
           isDirty: false,
+          saveError: null,
         };
 
         set((state) => ({
@@ -64,27 +74,28 @@ export function createEditorStore(deps: EditorStoreDeps) {
       }
     },
 
-    closeTab: async (id) => {
+    closeTab: async (id, options) => {
       const tab = get().tabs.find((t) => t.id === id);
-      if (!tab) return;
+      if (!tab) return true;
 
-      if (tab.isDirty) {
+      if (tab.isDirty && !options?.discard) {
         try {
           await deps.writeFile(tab.path, tab.content);
         } catch (err) {
-          // Still close the tab so the user is not stuck; unsaved edits are lost.
-          console.error('Failed to save tab on close (closing anyway):', tab.path, err);
+          const message = err instanceof Error ? err.message : String(err);
+          console.error('Failed to save tab on close:', tab.path, err);
+          set((state) => ({
+            tabs: state.tabs.map((t) =>
+              t.id === id ? { ...t, saveError: message } : t
+            ),
+            activeTabId: state.activeTabId ?? id,
+          }));
+          return false;
         }
       }
 
-      set((state) => {
-        const tabs = state.tabs.filter((t) => t.id !== id);
-        let activeTabId = state.activeTabId;
-        if (activeTabId === id) {
-          activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
-        }
-        return { tabs, activeTabId };
-      });
+      set((state) => removeTab(state, id));
+      return true;
     },
 
     clearTabs: () => {
@@ -94,7 +105,7 @@ export function createEditorStore(deps: EditorStoreDeps) {
     setTabContent: (id, content) => {
       set((state) => ({
         tabs: state.tabs.map((t) =>
-          t.id === id ? { ...t, content, isDirty: true } : t
+          t.id === id ? { ...t, content, isDirty: true, saveError: null } : t
         ),
       }));
     },
@@ -102,7 +113,7 @@ export function createEditorStore(deps: EditorStoreDeps) {
     markClean: (id) => {
       set((state) => ({
         tabs: state.tabs.map((t) =>
-          t.id === id ? { ...t, isDirty: false } : t
+          t.id === id ? { ...t, isDirty: false, saveError: null } : t
         ),
       }));
     },
@@ -143,7 +154,9 @@ export function createEditorStore(deps: EditorStoreDeps) {
       const newId = pathToId(normalizedNew);
       set((state) => ({
         tabs: state.tabs.map((t) =>
-          t.id === oldId ? { ...t, id: newId, path: normalizedNew, name: nameFromPath(normalizedNew) } : t
+          t.id === oldId
+            ? { ...t, id: newId, path: normalizedNew, name: nameFromPath(normalizedNew), saveError: null }
+            : t
         ),
         activeTabId: state.activeTabId === oldId ? newId : state.activeTabId,
       }));
@@ -158,7 +171,7 @@ export function createEditorStore(deps: EditorStoreDeps) {
         const content = await deps.readFile(normalizedPath);
         set((state) => ({
           tabs: state.tabs.map((t) =>
-            t.id === id ? { ...t, content, isDirty: false } : t
+            t.id === id ? { ...t, content, isDirty: false, saveError: null } : t
           ),
         }));
       } catch {

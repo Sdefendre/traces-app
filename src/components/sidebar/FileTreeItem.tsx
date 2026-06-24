@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import type { NodeCategory } from '@/types';
 import { CATEGORY_COLORS } from '@/types';
 import type { TreeNode } from '@/lib/build-tree';
-import { normalizeRelativePath } from '@/lib/paths'; // platform-safe paths
+import { normalizeRelativePath } from '@/lib/paths';
 import {
   ContextMenu,
   ContextMenuContent,
