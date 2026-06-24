@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useVaultStore } from '@/stores/vault-store';
-import { useEditorStore, safeCloseTab } from '@/stores/editor-store';
+import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
 import { FileTreeItem } from './FileTreeItem';
 import { buildTree } from '@/lib/build-tree';
@@ -12,7 +12,7 @@ import { ChevronLeft, FolderOpen, Plus } from 'lucide-react';
 
 export function FileTree() {
   const { files, activeFile, setActiveFile, refreshFiles, openFolder, vaultName } = useVaultStore();
-  const { openFile } = useEditorStore();
+  const { openFile, closeTab } = useEditorStore();
   const { toggleSidebar } = useUIStore();
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
@@ -85,7 +85,7 @@ export function FileTree() {
         await refreshFiles();
         const { tabs } = useEditorStore.getState();
         const tab = tabs.find((t) => t.path === path);
-        if (tab) safeCloseTab(tab.id);
+        if (tab) void closeTab(tab.id);
         if (useVaultStore.getState().activeFile === path) {
           useVaultStore.getState().setActiveFile(null);
         }

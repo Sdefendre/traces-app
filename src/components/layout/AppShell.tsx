@@ -5,7 +5,7 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useGraphStore } from '@/stores/graph-store';
 import { electronAPI } from '@/lib/electron-api';
-import { useEditorStore, safeCloseTab } from '@/stores/editor-store';
+import { useEditorStore } from '@/stores/editor-store';
 import { normalizeRelativePath } from '@/lib/paths';
 import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
@@ -100,10 +100,10 @@ export function AppShell() {
     const unsubFile = electronAPI.onFileChange((event, filePath) => {
       void refreshFiles();
       const normalized = normalizeRelativePath(filePath);
-      const { tabs, reloadTab } = useEditorStore.getState();
+      const { tabs, closeTab, reloadTab } = useEditorStore.getState();
       const tab = tabs.find((t) => t.path === normalized);
       if (event === 'unlink') {
-        if (tab) safeCloseTab(tab.id);
+        if (tab) void closeTab(tab.id);
         if (useVaultStore.getState().activeFile === normalized) {
           useVaultStore.getState().setActiveFile(null);
         }

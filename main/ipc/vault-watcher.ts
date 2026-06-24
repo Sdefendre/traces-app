@@ -12,17 +12,38 @@ const contentCache = new Map<string, string>();
 let knownFiles: string[] = [];
 
 const REBUILD_DEBOUNCE_MS = 400;
+const READ_RETRY_DELAY_MS = 100;
+const READ_RETRY_COUNT = 2;
+
+async function readFileWithRetry(rel: string): Promise<string | null> {
+  for (let attempt = 0; attempt < READ_RETRY_COUNT; attempt++) {
+    try {
+      return await readFile(rel);
+    } catch {
+      if (attempt < READ_RETRY_COUNT - 1) {
+        await new Promise((resolve) => setTimeout(resolve, READ_RETRY_DELAY_MS));
+      }
+    }
+  }
+  return null;
+}
 
 async function hydrateCacheForFiles(files: string[]) {
   for (const file of files) {
     if (!contentCache.has(file)) {
-      try {
-        contentCache.set(file, await readFile(file));
-      } catch {
-        contentCache.delete(file);
+      const content = await readFileWithRetry(file);
+      if (content !== null) {
+        contentCache.set(file, content);
       }
     }
   }
+}
+
+/** One-time vault scan at watcher start; subsequent rebuilds are incremental only. */
+async function bootstrapKnownFiles() {
+  knownFiles = await listFiles();
+  await hydrateCacheForFiles(knownFiles);
+  knownFiles.sort();
 }
 
 async function applyPendingChanges(): Promise<boolean> {
@@ -30,41 +51,25 @@ async function applyPendingChanges(): Promise<boolean> {
   pendingChanges.clear();
   if (changes.size === 0) return false;
 
-  let needsFullListing = false;
-
   for (const [rel, evt] of changes) {
     if (evt === 'unlink') {
       contentCache.delete(rel);
       knownFiles = knownFiles.filter((f) => f !== rel);
-    } else if (evt === 'add') {
-      if (!knownFiles.includes(rel)) {
-        knownFiles.push(rel);
-      }
-      try {
-        contentCache.set(rel, await readFile(rel));
-      } catch {
-        contentCache.delete(rel);
-        knownFiles = knownFiles.filter((f) => f !== rel);
-        needsFullListing = true;
-      }
-    } else if (evt === 'change') {
-      try {
-        contentCache.set(rel, await readFile(rel));
-      } catch {
-        contentCache.delete(rel);
-        knownFiles = knownFiles.filter((f) => f !== rel);
-        needsFullListing = true;
-      }
+      continue;
     }
-  }
 
-  // Full listing only on structural errors — change-only autosaves skip listFiles.
-  if (needsFullListing) {
-    knownFiles = await listFiles();
-    for (const key of [...contentCache.keys()]) {
-      if (!knownFiles.includes(key)) contentCache.delete(key);
+    if (evt === 'add' && !knownFiles.includes(rel)) {
+      knownFiles.push(rel);
     }
-    await hydrateCacheForFiles(knownFiles);
+
+    const content = await readFileWithRetry(rel);
+    if (content !== null) {
+      contentCache.set(rel, content);
+    } else if (evt === 'add') {
+      contentCache.delete(rel);
+      knownFiles = knownFiles.filter((f) => f !== rel);
+    }
+    // change: keep prior cache entry on transient read failure (e.g. mid-write).
   }
 
   knownFiles.sort();
@@ -80,10 +85,7 @@ async function rebuildGraph(
 
   try {
     const hadChanges = await applyPendingChanges();
-    if (!hadChanges && knownFiles.length === 0) {
-      knownFiles = await listFiles();
-      await hydrateCacheForFiles(knownFiles);
-    }
+    if (!hadChanges) return;
 
     const graphData = await parseVault(resolvedRoot, knownFiles, contentCache);
     win.webContents.send('vault:graphUpdate', graphData);
@@ -99,8 +101,7 @@ export async function startVaultWatcher(
   const resolvedRoot = path.resolve(vaultRoot);
   contentCache.clear();
   pendingChanges.clear();
-  knownFiles = await listFiles();
-  await hydrateCacheForFiles(knownFiles);
+  await bootstrapKnownFiles();
 
   watcher = watch(resolvedRoot, {
     ignored: [

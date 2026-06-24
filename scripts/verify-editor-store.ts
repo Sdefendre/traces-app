@@ -55,9 +55,31 @@ async function runOnce(label: string) {
   if (!ok) process.exit(1);
 }
 
+async function testCloseDespiteWriteFailure() {
+  const failingStore = createEditorStore({
+    readFile: async (path) => files[path] ?? '',
+    writeFile: async () => {
+      throw new Error('disk full');
+    },
+  });
+
+  const path = 'Memory/fail.md';
+  files[path] = 'initial';
+  await failingStore.getState().openFile(path);
+  const id = pathToId(path);
+  failingStore.getState().setTabContent(id, 'dirty but cannot save');
+
+  await failingStore.getState().closeTab(id);
+  const tabsAfterFailedSave = failingStore.getState().tabs.length;
+  console.log('[failSave] tabsAfterClose:', tabsAfterFailedSave);
+
+  if (tabsAfterFailedSave !== 0) process.exit(1);
+}
+
 async function main() {
   await runOnce('run1');
   await runOnce('run2');
+  await testCloseDespiteWriteFailure();
   console.log('editor-store verification passed');
 }
 

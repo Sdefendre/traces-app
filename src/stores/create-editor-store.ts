@@ -72,8 +72,8 @@ export function createEditorStore(deps: EditorStoreDeps) {
         try {
           await deps.writeFile(tab.path, tab.content);
         } catch (err) {
-          console.error('Failed to save tab on close:', tab.path, err);
-          return;
+          // Still close the tab so the user is not stuck; unsaved edits are lost.
+          console.error('Failed to save tab on close (closing anyway):', tab.path, err);
         }
       }
 
