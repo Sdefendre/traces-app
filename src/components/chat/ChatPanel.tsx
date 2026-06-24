@@ -188,7 +188,7 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
 // ChatPanel
 // ---------------------------------------------------------------------------
 export function ChatPanel() {
-  const { toggleChat } = useUIStore();
+  const { toggleChat, chatOpen } = useUIStore();
   const { refreshFiles, vaultName, files } = useVaultStore();
   const { reloadTab, getActiveTab } = useEditorStore();
   const { settings: appSettings, updateSettings } = useSettingsStore();
@@ -451,6 +451,15 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [messages]);
+
+  // clearChatOnClose: reset chat state when the panel is dismissed.
+  useEffect(() => {
+    if (!chatOpen && appSettings.clearChatOnClose) {
+      setMessages([]);
+      setError(null);
+      setInput('');
+    }
+  }, [chatOpen, appSettings.clearChatOnClose]);
 
   const handleModelChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {

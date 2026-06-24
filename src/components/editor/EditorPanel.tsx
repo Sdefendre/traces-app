@@ -11,12 +11,26 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, X, Sun, Moon, Plus, Eye, EyeOff, MessageCircle } from 'lucide-react';
 
 export function EditorPanel() {
-  const { tabs, activeTabId, closeTab, openFile } = useEditorStore();
+  const { tabs, activeTabId, openFile, closeTab } = useEditorStore();
   const { activeFile, refreshFiles, setActiveFile } = useVaultStore();
   const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed, previewMode, togglePreview, chatOpen, setChatOpen } = useUIStore();
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
+
+  const handleCloseTab = useCallback(
+    async (tab: { id: string; saveError?: string | null }) => {
+      const closed = await closeTab(
+        tab.id,
+        tab.saveError ? { discard: true } : undefined
+      );
+      if (!closed) {
+        // Save-on-close failed: tab stays open; focus it so the error indicator is visible.
+        useEditorStore.setState({ activeTabId: tab.id });
+      }
+    },
+    [closeTab]
+  );
 
   // Editor-specific colors based on light/dark mode
   const editorBg = editorLightMode ? '#ffffff' : 'transparent';
@@ -61,15 +75,24 @@ export function EditorPanel() {
   }, []);
 
   const handleCreateNote = useCallback(async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      setCreating(false);
+      setNewName('');
+      return;
+    }
     const fileName = newName.endsWith('.md') ? newName : `${newName}.md`;
     const filePath = `Memory/${fileName}`;
-    await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
-    await refreshFiles();
-    setCreating(false);
-    setNewName('');
-    setActiveFile(filePath);
-    openFile(filePath);
+    try {
+      await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
+      await refreshFiles();
+      setActiveFile(filePath);
+      await openFile(filePath);
+    } catch (err) {
+      console.error('Failed to create note:', err);
+    } finally {
+      setCreating(false);
+      setNewName('');
+    }
   }, [newName, refreshFiles, setActiveFile, openFile]);
 
   if (!activeTab) {
@@ -168,8 +191,12 @@ export function EditorPanel() {
                   useVaultStore.getState().setActiveFile(tab.path);
                 }}
               >
-                {tab.isDirty && (
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: editorSecondary }} />
+                {(tab.isDirty || tab.saveError) && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: tab.saveError ? '#f97316' : editorSecondary }}
+                    title={tab.saveError ?? undefined}
+                  />
                 )}
                 <span className="truncate max-w-[120px]">{tab.name}</span>
                 <Button
@@ -177,10 +204,15 @@ export function EditorPanel() {
                   size="icon-xs"
                   className="ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity size-4"
                   style={{ color: editorLightMode ? '#a1a1aa' : 'var(--text-dim)' }}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    closeTab(tab.id);
+                    await handleCloseTab(tab);
                   }}
+                  title={
+                    tab.saveError
+                      ? `Discard unsaved changes (${tab.saveError})`
+                      : 'Close tab'
+                  }
                 >
                   <X className="size-2.5" />
                 </Button>

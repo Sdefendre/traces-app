@@ -4,56 +4,15 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
-import { FileTreeItem, TreeNode } from './FileTreeItem';
+import { FileTreeItem } from './FileTreeItem';
+import { buildTree } from '@/lib/build-tree';
 import { electronAPI } from '@/lib/electron-api';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, FolderOpen, Plus } from 'lucide-react';
 
-function buildTree(files: string[]): TreeNode[] {
-  const root: TreeNode[] = [];
-
-  for (const file of files) {
-    const parts = file.split('/');
-    let current = root;
-
-    for (let i = 0; i < parts.length; i++) {
-      const name = parts[i];
-      const isFile = i === parts.length - 1;
-      const path = parts.slice(0, i + 1).join('/');
-
-      let existing = current.find((n) => n.name === name);
-      if (!existing) {
-        existing = {
-          name,
-          path,
-          isFile,
-          children: isFile ? undefined : [],
-        };
-        current.push(existing);
-      }
-      if (!isFile && existing.children) {
-        current = existing.children;
-      }
-    }
-  }
-
-  // Sort: folders first, then alphabetically
-  function sortTree(nodes: TreeNode[]) {
-    nodes.sort((a, b) => {
-      if (a.isFile !== b.isFile) return a.isFile ? 1 : -1;
-      return a.name.localeCompare(b.name);
-    });
-    for (const node of nodes) {
-      if (node.children) sortTree(node.children);
-    }
-  }
-  sortTree(root);
-  return root;
-}
-
 export function FileTree() {
   const { files, activeFile, setActiveFile, refreshFiles, openFolder, vaultName } = useVaultStore();
-  const { openFile } = useEditorStore();
+  const { openFile, closeTab } = useEditorStore();
   const { toggleSidebar } = useUIStore();
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
@@ -107,17 +66,37 @@ export function FileTree() {
     if (!newFileName.trim()) return;
     const fileName = newFileName.endsWith('.md') ? newFileName : `${newFileName}.md`;
     const filePath = `Memory/${fileName}`;
-    await electronAPI.createFile(filePath, `# ${newFileName.replace('.md', '')}\n\n`);
-    await refreshFiles();
-    setCreating(false);
-    setNewFileName('');
-    handleSelect(filePath);
+    try {
+      await electronAPI.createFile(filePath, `# ${newFileName.replace('.md', '')}\n\n`);
+      await refreshFiles();
+      handleSelect(filePath);
+    } catch (err) {
+      console.error('Failed to create note:', err);
+    } finally {
+      setCreating(false);
+      setNewFileName('');
+    }
   }, [newFileName, refreshFiles, handleSelect]);
 
   const handleDelete = useCallback(
     async (path: string) => {
-      await electronAPI.deleteFile(path);
-      await refreshFiles();
+      try {
+        await electronAPI.deleteFile(path);
+        await refreshFiles();
+        const { tabs } = useEditorStore.getState();
+        const tab = tabs.find((t) => t.path === path);
+        if (tab) {
+          const removed = await closeTab(tab.id, { discard: true });
+          if (!removed) {
+            console.warn('Expected discard close to remove tab:', path);
+          }
+        }
+        if (useVaultStore.getState().activeFile === path) {
+          useVaultStore.getState().setActiveFile(null);
+        }
+      } catch (err) {
+        console.error('Failed to delete note:', err);
+      }
     },
     [refreshFiles]
   );

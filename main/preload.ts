@@ -42,4 +42,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('vault:graphUpdate', handler);
     return () => ipcRenderer.removeListener('vault:graphUpdate', handler);
   },
+
+  // Flushes dirty editor tabs before app quit.
+  onBeforeQuit: (callback: () => void | Promise<void>) => {
+    const handler = async () => {
+      try {
+        await callback();
+      } catch (err) {
+        console.error('before-quit handler failed:', err);
+      } finally {
+        await ipcRenderer.invoke('app:ready-to-quit');
+      }
+    };
+    ipcRenderer.on('app:before-quit', handler);
+    return () => ipcRenderer.removeListener('app:before-quit', handler);
+  },
 });

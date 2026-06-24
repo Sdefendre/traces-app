@@ -3,6 +3,8 @@
 import { useState, useCallback } from 'react';
 import type { NodeCategory } from '@/types';
 import { CATEGORY_COLORS } from '@/types';
+import type { TreeNode } from '@/lib/build-tree';
+import { normalizeRelativePath } from '@/lib/paths';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -10,12 +12,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 
-export interface TreeNode {
-  name: string;
-  path: string;
-  isFile: boolean;
-  children?: TreeNode[];
-}
+export type { TreeNode };
 
 interface FileTreeItemProps {
   node: TreeNode;
@@ -26,7 +23,7 @@ interface FileTreeItemProps {
 }
 
 function getCategoryFromPath(path: string): NodeCategory {
-  const parts = path.split('/');
+  const parts = normalizeRelativePath(path).split('/');
   if (parts[0] === 'Memory') {
     if (parts[1] === 'journal') return 'journal';
     if (parts[1] === 'personal') return 'personal';

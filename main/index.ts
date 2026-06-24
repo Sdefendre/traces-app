@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'node:fs';
 import { registerIpcHandlers } from './ipc/handlers';
 import { setVaultRoot } from './ipc/file-system';
-import { startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
+import { resetVaultFileCache, startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
 
 let vaultPath = path.join(
   app.getPath('home'),
@@ -15,6 +15,7 @@ let vaultPath = path.join(
 fs.mkdirSync(vaultPath, { recursive: true });
 
 let mainWindow: BrowserWindow | null = null;
+let isQuitting = false;
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -51,7 +52,7 @@ function createWindow() {
 app.whenReady().then(() => {
   registerIpcHandlers(vaultPath);
   createWindow();
-  startVaultWatcher(vaultPath, () => mainWindow);
+  void startVaultWatcher(vaultPath, () => mainWindow);
 
   // IPC handler: open a native folder picker and switch the vault root
   ipcMain.handle('vault:openFolder', async () => {
@@ -73,16 +74,35 @@ app.whenReady().then(() => {
     vaultPath = selectedPath;
     setVaultRoot(selectedPath);
 
-    // Restart the watcher on the new folder
+    // Cold restart: new vault requires full cache reset
     stopVaultWatcher();
-    startVaultWatcher(selectedPath, () => mainWindow);
+    resetVaultFileCache();
+    void startVaultWatcher(selectedPath, () => mainWindow);
 
     return selectedPath;
   });
 });
 
+// Defer quit until renderer flushes dirty editor tabs via onBeforeQuit.
+app.on('before-quit', (event) => {
+  if (isQuitting) return;
+  const win = mainWindow;
+  if (!win || win.isDestroyed()) return;
+
+  event.preventDefault();
+  win.webContents.send('app:before-quit');
+});
+
+ipcMain.handle('app:ready-to-quit', () => {
+  isQuitting = true;
+  stopVaultWatcher();
+  resetVaultFileCache();
+  app.quit();
+});
+
 app.on('window-all-closed', () => {
   stopVaultWatcher();
+  resetVaultFileCache();
   if (process.platform !== 'darwin') {
     app.quit();
   }

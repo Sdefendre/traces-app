@@ -34,9 +34,7 @@ function loadSettings(): Record<string, unknown> {
 export function registerIpcHandlers(vaultRoot: string) {
   setVaultRoot(vaultRoot);
 
-  ipcMain.handle('vault:getVaultPath', async () => {
-    return getVaultRoot();
-  });
+  ipcMain.handle('vault:getVaultPath', async () => getVaultRoot());
 
   ipcMain.handle('vault:listFiles', async () => {
     return listFiles();
@@ -64,7 +62,8 @@ export function registerIpcHandlers(vaultRoot: string) {
 
   ipcMain.handle('vault:getGraphData', async () => {
     const files = await listFiles();
-    return parseVault(vaultRoot, files);
+    const root = getVaultRoot();
+    return parseVault(root, files);
   });
 
   ipcMain.handle('settings:load', async () => {

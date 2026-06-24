@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GraphData, GraphNode, GraphEdge } from '@/types';
 import { electronAPI } from '@/lib/electron-api';
+import { normalizeRelativePath } from '@/lib/paths';
 import { useEditorStore } from '@/stores/editor-store';
 
 interface VaultState {
@@ -29,11 +30,16 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     try {
       const [files, graphData, vaultPath] = await Promise.all([
         electronAPI.listFiles(),
-        electronAPI.getGraphData(),
+        electronAPI.getGraphData(), // watcher also pushes vault:graphUpdate after bootstrap
         electronAPI.getVaultPath(),
       ]);
       const vaultName = vaultPath ? (vaultPath.split('/').pop() || 'Traces Vault') : 'Traces Vault';
-      set({ files, graphData, vaultName, loading: false });
+      set({
+        files: files.map(normalizeRelativePath),
+        graphData,
+        vaultName,
+        loading: false,
+      });
     } catch (err) {
       console.error('Failed to load vault:', err);
       set({ loading: false });
@@ -45,8 +51,12 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   setGraphData: (data) => set({ graphData: data }),
 
   refreshFiles: async () => {
-    const files = await electronAPI.listFiles();
-    set({ files });
+    try {
+      const files = await electronAPI.listFiles();
+      set({ files: files.map((f) => normalizeRelativePath(f)) });
+    } catch (err) {
+      console.error('Failed to refresh files:', err);
+    }
   },
 
   openFolder: async () => {

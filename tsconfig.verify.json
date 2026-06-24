@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "scripts/.verify-out",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "scripts/verify-editor-store.ts",
+    "src/stores/create-editor-store.ts",
+    "src/stores/editor-store-factory.ts",
+    "src/types/index.ts",
+    "shared/paths.ts",
+    "shared/tab-close-policy.ts",
+    "src/lib/paths.ts",
+
+  ]
+}
