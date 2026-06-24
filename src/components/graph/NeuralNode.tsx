@@ -6,19 +6,21 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { GraphNode, NodeCategory } from '@/types';
+import type { NodePosition } from './useForceGraph';
 import { CATEGORY_COLORS } from '@/types';
 import { useGraphStore } from '@/stores/graph-store';
 
 interface NeuralNodeProps {
   node: GraphNode;
-  position: [number, number, number];
+  getPositions: () => Map<string, NodePosition>;
   isConnected: boolean;
   onSelect: (node: GraphNode) => void;
   nodeSize: number;
   showLabels: boolean;
 }
 
-export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, showLabels }: NeuralNodeProps) {
+export function NeuralNode({ node, getPositions, isConnected, onSelect, nodeSize, showLabels }: NeuralNodeProps) {
+  const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
@@ -37,6 +39,9 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
 
+    const pos = getPositions().get(node.id);
+    if (!pos) return;
+
     const t = clock.getElapsedTime();
 
     // Smooth scale transition
@@ -45,7 +50,7 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
     meshRef.current.scale.setScalar(newScale);
 
     // Gentle breathing pulse
-    const breathe = 1 + Math.sin(t * 1.5 + position[0]) * 0.03;
+    const breathe = 1 + Math.sin(t * 1.5 + pos.x) * 0.03;
     meshRef.current.scale.setScalar(newScale * breathe);
 
     // Emissive intensity
@@ -53,12 +58,13 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
     const targetEmissive = hovered ? 1.0 : isHighlighted ? 0.6 : 0.3;
     mat.emissiveIntensity += (targetEmissive - mat.emissiveIntensity) * 0.1;
 
-    // Position update
-    meshRef.current.position.set(...position);
+    // Position update from simulation ref (no parent re-render)
+    if (groupRef.current) {
+      groupRef.current.position.set(pos.x, pos.y, pos.z);
+    }
 
     // Ring
     if (ringRef.current) {
-      ringRef.current.position.set(...position);
       ringRef.current.scale.setScalar(newScale * breathe);
       const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
       const targetRingOpacity = hovered ? 0.5 : isHighlighted ? 0.3 : 0.15;
@@ -67,11 +73,10 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
   });
 
   return (
-    <>
+    <group ref={groupRef}>
       {/* Core node — clean sphere */}
       <mesh
         ref={meshRef}
-        position={position}
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
@@ -99,7 +104,7 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
       </mesh>
 
       {/* Subtle ring outline */}
-      <mesh ref={ringRef} position={position}>
+      <mesh ref={ringRef}>
         <ringGeometry args={[radius * 1.3, radius * 1.5, 32]} />
         <meshBasicMaterial
           color={ringColor}
@@ -112,7 +117,7 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
 
       {/* Label */}
       {showLabels && (
-        <Html position={position} center style={{ pointerEvents: 'none' }}>
+        <Html center style={{ pointerEvents: 'none' }}>
           <div
             style={{
               color: '#e5e5e5',
@@ -131,6 +136,6 @@ export function NeuralNode({ node, position, isConnected, onSelect, nodeSize, sh
           </div>
         </Html>
       )}
-    </>
+    </group>
   );
 }

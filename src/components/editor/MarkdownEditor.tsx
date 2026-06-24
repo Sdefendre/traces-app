@@ -14,6 +14,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { electronAPI } from '@/lib/electron-api';
+import { basenameWithoutExt, dirnameRelative, normalizeRelativePath } from '@/lib/paths';
 
 interface MarkdownEditorProps {
   tabId: string;
@@ -44,7 +45,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
       const query = before.text.slice(2).toLowerCase();
       const options = files
         .map((f) => {
-          const name = f.split('/').pop()?.replace('.md', '') || f;
+          const name = basenameWithoutExt(f);
           return { label: name, apply: `${name}]]`, type: 'text' };
         })
         .filter((o) => o.label.toLowerCase().includes(query));
@@ -96,16 +97,19 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
               const tab = tabs.find((t) => t.id === tabId);
               if (!tab) return;
 
-              const currentName = tab.path.split('/').pop()?.replace('.md', '') || '';
+              const normalizedPath = normalizeRelativePath(tab.path);
+              const currentName = basenameWithoutExt(normalizedPath);
               if (sanitized === currentName) return;
 
-              const dir = tab.path.substring(0, tab.path.lastIndexOf('/'));
+              const dir = dirnameRelative(normalizedPath);
               const newPath = dir ? `${dir}/${sanitized}.md` : `${sanitized}.md`;
 
-              electronAPI.renameFile(tab.path, newPath).then(() => {
-                useEditorStore.getState().renameTab(tab.path, newPath);
+              electronAPI.renameFile(normalizedPath, newPath).then(() => {
+                useEditorStore.getState().renameTab(normalizedPath, newPath);
                 useVaultStore.getState().setActiveFile(newPath);
                 useVaultStore.getState().refreshFiles();
+              }).catch((err) => {
+                console.error('Failed to rename note from title:', err);
               });
             }, 1500);
           }

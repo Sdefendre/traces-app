@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { EditorTab } from '@/types';
 import { electronAPI } from '@/lib/electron-api';
+import { basenameWithoutExt, normalizeRelativePath } from '@/lib/paths';
 
 interface EditorState {
   tabs: EditorTab[];
@@ -12,17 +13,18 @@ interface EditorState {
   setTabContent: (id: string, content: string) => void;
   markClean: (id: string) => void;
   saveTab: (id: string) => Promise<void>;
+  saveAllDirty: () => Promise<void>;
   getActiveTab: () => EditorTab | null;
   renameTab: (oldPath: string, newPath: string) => void;
   reloadTab: (path: string) => Promise<void>;
 }
 
-function pathToId(p: string) {
-  return p.replace(/[\/\\]/g, '__');
+export function pathToId(p: string) {
+  return normalizeRelativePath(p).replace(/\//g, '__');
 }
 
 function nameFromPath(p: string) {
-  return p.split('/').pop()?.replace('.md', '') || p;
+  return basenameWithoutExt(p);
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -30,29 +32,38 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   activeTabId: null,
 
   openFile: async (path) => {
-    const id = pathToId(path);
+    const normalizedPath = normalizeRelativePath(path);
+    const id = pathToId(normalizedPath);
     const existing = get().tabs.find((t) => t.id === id);
     if (existing) {
       set({ activeTabId: id });
       return;
     }
 
-    const content = await electronAPI.readFile(path);
-    const tab: EditorTab = {
-      id,
-      path,
-      name: nameFromPath(path),
-      content,
-      isDirty: false,
-    };
+    try {
+      const content = await electronAPI.readFile(normalizedPath);
+      const tab: EditorTab = {
+        id,
+        path: normalizedPath,
+        name: nameFromPath(normalizedPath),
+        content,
+        isDirty: false,
+      };
 
-    set((state) => ({
-      tabs: [...state.tabs, tab],
-      activeTabId: id,
-    }));
+      set((state) => ({
+        tabs: [...state.tabs, tab],
+        activeTabId: id,
+      }));
+    } catch (err) {
+      console.error('Failed to open file:', normalizedPath, err);
+    }
   },
 
   closeTab: (id) => {
+    const tab = get().tabs.find((t) => t.id === id);
+    if (tab?.isDirty) {
+      void get().saveTab(id);
+    }
     set((state) => {
       const tabs = state.tabs.filter((t) => t.id !== id);
       let activeTabId = state.activeTabId;
@@ -85,9 +96,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   saveTab: async (id) => {
     const tab = get().tabs.find((t) => t.id === id);
-    if (!tab) return;
-    await electronAPI.writeFile(tab.path, tab.content);
-    get().markClean(id);
+    if (!tab || !tab.isDirty) return;
+    try {
+      await electronAPI.writeFile(tab.path, tab.content);
+      get().markClean(id);
+    } catch (err) {
+      console.error('Failed to save tab:', tab.path, err);
+      throw err;
+    }
+  },
+
+  saveAllDirty: async () => {
+    const dirtyTabs = get().tabs.filter((t) => t.isDirty);
+    await Promise.all(dirtyTabs.map((t) => get().saveTab(t.id)));
   },
 
   getActiveTab: () => {
@@ -96,20 +117,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   renameTab: (oldPath, newPath) => {
-    const oldId = pathToId(oldPath);
-    const newId = pathToId(newPath);
+    const normalizedOld = normalizeRelativePath(oldPath);
+    const normalizedNew = normalizeRelativePath(newPath);
+    const oldId = pathToId(normalizedOld);
+    const newId = pathToId(normalizedNew);
     set((state) => ({
       tabs: state.tabs.map((t) =>
-        t.id === oldId ? { ...t, id: newId, path: newPath, name: nameFromPath(newPath) } : t
+        t.id === oldId ? { ...t, id: newId, path: normalizedNew, name: nameFromPath(normalizedNew) } : t
       ),
       activeTabId: state.activeTabId === oldId ? newId : state.activeTabId,
     }));
   },
 
   reloadTab: async (path) => {
-    const id = pathToId(path);
+    const normalizedPath = normalizeRelativePath(path);
+    const id = pathToId(normalizedPath);
     const existing = get().tabs.find((t) => t.id === id);
-    if (!existing) return;
+    if (!existing || existing.isDirty) return;
     try {
       const content = await electronAPI.readFile(path);
       set((state) => ({

@@ -64,12 +64,17 @@ export function EditorPanel() {
     if (!newName.trim()) return;
     const fileName = newName.endsWith('.md') ? newName : `${newName}.md`;
     const filePath = `Memory/${fileName}`;
-    await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
-    await refreshFiles();
-    setCreating(false);
-    setNewName('');
-    setActiveFile(filePath);
-    openFile(filePath);
+    try {
+      await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
+      await refreshFiles();
+      setActiveFile(filePath);
+      await openFile(filePath);
+    } catch (err) {
+      console.error('Failed to create note:', err);
+    } finally {
+      setCreating(false);
+      setNewName('');
+    }
   }, [newName, refreshFiles, setActiveFile, openFile]);
 
   if (!activeTab) {

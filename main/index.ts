@@ -15,6 +15,7 @@ let vaultPath = path.join(
 fs.mkdirSync(vaultPath, { recursive: true });
 
 let mainWindow: BrowserWindow | null = null;
+let isQuitting = false;
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -79,6 +80,21 @@ app.whenReady().then(() => {
 
     return selectedPath;
   });
+});
+
+app.on('before-quit', (event) => {
+  if (isQuitting) return;
+  const win = mainWindow;
+  if (!win || win.isDestroyed()) return;
+
+  event.preventDefault();
+  win.webContents.send('app:before-quit');
+});
+
+ipcMain.handle('app:ready-to-quit', () => {
+  isQuitting = true;
+  stopVaultWatcher();
+  app.quit();
 });
 
 app.on('window-all-closed', () => {

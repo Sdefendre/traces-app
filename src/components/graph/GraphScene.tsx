@@ -10,7 +10,7 @@ import { useForceGraph } from './useForceGraph';
 import { NeuralNode } from './NeuralNode';
 import { Synapse } from './Synapse';
 import type { GraphNode } from '@/types';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 
 export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any> }) {
@@ -18,8 +18,7 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
   const { openFile } = useEditorStore();
   const { hoveredNode, selectedNode, setSelectedNode, settings } = useGraphStore();
   const { setActiveFile } = useVaultStore();
-  const { getPositions, tickRef } = useForceGraph(graphData.nodes, graphData.edges);
-  const [, setRenderTick] = useState(0);
+  const { getPositions } = useForceGraph(graphData.nodes, graphData.edges);
   const cameraTargetPosRef = useRef<THREE.Vector3 | null>(null);
   const cameraLerpFrames = useRef(0);
 
@@ -65,10 +64,9 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
     [openFile, setActiveFile, setSelectedNode]
   );
 
-  // Trigger re-render when force simulation updates + smooth camera animation
+  // Smooth camera animation (positions update via refs in child useFrame hooks)
   useFrame((state) => {
     const { camera } = state;
-    setRenderTick(tickRef.current);
 
     // When a node is selected, smoothly animate the camera toward it
     if (selectedNode) {
@@ -99,16 +97,10 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
     }
   });
 
-  const positions = getPositions();
-
   return (
     <>
       {/* Synapses first (behind nodes) */}
       {graphData.edges.map((edge, i) => {
-        const sPos = positions.get(edge.source);
-        const tPos = positions.get(edge.target);
-        if (!sPos || !tPos) return null;
-
         const highlighted =
           hoveredNode === edge.source ||
           hoveredNode === edge.target;
@@ -117,8 +109,7 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
           <Synapse
             key={`edge-${i}`}
             edge={edge}
-            sourcePos={[sPos.x, sPos.y, sPos.z]}
-            targetPos={[tPos.x, tPos.y, tPos.z]}
+            getPositions={getPositions}
             sourceCategory={categoryMap.get(edge.source) || 'archive'}
             highlighted={highlighted}
             lineThickness={settings.lineThickness}
@@ -128,22 +119,17 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
       })}
 
       {/* Neural nodes */}
-      {graphData.nodes.map((node) => {
-        const pos = positions.get(node.id);
-        if (!pos) return null;
-
-        return (
-          <NeuralNode
-            key={node.id}
-            node={node}
-            position={[pos.x, pos.y, pos.z]}
-            isConnected={connectedToHovered(node.id)}
-            onSelect={handleSelect}
-            nodeSize={settings.nodeSize}
-            showLabels={settings.showLabels}
-          />
-        );
-      })}
+      {graphData.nodes.map((node) => (
+        <NeuralNode
+          key={node.id}
+          node={node}
+          getPositions={getPositions}
+          isConnected={connectedToHovered(node.id)}
+          onSelect={handleSelect}
+          nodeSize={settings.nodeSize}
+          showLabels={settings.showLabels}
+        />
+      ))}
     </>
   );
 }

@@ -5,6 +5,8 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useGraphStore } from '@/stores/graph-store';
 import { electronAPI } from '@/lib/electron-api';
+import { useEditorStore } from '@/stores/editor-store';
+import { normalizeRelativePath } from '@/lib/paths';
 import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
@@ -96,16 +98,34 @@ export function AppShell() {
 
   useEffect(() => {
     const unsubFile = electronAPI.onFileChange((event, filePath) => {
-      refreshFiles();
+      void refreshFiles();
+      const normalized = normalizeRelativePath(filePath);
+      const { tabs, closeTab, reloadTab } = useEditorStore.getState();
+      const tab = tabs.find((t) => t.path === normalized);
+      if (event === 'unlink') {
+        if (tab) closeTab(tab.id);
+        if (useVaultStore.getState().activeFile === normalized) {
+          useVaultStore.getState().setActiveFile(null);
+        }
+        return;
+      }
+      if (tab && (event === 'change' || event === 'add')) {
+        void reloadTab(normalized);
+      }
     });
 
     const unsubGraph = electronAPI.onGraphUpdate((data) => {
       setGraphData(data);
     });
 
+    const unsubQuit = electronAPI.onBeforeQuit(async () => {
+      await useEditorStore.getState().saveAllDirty();
+    });
+
     return () => {
       unsubFile();
       unsubGraph();
+      unsubQuit();
     };
   }, [refreshFiles, setGraphData]);
 

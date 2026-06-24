@@ -5,11 +5,13 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GraphEdge } from '@/types';
+import type { NodePosition } from './useForceGraph';
 
 interface SynapseProps {
   edge: GraphEdge;
-  sourcePos: [number, number, number];
-  targetPos: [number, number, number];
+  getPositions?: () => Map<string, NodePosition>;
+  sourcePos?: [number, number, number];
+  targetPos?: [number, number, number];
   sourceCategory: string;
   highlighted: boolean;
   lineThickness: number;
@@ -24,33 +26,10 @@ const _dir = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 const _quat = new THREE.Quaternion();
 
-export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighted, lineThickness, lineColor: lineColorProp, variant = 'default' }: SynapseProps) {
+export function Synapse({ edge, getPositions, sourcePos, targetPos, sourceCategory, highlighted, lineThickness, lineColor: lineColorProp, variant = 'default' }: SynapseProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  
-  // Calculate holographic color based on length if variant is holographic
-  const holoColor = useMemo(() => {
-    if (variant !== 'holographic') return new THREE.Color(lineColorProp);
-    
-    const p1 = new THREE.Vector3(...sourcePos);
-    const p2 = new THREE.Vector3(...targetPos);
-    const dist = p1.distanceTo(p2);
-    
-    // Map length (e.g. 0 to 400) to 0-1
-    const percent = Math.max(0, Math.min(1, dist / 400));
-    
-    const tmpColor = new THREE.Color();
-    if (percent < 0.5) {
-      // Short edges (inside cluster) are Cyan -> Purple
-      tmpColor.set('#06b6d4').lerp(new THREE.Color('#a855f7'), percent * 2);
-    } else {
-      // Long edges (cross cluster) are Purple -> Magenta
-      tmpColor.set('#a855f7').lerp(new THREE.Color('#d946ef'), (percent - 0.5) * 2);
-    }
-    return tmpColor;
-  }, [variant, lineColorProp, sourcePos, targetPos]);
-
   const defaultColor = useMemo(() => new THREE.Color(lineColorProp), [lineColorProp]);
-  const color = variant === 'holographic' ? holoColor : defaultColor;
+  const holoScratch = useMemo(() => new THREE.Color(), []);
 
   const baseRadius = edge.type === 'wiki-link' ? 0.25 : edge.type === 'folder-sibling' ? 0.18 : 0.12;
   const radius = baseRadius * lineThickness * (variant === 'holographic' ? 1.5 : 1); // Make holographic slightly thicker
@@ -58,8 +37,18 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
   useFrame(() => {
     if (!meshRef.current) return;
 
-    _start.set(sourcePos[0], sourcePos[1], sourcePos[2]);
-    _end.set(targetPos[0], targetPos[1], targetPos[2]);
+    if (getPositions) {
+      const s = getPositions().get(edge.source);
+      const t = getPositions().get(edge.target);
+      if (!s || !t) return;
+      _start.set(s.x, s.y, s.z);
+      _end.set(t.x, t.y, t.z);
+    } else if (sourcePos && targetPos) {
+      _start.set(sourcePos[0], sourcePos[1], sourcePos[2]);
+      _end.set(targetPos[0], targetPos[1], targetPos[2]);
+    } else {
+      return;
+    }
 
     _mid.copy(_start).add(_end).multiplyScalar(0.5);
     meshRef.current.position.copy(_mid);
@@ -72,8 +61,16 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
     meshRef.current.quaternion.copy(_quat);
 
     const mat = meshRef.current.material as THREE.MeshBasicMaterial;
-    if (variant !== 'holographic') {
-      mat.color.set(lineColorProp);
+    if (variant === 'holographic') {
+      const percent = Math.max(0, Math.min(1, dist / 400));
+      if (percent < 0.5) {
+        holoScratch.set('#06b6d4').lerp(new THREE.Color('#a855f7'), percent * 2);
+      } else {
+        holoScratch.set('#a855f7').lerp(new THREE.Color('#d946ef'), (percent - 0.5) * 2);
+      }
+      mat.color.copy(holoScratch);
+    } else {
+      mat.color.copy(defaultColor);
     }
     mat.needsUpdate = true;
     
@@ -85,7 +82,7 @@ export function Synapse({ edge, sourcePos, targetPos, sourceCategory, highlighte
     <mesh ref={meshRef}>
       <cylinderGeometry args={[radius, radius, 1, 6, 1]} />
       <meshBasicMaterial
-        color={color}
+        color={defaultColor}
         transparent
         opacity={variant === 'holographic' ? 0.4 : 0.5}
         depthWrite={false}

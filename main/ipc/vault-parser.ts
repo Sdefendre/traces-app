@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { basenameWithoutExt, normalizeRelativePath } from './path-utils';
 
 export interface GraphNode {
   id: string;
@@ -23,7 +24,7 @@ export interface GraphData {
 const WIKI_LINK_REGEX = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
 
 function getCategory(filePath: string): string {
-  const parts = filePath.split(path.sep);
+  const parts = normalizeRelativePath(filePath).split('/');
   if (parts[0] === 'Memory') {
     if (parts[1] === 'journal') return 'journal';
     if (parts[1] === 'personal') return 'personal';
@@ -37,8 +38,7 @@ function getCategory(filePath: string): string {
 }
 
 function fileId(filePath: string): string {
-  // Use filename without extension as ID
-  return path.basename(filePath, '.md');
+  return normalizeRelativePath(filePath);
 }
 
 export async function parseVault(vaultRoot: string, files: string[]): Promise<GraphData> {
@@ -52,15 +52,16 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
 
   // Build node list
   for (const file of files) {
-    const id = fileId(file);
+    const normalized = normalizeRelativePath(file);
+    const id = fileId(normalized);
     nodes.push({
       id,
-      label: id,
-      category: getCategory(file),
-      path: file,
+      label: basenameWithoutExt(normalized),
+      category: getCategory(normalized),
+      path: normalized,
     });
-    idToPath.set(id.toLowerCase(), file);
-    pathToId.set(file, id);
+    idToPath.set(basenameWithoutExt(normalized).toLowerCase(), normalized);
+    pathToId.set(normalized, id);
   }
 
   const nodeIds = new Set(nodes.map((n) => n.id));
@@ -75,7 +76,8 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
 
   // Parse wiki-links from each file
   for (const file of files) {
-    const fullPath = path.join(vaultRoot, file);
+    const normalized = normalizeRelativePath(file);
+    const fullPath = path.join(vaultRoot, normalized);
     let content: string;
     try {
       content = await fs.readFile(fullPath, 'utf-8');
@@ -83,7 +85,7 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
       continue;
     }
 
-    const sourceId = pathToId.get(file)!;
+    const sourceId = pathToId.get(normalized)!;
     let match: RegExpExecArray | null;
     const regex = new RegExp(WIKI_LINK_REGEX.source, WIKI_LINK_REGEX.flags);
 
@@ -103,9 +105,10 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
   // Folder-sibling edges: files in the same directory
   const folderGroups = new Map<string, string[]>();
   for (const file of files) {
-    const dir = path.dirname(file);
+    const normalized = normalizeRelativePath(file);
+    const dir = path.posix.dirname(normalized);
     if (!folderGroups.has(dir)) folderGroups.set(dir, []);
-    folderGroups.get(dir)!.push(pathToId.get(file)!);
+    folderGroups.get(dir)!.push(pathToId.get(normalized)!);
   }
 
   for (const [, siblings] of folderGroups) {
@@ -119,9 +122,10 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
   // Cross-folder bridge edges: connect closest files between different top-level folders
   const topLevelGroups = new Map<string, string[]>();
   for (const file of files) {
-    const topDir = file.split(path.sep)[0];
+    const normalized = normalizeRelativePath(file);
+    const topDir = normalized.split('/')[0];
     if (!topLevelGroups.has(topDir)) topLevelGroups.set(topDir, []);
-    topLevelGroups.get(topDir)!.push(pathToId.get(file)!);
+    topLevelGroups.get(topDir)!.push(pathToId.get(normalized)!);
   }
 
   const topDirs = [...topLevelGroups.keys()];
@@ -151,15 +155,16 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
     // Pre-compute lookup helpers for orphan resolution
     const idToFile = new Map<string, string>();
     for (const file of files) {
-      idToFile.set(pathToId.get(file)!, file);
+      const normalized = normalizeRelativePath(file);
+      idToFile.set(pathToId.get(normalized)!, normalized);
     }
 
     for (const orphan of orphanNodes) {
       const orphanFile = idToFile.get(orphan.id);
       if (!orphanFile) continue;
 
-      const orphanDir = path.dirname(orphanFile);
-      const orphanTopDir = orphanFile.split(path.sep)[0];
+      const orphanDir = path.posix.dirname(orphanFile);
+      const orphanTopDir = orphanFile.split('/')[0];
       let connected = false;
 
       // 1st preference: folder-sibling in the same directory

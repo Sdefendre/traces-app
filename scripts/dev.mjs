@@ -1,6 +1,6 @@
 import concurrently from 'concurrently';
 
-concurrently(
+const { result } = concurrently(
   [
     {
       command: 'npx next dev -p 3333 --turbo',
@@ -19,3 +19,8 @@ concurrently(
     restartTries: 0,
   }
 );
+
+result.catch((err) => {
+  const code = Array.isArray(err) ? 1 : 1;
+  process.exit(code);
+});

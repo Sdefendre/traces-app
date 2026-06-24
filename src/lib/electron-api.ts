@@ -40,6 +40,7 @@ export interface ElectronAPI {
   executeRealtimeTool: (opts: { toolName: string; args: Record<string, string> }) => Promise<string>;
   onFileChange: (callback: (event: string, filePath: string) => void) => () => void;
   onGraphUpdate: (callback: (data: GraphData) => void) => () => void;
+  onBeforeQuit: (callback: () => void | Promise<void>) => () => void;
 }
 
 function getAPI(): ElectronAPI | null {
@@ -199,5 +200,11 @@ export const electronAPI = {
     const api = getAPI();
     if (!api) return () => {};
     return api.onGraphUpdate(callback);
+  },
+
+  onBeforeQuit(callback: () => void | Promise<void>): () => void {
+    const api = getAPI();
+    if (!api || typeof api.onBeforeQuit !== 'function') return () => {};
+    return api.onBeforeQuit(callback);
   },
 };

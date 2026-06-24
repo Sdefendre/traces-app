@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { normalizeRelativePath } from './path-utils';
 
 /** Directories to ignore when walking the vault. */
 export const IGNORE_DIRS = ['Google-Drive', 'node_modules'];
@@ -7,7 +8,7 @@ export const IGNORE_DIRS = ['Google-Drive', 'node_modules'];
 let vaultRoot = '';
 
 export function setVaultRoot(root: string) {
-  vaultRoot = root;
+  vaultRoot = path.resolve(root);
 }
 
 export function getVaultRoot(): string {
@@ -16,8 +17,9 @@ export function getVaultRoot(): string {
 
 /** Validate path is within vault — prevents path traversal attacks */
 function safePath(filePath: string): string {
-  const resolved = path.resolve(vaultRoot, filePath);
-  if (!resolved.startsWith(vaultRoot)) {
+  const resolved = path.resolve(vaultRoot, normalizeRelativePath(filePath));
+  const rootWithSep = vaultRoot.endsWith(path.sep) ? vaultRoot : vaultRoot + path.sep;
+  if (resolved !== vaultRoot && !resolved.startsWith(rootWithSep)) {
     throw new Error(`Path traversal blocked: ${filePath}`);
   }
   return resolved;
@@ -36,7 +38,7 @@ export async function listFiles(): Promise<string[]> {
       if (entry.isDirectory()) {
         await walk(fullPath);
       } else if (entry.name.endsWith('.md')) {
-        files.push(path.relative(vaultRoot, fullPath));
+        files.push(normalizeRelativePath(path.relative(vaultRoot, fullPath)));
       }
     }
   }
