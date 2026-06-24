@@ -139,32 +139,25 @@ export function EditorPanel() {
               <p className="text-[11px] text-muted-foreground mt-2 text-center">Press Enter to create, Esc to cancel</p>
             </div>
           ) : (
-            <div className="text-center flex flex-col items-center gap-5">
-              <div
-                className="size-14 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(35,131,226,0.15), rgba(155,89,182,0.15))',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                }}
-              >
-                <Plus className="size-6 text-muted-foreground/70" />
+            <div className="text-center flex flex-col items-center gap-6 max-w-[260px]">
+              <div className="space-y-2">
+                <div className="text-[15px] font-medium tracking-tight" style={{ color: 'var(--text)' }}>
+                  No note selected
+                </div>
+                <div className="text-[13px] text-muted-foreground/70 leading-relaxed">
+                  Pick a note from the sidebar or create a new one
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <div className="text-sm font-medium" style={{ color: 'var(--text)' }}>No note selected</div>
-                <div className="text-xs text-muted-foreground/60">Pick a note from the sidebar or create a new one</div>
-              </div>
-              <button
+              <Button
+                variant="cta"
                 onClick={() => setCreating(true)}
-                className="group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(35,131,226,0.55), rgba(155,89,182,0.55))',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: '0 4px 24px rgba(35,131,226,0.2), 0 0 0 1px rgba(255,255,255,0.04) inset',
-                }}
+                className="group justify-center"
               >
-                <Plus className="size-4 transition-transform duration-200 group-hover:rotate-90" />
-                New Note
-              </button>
+                <span className="flex shrink-0 items-center justify-center size-7 rounded-lg bg-gradient-to-br from-[rgba(35,131,226,0.22)] to-[rgba(155,89,182,0.18)] border border-white/[0.06] transition-all duration-300 group-hover:from-[rgba(35,131,226,0.38)] group-hover:to-[rgba(155,89,182,0.28)] group-hover:border-white/[0.1]">
+                  <Plus className="size-3.5 text-white/90 transition-transform duration-300 group-hover:rotate-90" />
+                </span>
+                <span className="leading-none">New Note</span>
+              </Button>
             </div>
           )}
         </div>
