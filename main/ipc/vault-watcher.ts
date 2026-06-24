@@ -1,25 +1,74 @@
 import { BrowserWindow } from 'electron';
 import path from 'path';
 import { watch, FSWatcher } from 'chokidar';
-import { listFiles, IGNORE_DIRS } from './file-system';
+import { listFiles, readFile, IGNORE_DIRS } from './file-system';
 import { parseVault } from './vault-parser';
 import { toRelativeVaultPath } from './path-utils';
 
 let watcher: FSWatcher | null = null;
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingRebuild = false;
+let pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
+const contentCache = new Map<string, string>();
 
 const REBUILD_DEBOUNCE_MS = 400;
+
+async function rebuildGraph(
+  resolvedRoot: string,
+  getWindow: () => BrowserWindow | null
+) {
+  const win = getWindow();
+  if (!win || win.isDestroyed()) return;
+
+  const changes = new Map(pendingChanges);
+  pendingChanges.clear();
+
+  try {
+    const files = await listFiles();
+
+    for (const [rel, evt] of changes) {
+      if (evt === 'unlink') {
+        contentCache.delete(rel);
+      } else {
+        try {
+          contentCache.set(rel, await readFile(rel));
+        } catch {
+          contentCache.delete(rel);
+        }
+      }
+    }
+
+    for (const key of [...contentCache.keys()]) {
+      if (!files.includes(key)) contentCache.delete(key);
+    }
+
+    for (const file of files) {
+      if (!contentCache.has(file)) {
+        try {
+          contentCache.set(file, await readFile(file));
+        } catch {
+          contentCache.delete(file);
+        }
+      }
+    }
+
+    const graphData = await parseVault(resolvedRoot, files, contentCache);
+    win.webContents.send('vault:graphUpdate', graphData);
+  } catch (err) {
+    console.error('Error rebuilding graph:', err);
+  }
+}
 
 export function startVaultWatcher(
   vaultRoot: string,
   getWindow: () => BrowserWindow | null
 ) {
   const resolvedRoot = path.resolve(vaultRoot);
+  contentCache.clear();
+  pendingChanges.clear();
 
   watcher = watch(resolvedRoot, {
     ignored: [
-      /(^|[\/\\])\./,            // dotfiles
+      /(^|[\/\\])\./,
       ...IGNORE_DIRS.map((d) => new RegExp(d)),
     ],
     persistent: true,
@@ -31,29 +80,20 @@ export function startVaultWatcher(
   });
 
   const scheduleGraphRebuild = () => {
-    pendingRebuild = true;
     if (rebuildTimer) clearTimeout(rebuildTimer);
-    rebuildTimer = setTimeout(async () => {
-      if (!pendingRebuild) return;
-      pendingRebuild = false;
-      const win = getWindow();
-      if (!win || win.isDestroyed()) return;
-      try {
-        const files = await listFiles();
-        const graphData = await parseVault(resolvedRoot, files);
-        win.webContents.send('vault:graphUpdate', graphData);
-      } catch (err) {
-        console.error('Error rebuilding graph:', err);
-      }
+    rebuildTimer = setTimeout(() => {
+      rebuildTimer = null;
+      void rebuildGraph(resolvedRoot, getWindow);
     }, REBUILD_DEBOUNCE_MS);
   };
 
-  const handleChange = (eventType: string, filePath: string) => {
+  const handleChange = (eventType: 'add' | 'change' | 'unlink', filePath: string) => {
     const win = getWindow();
     if (!win || win.isDestroyed() || !filePath.endsWith('.md')) return;
 
     const relative = toRelativeVaultPath(resolvedRoot, filePath);
     win.webContents.send('vault:fileChange', eventType, relative);
+    pendingChanges.set(relative, eventType);
     scheduleGraphRebuild();
   };
 
@@ -67,7 +107,8 @@ export function stopVaultWatcher() {
     clearTimeout(rebuildTimer);
     rebuildTimer = null;
   }
-  pendingRebuild = false;
+  pendingChanges.clear();
+  contentCache.clear();
   if (watcher) {
     watcher.close();
     watcher = null;

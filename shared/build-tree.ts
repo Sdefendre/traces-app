@@ -1,4 +1,4 @@
-import { normalizeRelativePath } from './path-utils';
+import { normalizeRelativePath } from './paths';
 
 export interface TreeNode {
   name: string;

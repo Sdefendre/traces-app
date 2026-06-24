@@ -5,12 +5,19 @@
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { parseVault } = require('../main/dist/ipc/vault-parser.js');
-const { buildTree } = require('../main/dist/ipc/build-tree.js');
+const { parseVault } = require('../main/dist/main/ipc/vault-parser.js');
+const { buildTree } = require('../main/dist/shared/build-tree.js');
 
 const sampleFiles = ['Memory/a.md', 'Workspace/b.md', 'Memory/sub/c.md', 'Memory\\dup.md'];
 
-const data = await parseVault('/tmp/vault-verify', sampleFiles);
+const contentCache = new Map([
+  ['Memory/a.md', '[[b]]'],
+  ['Workspace/b.md', ''],
+  ['Memory/sub/c.md', ''],
+  ['Memory/dup.md', ''],
+]);
+
+const data = await parseVault('/tmp/vault-verify', sampleFiles, contentCache);
 const uniqueIds = new Set(data.nodes.map((n) => n.id)).size === data.nodes.length;
 const fullPathIds = data.nodes.every((n) => n.id.includes('/'));
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,6 +31,12 @@ export function ClusterCard({ node, position, isConnected, onSelect, nodeSize }:
   const scale = hovered ? 1.2 : 1;
   const cardWidth = 10 * nodeSize;
   const cardHeight = 14 * nodeSize;
+
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = '';
+    };
+  }, []);
 
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>

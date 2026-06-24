@@ -61,7 +61,11 @@ export function EditorPanel() {
   }, []);
 
   const handleCreateNote = useCallback(async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      setCreating(false);
+      setNewName('');
+      return;
+    }
     const fileName = newName.endsWith('.md') ? newName : `${newName}.md`;
     const filePath = `Memory/${fileName}`;
     try {

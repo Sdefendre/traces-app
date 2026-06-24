@@ -41,7 +41,11 @@ function fileId(filePath: string): string {
   return normalizeRelativePath(filePath);
 }
 
-export async function parseVault(vaultRoot: string, files: string[]): Promise<GraphData> {
+export async function parseVault(
+  vaultRoot: string,
+  files: string[],
+  contentCache?: Map<string, string>
+): Promise<GraphData> {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const edgeSet = new Set<string>();
@@ -78,12 +82,18 @@ export async function parseVault(vaultRoot: string, files: string[]): Promise<Gr
   for (const file of files) {
     const normalized = normalizeRelativePath(file);
     const fullPath = path.join(vaultRoot, normalized);
-    let content: string;
-    try {
-      content = await fs.readFile(fullPath, 'utf-8');
-    } catch {
-      continue;
+    let content: string | undefined;
+    if (contentCache?.has(normalized)) {
+      content = contentCache.get(normalized);
+    } else {
+      try {
+        content = await fs.readFile(fullPath, 'utf-8');
+        contentCache?.set(normalized, content);
+      } catch {
+        continue;
+      }
     }
+    if (content === undefined) continue;
 
     const sourceId = pathToId.get(normalized)!;
     let match: RegExpExecArray | null;

@@ -103,7 +103,7 @@ export function AppShell() {
       const { tabs, closeTab, reloadTab } = useEditorStore.getState();
       const tab = tabs.find((t) => t.path === normalized);
       if (event === 'unlink') {
-        if (tab) closeTab(tab.id);
+        if (tab) void closeTab(tab.id);
         if (useVaultStore.getState().activeFile === normalized) {
           useVaultStore.getState().setActiveFile(null);
         }
