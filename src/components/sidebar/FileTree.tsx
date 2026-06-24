@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useVaultStore } from '@/stores/vault-store';
-import { useEditorStore } from '@/stores/editor-store';
+import { useEditorStore, safeCloseTab } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
 import { FileTreeItem } from './FileTreeItem';
 import { buildTree } from '@/lib/build-tree';
@@ -83,9 +83,9 @@ export function FileTree() {
       try {
         await electronAPI.deleteFile(path);
         await refreshFiles();
-        const { tabs, closeTab } = useEditorStore.getState();
+        const { tabs } = useEditorStore.getState();
         const tab = tabs.find((t) => t.path === path);
-        if (tab) void closeTab(tab.id);
+        if (tab) safeCloseTab(tab.id);
         if (useVaultStore.getState().activeFile === path) {
           useVaultStore.getState().setActiveFile(null);
         }

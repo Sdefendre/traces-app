@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useEditorStore } from '@/stores/editor-store';
+import { useEditorStore, safeCloseTab } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, X, Sun, Moon, Plus, Eye, EyeOff, MessageCircle } from 'lucide-react';
 
 export function EditorPanel() {
-  const { tabs, activeTabId, closeTab, openFile } = useEditorStore();
+  const { tabs, activeTabId, openFile } = useEditorStore();
   const { activeFile, refreshFiles, setActiveFile } = useVaultStore();
   const { editorLightMode, toggleEditorTheme, toggleEditorCollapsed, previewMode, togglePreview, chatOpen, setChatOpen } = useUIStore();
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -195,7 +195,7 @@ export function EditorPanel() {
                   style={{ color: editorLightMode ? '#a1a1aa' : 'var(--text-dim)' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    void closeTab(tab.id);
+                    safeCloseTab(tab.id);
                   }}
                 >
                   <X className="size-2.5" />

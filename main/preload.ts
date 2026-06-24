@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('vault:graphUpdate', handler);
   },
 
+  // Flushes dirty editor tabs before app quit.
   onBeforeQuit: (callback: () => void | Promise<void>) => {
     const handler = async () => {
       try {

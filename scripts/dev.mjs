@@ -1,5 +1,6 @@
 import concurrently from 'concurrently';
 
+// Dev launcher: Next.js + Electron with graceful shutdown.
 let shuttingDown = false;
 
 function gracefulExit(code = 0) {

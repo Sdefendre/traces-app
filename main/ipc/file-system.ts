@@ -8,7 +8,7 @@ export const IGNORE_DIRS = ['Google-Drive', 'node_modules'];
 let vaultRoot = '';
 
 export function setVaultRoot(root: string) {
-  vaultRoot = path.resolve(root);
+  vaultRoot = path.resolve(root); // normalized for safePath checks
 }
 
 export function getVaultRoot(): string {

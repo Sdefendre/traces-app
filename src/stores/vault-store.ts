@@ -53,7 +53,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   refreshFiles: async () => {
     try {
       const files = await electronAPI.listFiles();
-      set({ files: files.map(normalizeRelativePath) });
+      set({ files: files.map((f) => normalizeRelativePath(f)) });
     } catch (err) {
       console.error('Failed to refresh files:', err);
     }

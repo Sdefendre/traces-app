@@ -38,7 +38,7 @@ function getCategory(filePath: string): string {
 }
 
 function fileId(filePath: string): string {
-  return normalizeRelativePath(filePath);
+  return normalizeRelativePath(filePath); // full relative path as unique id
 }
 
 export async function parseVault(

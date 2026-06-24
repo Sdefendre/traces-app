@@ -203,6 +203,7 @@ export const electronAPI = {
   },
 
   onBeforeQuit(callback: () => void | Promise<void>): () => void {
+    // Renderer hook for app:before-quit flush.
     const api = getAPI();
     if (!api || typeof api.onBeforeQuit !== 'function') return () => {};
     return api.onBeforeQuit(callback);

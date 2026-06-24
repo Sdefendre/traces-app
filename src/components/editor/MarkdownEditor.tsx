@@ -108,7 +108,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
                 useEditorStore.getState().renameTab(normalizedPath, newPath);
                 useVaultStore.getState().setActiveFile(newPath);
                 useVaultStore.getState().refreshFiles();
-              }).catch((err) => {
+              }).catch((err: unknown) => {
                 console.error('Failed to rename note from title:', err);
               });
             }, 1500);

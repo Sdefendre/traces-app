@@ -73,6 +73,7 @@ export function createEditorStore(deps: EditorStoreDeps) {
           await deps.writeFile(tab.path, tab.content);
         } catch (err) {
           console.error('Failed to save tab on close:', tab.path, err);
+          return;
         }
       }
 

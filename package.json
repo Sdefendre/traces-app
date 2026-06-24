@@ -9,7 +9,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "verify:logic": "node scripts/verify-logic.mjs",
     "verify:editor": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-editor-store.js",
-    "verify": "bash scripts/run-verification.sh",
+    "verify:all": "bash scripts/run-verification.sh",
     "build": "pnpm build:next && pnpm build:electron",
     "dist": "pnpm build && electron-builder",
     "start": "electron .",

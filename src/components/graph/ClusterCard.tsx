@@ -32,11 +32,7 @@ export function ClusterCard({ node, position, isConnected, onSelect, nodeSize }:
   const cardWidth = 10 * nodeSize;
   const cardHeight = 14 * nodeSize;
 
-  useEffect(() => {
-    return () => {
-      document.body.style.cursor = '';
-    };
-  }, []);
+  useEffect(() => () => { document.body.style.cursor = ''; }, []);
 
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>

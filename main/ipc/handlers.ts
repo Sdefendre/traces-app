@@ -64,7 +64,8 @@ export function registerIpcHandlers(vaultRoot: string) {
 
   ipcMain.handle('vault:getGraphData', async () => {
     const files = await listFiles();
-    return parseVault(getVaultRoot(), files);
+    const root = getVaultRoot();
+    return parseVault(root, files);
   });
 
   ipcMain.handle('settings:load', async () => {

@@ -58,6 +58,7 @@ async function applyPendingChanges(): Promise<boolean> {
     }
   }
 
+  // Full listing only on structural errors — change-only autosaves skip listFiles.
   if (needsFullListing) {
     knownFiles = await listFiles();
     for (const key of [...contentCache.keys()]) {

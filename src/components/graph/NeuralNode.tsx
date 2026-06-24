@@ -36,11 +36,7 @@ export function NeuralNode({ node, getPositions, isConnected, onSelect, nodeSize
   const targetScale = hovered ? 1.3 : isHighlighted ? 1.1 : 1;
   const radius = nodeSize;
 
-  useEffect(() => {
-    return () => {
-      document.body.style.cursor = '';
-    };
-  }, []);
+  useEffect(() => () => { document.body.style.cursor = ''; }, []);
 
   useFrame(({ clock }) => {
     if (!meshRef.current) return;

@@ -1,3 +1,4 @@
+// Shared file-tree builder (main + renderer).
 import { normalizeRelativePath } from './paths';
 
 export interface TreeNode {

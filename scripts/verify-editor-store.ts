@@ -1,3 +1,4 @@
+// Exercises real createEditorStore (open/save/close dirty tabs).
 import { createEditorStore, pathToId } from '../src/stores/create-editor-store';
 
 const files: Record<string, string> = {};
