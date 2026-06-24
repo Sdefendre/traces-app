@@ -85,7 +85,12 @@ export function FileTree() {
         await refreshFiles();
         const { tabs } = useEditorStore.getState();
         const tab = tabs.find((t) => t.path === path);
-        if (tab) void closeTab(tab.id, { discard: true });
+        if (tab) {
+          const removed = await closeTab(tab.id, { discard: true });
+          if (!removed) {
+            console.warn('Expected discard close to remove tab:', path);
+          }
+        }
         if (useVaultStore.getState().activeFile === path) {
           useVaultStore.getState().setActiveFile(null);
         }

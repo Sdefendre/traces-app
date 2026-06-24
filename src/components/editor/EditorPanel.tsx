@@ -18,6 +18,20 @@ export function EditorPanel() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
 
+  const handleCloseTab = useCallback(
+    async (tab: { id: string; saveError?: string | null }) => {
+      const closed = await closeTab(
+        tab.id,
+        tab.saveError ? { discard: true } : undefined
+      );
+      if (!closed) {
+        // Save-on-close failed: tab stays open; focus it so the error indicator is visible.
+        useEditorStore.setState({ activeTabId: tab.id });
+      }
+    },
+    [closeTab]
+  );
+
   // Editor-specific colors based on light/dark mode
   const editorBg = editorLightMode ? '#ffffff' : 'transparent';
   const editorText = editorLightMode ? '#09090b' : 'var(--text)';
@@ -197,11 +211,15 @@ export function EditorPanel() {
                   size="icon-xs"
                   className="ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity size-4"
                   style={{ color: editorLightMode ? '#a1a1aa' : 'var(--text-dim)' }}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    void closeTab(tab.id);
+                    await handleCloseTab(tab);
                   }}
-                  title={tab.saveError ? `Save failed: ${tab.saveError}` : 'Close tab'}
+                  title={
+                    tab.saveError
+                      ? `Discard unsaved changes (${tab.saveError})`
+                      : 'Close tab'
+                  }
                 >
                   <X className="size-2.5" />
                 </Button>

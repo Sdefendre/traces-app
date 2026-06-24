@@ -452,7 +452,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [messages]);
 
-  // Settings: clearChatOnClose resets chat when the panel is dismissed.
+  // clearChatOnClose: reset chat state when the panel is dismissed.
   useEffect(() => {
     if (!chatOpen && appSettings.clearChatOnClose) {
       setMessages([]);

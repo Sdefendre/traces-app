@@ -6,35 +6,51 @@ SCRATCH="${SCRATCH:-/var/folders/f0/sgw9jtdj00z349p4skdvkjtw0000gn/T/grok-goal-1
 cd "$ROOT"
 mkdir -p "$SCRATCH"
 rm -f "$SCRATCH"/tsc.log "$SCRATCH"/tsc2.log "$SCRATCH"/build.log "$SCRATCH"/build2.log \
-  "$SCRATCH"/logic.log "$SCRATCH"/launch.log "$SCRATCH"/editor-store.log \
-  "$SCRATCH"/editor-store2.log "$SCRATCH"/checks.log
+  "$SCRATCH"/logic.log "$SCRATCH"/launch.log "$SCRATCH"/launch-full.log \
+  "$SCRATCH"/editor-store.log "$SCRATCH"/editor-store2.log "$SCRATCH"/checks.log
 
-# Step 1: type-check (twice)
-pnpm exec tsc --noEmit 2>&1 | tee "$SCRATCH/tsc.log"
-pnpm exec tsc --noEmit 2>&1 | tee "$SCRATCH/tsc2.log"
+lsof -ti:3333 | xargs kill -9 2>/dev/null || true
+pkill -f "scripts/dev.mjs" 2>/dev/null || true
 
-# Step 1 continued: production build (twice)
+run_tsc() {
+  local out="$1"
+  {
+    pnpm exec tsc --noEmit 2>&1
+    local ec=$?
+    if [ "$ec" -eq 0 ]; then
+      echo "success: tsc --noEmit passed with zero errors"
+    fi
+    exit "$ec"
+  } | tee "$out"
+}
+
+# Step 1 (plan): tsc twice
+run_tsc "$SCRATCH/tsc.log"
+run_tsc "$SCRATCH/tsc2.log"
+
+# Step 1 continued: production build twice
 pnpm build 2>&1 | tee "$SCRATCH/build.log"
 pnpm build 2>&1 | tee "$SCRATCH/build2.log"
 
-# Step 2: after build:electron, exercise shipped parseVault + buildTree
+# Step 2 (plan): after build:electron, load real compiled exports
 pnpm build:electron 2>&1 | tee -a "$SCRATCH/build2.log"
 node scripts/verify-logic.mjs 2>&1 | tee "$SCRATCH/logic.log"
 
-# Step 3: launch attempt (15s)
-if command -v timeout >/dev/null 2>&1; then
-  timeout 15s pnpm dev 2>&1 | head -100 | tee "$SCRATCH/launch.log" || true
-else
-  perl -e 'alarm 15; exec @ARGV' pnpm dev 2>&1 | head -100 | tee "$SCRATCH/launch.log" || true
-fi
+# Step 3 (plan): launch — capture startup only (no wait-on HEAD flood)
+lsof -ti:3333 | xargs kill -9 2>/dev/null || true
+pnpm dev > "$SCRATCH/launch-full.log" 2>&1 &
+DEVPID=$!
+sleep 10
+kill "$DEVPID" 2>/dev/null || true
 pkill -f "scripts/dev.mjs" 2>/dev/null || true
 pkill -f "next dev -p 3333" 2>/dev/null || true
+head -12 "$SCRATCH/launch-full.log" | tee "$SCRATCH/launch.log"
 
-# Step 4: editor store (twice)
+# Step 4 (plan): editor store — run twice for consistency
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store.log"
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store2.log"
 
-# Step 5: source inspection
+# Step 5 (plan): source inspection
 {
   echo "=== setRenderTick ==="
   grep -rn "setRenderTick" src/components/graph/ || echo "none"
@@ -44,12 +60,12 @@ pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store2.log"
   grep -n "clearChatOnClose" src/components/chat/ChatPanel.tsx
   echo "=== before-quit ==="
   grep -n "before-quit\|ready-to-quit" main/index.ts main/preload.ts
-  echo "=== closeTab saveError recovery ==="
-  grep -n "saveError" src/stores/create-editor-store.ts src/types/index.ts
-  echo "=== closeTab discard on unlink ==="
-  grep -n "discard: true" src/components/layout/AppShell.tsx src/components/sidebar/FileTree.tsx
-  echo "=== incremental watcher ==="
-  grep -n "bootstrapKnownFiles\|hadChanges" main/ipc/vault-watcher.ts
+  echo "=== handleCloseTab await ==="
+  grep -n "await handleCloseTab\|createEditorStoreWithDeps" src/components/editor/EditorPanel.tsx src/stores/editor-store.ts
+  echo "=== tab-close-policy ==="
+  grep -n "planTabClose" shared/tab-close-policy.ts
+  echo "=== vault warm cache ==="
+  grep -n "isWarm\|resetVaultFileCache\|coldStart" main/ipc/vault-file-cache.ts main/ipc/vault-watcher.ts
 } | tee "$SCRATCH/checks.log"
 
 echo "verification complete"

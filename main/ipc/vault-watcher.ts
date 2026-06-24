@@ -4,18 +4,27 @@ import { watch, FSWatcher } from 'chokidar';
 import { listFiles, readFile, IGNORE_DIRS } from './file-system';
 import { parseVault } from './vault-parser';
 import { toRelativeVaultPath } from './path-utils';
+import {
+  getContentCache,
+  getKnownFiles,
+  isWarm,
+  markWarm,
+  resetVaultFileCache,
+  setKnownFiles,
+} from './vault-file-cache';
 
 let watcher: FSWatcher | null = null;
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
-const contentCache = new Map<string, string>();
-let knownFiles: string[] = [];
 
 const REBUILD_DEBOUNCE_MS = 400;
 const READ_RETRY_DELAY_MS = 100;
 const READ_RETRY_COUNT = 2;
 
+export { resetVaultFileCache };
+
 async function readFileWithRetry(rel: string): Promise<string | null> {
+  const contentCache = getContentCache();
   for (let attempt = 0; attempt < READ_RETRY_COUNT; attempt++) {
     try {
       return await readFile(rel);
@@ -29,6 +38,7 @@ async function readFileWithRetry(rel: string): Promise<string | null> {
 }
 
 async function hydrateCacheForFiles(files: string[]) {
+  const contentCache = getContentCache();
   for (const file of files) {
     if (!contentCache.has(file)) {
       const content = await readFileWithRetry(file);
@@ -39,14 +49,17 @@ async function hydrateCacheForFiles(files: string[]) {
   }
 }
 
-/** One-time vault scan at watcher start; subsequent rebuilds are incremental only. */
+/** Full listFiles scan — only on cold vault open (not warm watcher restarts). */
 async function bootstrapKnownFiles() {
-  knownFiles = await listFiles();
-  await hydrateCacheForFiles(knownFiles);
-  knownFiles.sort();
+  const files = (await listFiles()).sort();
+  setKnownFiles(files);
+  await hydrateCacheForFiles(files);
 }
 
 async function applyPendingChanges(): Promise<boolean> {
+  const contentCache = getContentCache();
+  let knownFiles = getKnownFiles();
+
   const changes = new Map(pendingChanges);
   pendingChanges.clear();
   if (changes.size === 0) return false;
@@ -69,11 +82,26 @@ async function applyPendingChanges(): Promise<boolean> {
       contentCache.delete(rel);
       knownFiles = knownFiles.filter((f) => f !== rel);
     }
-    // change: keep prior cache entry on transient read failure (e.g. mid-write).
   }
 
   knownFiles.sort();
+  setKnownFiles(knownFiles);
   return true;
+}
+
+async function pushGraphFromCache(
+  resolvedRoot: string,
+  getWindow: () => BrowserWindow | null
+) {
+  const win = getWindow();
+  if (!win || win.isDestroyed()) return;
+
+  const graphData = await parseVault(
+    resolvedRoot,
+    getKnownFiles(),
+    getContentCache()
+  );
+  win.webContents.send('vault:graphUpdate', graphData);
 }
 
 async function rebuildGraph(
@@ -86,9 +114,7 @@ async function rebuildGraph(
   try {
     const hadChanges = await applyPendingChanges();
     if (!hadChanges) return;
-
-    const graphData = await parseVault(resolvedRoot, knownFiles, contentCache);
-    win.webContents.send('vault:graphUpdate', graphData);
+    await pushGraphFromCache(resolvedRoot, getWindow);
   } catch (err) {
     console.error('Error rebuilding graph:', err);
   }
@@ -99,14 +125,22 @@ export async function startVaultWatcher(
   getWindow: () => BrowserWindow | null
 ) {
   const resolvedRoot = path.resolve(vaultRoot);
-  contentCache.clear();
   pendingChanges.clear();
-  await bootstrapKnownFiles();
 
-  const win = getWindow();
-  if (win && !win.isDestroyed()) {
-    const graphData = await parseVault(resolvedRoot, knownFiles, contentCache);
-    win.webContents.send('vault:graphUpdate', graphData);
+  // First open or after resetVaultFileCache: one listFiles scan (required).
+  // Warm restarts on the same vault skip listFiles entirely.
+  const coldStart = !isWarm(resolvedRoot);
+  if (coldStart) {
+    await bootstrapKnownFiles();
+    markWarm(resolvedRoot);
+    await pushGraphFromCache(resolvedRoot, getWindow);
+  } else {
+    await pushGraphFromCache(resolvedRoot, getWindow);
+  }
+
+  if (watcher) {
+    await watcher.close();
+    watcher = null;
   }
 
   watcher = watch(resolvedRoot, {
@@ -151,8 +185,6 @@ export function stopVaultWatcher() {
     rebuildTimer = null;
   }
   pendingChanges.clear();
-  contentCache.clear();
-  knownFiles = [];
   if (watcher) {
     watcher.close();
     watcher = null;

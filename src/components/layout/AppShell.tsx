@@ -98,20 +98,24 @@ export function AppShell() {
 
   useEffect(() => {
     const unsubFile = electronAPI.onFileChange((event, filePath) => {
-      void refreshFiles();
-      const normalized = normalizeRelativePath(filePath);
-      const { tabs, closeTab, reloadTab } = useEditorStore.getState();
-      const tab = tabs.find((t) => t.path === normalized);
-      if (event === 'unlink') {
-        if (tab) void closeTab(tab.id, { discard: true });
-        if (useVaultStore.getState().activeFile === normalized) {
-          useVaultStore.getState().setActiveFile(null);
+      void (async () => {
+        await refreshFiles();
+        const normalized = normalizeRelativePath(filePath);
+        const { tabs, closeTab, reloadTab } = useEditorStore.getState();
+        const tab = tabs.find((t) => t.path === normalized);
+        if (event === 'unlink') {
+          if (tab) {
+            await closeTab(tab.id, { discard: true });
+          }
+          if (useVaultStore.getState().activeFile === normalized) {
+            useVaultStore.getState().setActiveFile(null);
+          }
+          return;
         }
-        return;
-      }
-      if (tab && (event === 'change' || event === 'add')) {
-        void reloadTab(normalized);
-      }
+        if (tab && (event === 'change' || event === 'add')) {
+          await reloadTab(normalized);
+        }
+      })();
     });
 
     const unsubGraph = electronAPI.onGraphUpdate((data) => {

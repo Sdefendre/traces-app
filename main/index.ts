@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'node:fs';
 import { registerIpcHandlers } from './ipc/handlers';
 import { setVaultRoot } from './ipc/file-system';
-import { startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
+import { resetVaultFileCache, startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
 
 let vaultPath = path.join(
   app.getPath('home'),
@@ -52,7 +52,7 @@ function createWindow() {
 app.whenReady().then(() => {
   registerIpcHandlers(vaultPath);
   createWindow();
-  void startVaultWatcher(vaultPath, () => mainWindow); // hydrates cache once at init
+  void startVaultWatcher(vaultPath, () => mainWindow);
 
   // IPC handler: open a native folder picker and switch the vault root
   ipcMain.handle('vault:openFolder', async () => {
@@ -74,8 +74,9 @@ app.whenReady().then(() => {
     vaultPath = selectedPath;
     setVaultRoot(selectedPath);
 
-    // Restart the watcher on the new folder
+    // Cold restart: new vault requires full cache reset
     stopVaultWatcher();
+    resetVaultFileCache();
     void startVaultWatcher(selectedPath, () => mainWindow);
 
     return selectedPath;
@@ -95,11 +96,13 @@ app.on('before-quit', (event) => {
 ipcMain.handle('app:ready-to-quit', () => {
   isQuitting = true;
   stopVaultWatcher();
+  resetVaultFileCache();
   app.quit();
 });
 
 app.on('window-all-closed', () => {
   stopVaultWatcher();
+  resetVaultFileCache();
   if (process.platform !== 'darwin') {
     app.quit();
   }

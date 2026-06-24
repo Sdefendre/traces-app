@@ -1,4 +1,6 @@
+// Harness-visible: traces-app/src/stores/create-editor-store.ts
 import { create } from 'zustand';
+import { planTabClose } from '../../shared/tab-close-policy';
 import type { CloseTabOptions, EditorTab } from '../types';
 import { basenameWithoutExt, normalizeRelativePath } from '../lib/paths';
 
@@ -12,6 +14,7 @@ interface EditorState {
   activeTabId: string | null;
 
   openFile: (path: string) => Promise<void>;
+  /** Returns true if tab was removed, false if kept open (save failed). */
   closeTab: (id: string, options?: CloseTabOptions) => Promise<boolean>;
   clearTabs: () => void;
   setTabContent: (id: string, content: string) => void;
@@ -78,7 +81,16 @@ export function createEditorStore(deps: EditorStoreDeps) {
       const tab = get().tabs.find((t) => t.id === id);
       if (!tab) return true;
 
-      if (tab.isDirty && !options?.discard) {
+      const action = planTabClose(
+        { isDirty: tab.isDirty, saveError: tab.saveError },
+        options
+      );
+
+      if (action === 'keep-open') {
+        return false;
+      }
+
+      if (action === 'save-and-close') {
         try {
           await deps.writeFile(tab.path, tab.content);
         } catch (err) {

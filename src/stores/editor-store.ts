@@ -1,14 +1,15 @@
 import { electronAPI } from '../lib/electron-api';
-import { createEditorStore } from './create-editor-store';
+import { createEditorStoreWithDeps } from './editor-store-factory';
 
 export {
   createEditorStore,
+  createEditorStoreWithDeps,
   pathToId,
   type EditorStoreDeps,
-} from './create-editor-store';
+} from './editor-store-factory';
 export type { CloseTabOptions } from '../types';
 
-export const useEditorStore = createEditorStore({
+export const useEditorStore = createEditorStoreWithDeps({
   readFile: (path) => electronAPI.readFile(path),
   writeFile: (path, content) => electronAPI.writeFile(path, content),
 });

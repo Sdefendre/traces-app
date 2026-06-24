@@ -64,7 +64,7 @@ export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any>
     [openFile, setActiveFile, setSelectedNode]
   );
 
-  // Camera animation only — graph positions update via refs in child useFrame hooks.
+  // Camera animation only; graph positions update via refs (no per-frame setState).
   useFrame((state) => {
     const { camera } = state;
 
