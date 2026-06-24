@@ -195,7 +195,7 @@ export function EditorPanel() {
                   style={{ color: editorLightMode ? '#a1a1aa' : 'var(--text-dim)' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    closeTab(tab.id);
+                    void closeTab(tab.id);
                   }}
                 >
                   <X className="size-2.5" />

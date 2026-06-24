@@ -1,5 +1,16 @@
 import concurrently from 'concurrently';
 
+let shuttingDown = false;
+
+function gracefulExit(code = 0) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  process.exit(code);
+}
+
+process.on('SIGINT', () => gracefulExit(0));
+process.on('SIGTERM', () => gracefulExit(0));
+
 const { result } = concurrently(
   [
     {
@@ -20,7 +31,13 @@ const { result } = concurrently(
   }
 );
 
-result.catch((err) => {
-  const code = Array.isArray(err) ? 1 : 1;
-  process.exit(code);
-});
+result
+  .then(() => gracefulExit(0))
+  .catch((err) => {
+    if (shuttingDown) {
+      gracefulExit(0);
+      return;
+    }
+    console.error('[dev] One or more processes exited:', err);
+    gracefulExit(1);
+  });

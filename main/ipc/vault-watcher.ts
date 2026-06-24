@@ -9,8 +9,66 @@ let watcher: FSWatcher | null = null;
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
 const contentCache = new Map<string, string>();
+let knownFiles: string[] = [];
 
 const REBUILD_DEBOUNCE_MS = 400;
+
+async function hydrateCacheForFiles(files: string[]) {
+  for (const file of files) {
+    if (!contentCache.has(file)) {
+      try {
+        contentCache.set(file, await readFile(file));
+      } catch {
+        contentCache.delete(file);
+      }
+    }
+  }
+}
+
+async function applyPendingChanges(): Promise<boolean> {
+  const changes = new Map(pendingChanges);
+  pendingChanges.clear();
+  if (changes.size === 0) return false;
+
+  let needsFullListing = false;
+
+  for (const [rel, evt] of changes) {
+    if (evt === 'unlink') {
+      contentCache.delete(rel);
+      knownFiles = knownFiles.filter((f) => f !== rel);
+    } else if (evt === 'add') {
+      if (!knownFiles.includes(rel)) {
+        knownFiles.push(rel);
+      }
+      try {
+        contentCache.set(rel, await readFile(rel));
+      } catch {
+        contentCache.delete(rel);
+        knownFiles = knownFiles.filter((f) => f !== rel);
+        needsFullListing = true;
+      }
+    } else if (evt === 'change') {
+      try {
+        contentCache.set(rel, await readFile(rel));
+      } catch {
+        contentCache.delete(rel);
+        knownFiles = knownFiles.filter((f) => f !== rel);
+        needsFullListing = true;
+      }
+    }
+  }
+
+  if (needsFullListing) {
+    knownFiles = await listFiles();
+    for (const key of [...contentCache.keys()]) {
+      if (!knownFiles.includes(key)) contentCache.delete(key);
+    }
+    await hydrateCacheForFiles(knownFiles);
+  }
+
+  knownFiles.sort();
+  return true;
+}
 
 async function rebuildGraph(
   resolvedRoot: string,
@@ -19,52 +77,29 @@ async function rebuildGraph(
   const win = getWindow();
   if (!win || win.isDestroyed()) return;
 
-  const changes = new Map(pendingChanges);
-  pendingChanges.clear();
-
   try {
-    const files = await listFiles();
-
-    for (const [rel, evt] of changes) {
-      if (evt === 'unlink') {
-        contentCache.delete(rel);
-      } else {
-        try {
-          contentCache.set(rel, await readFile(rel));
-        } catch {
-          contentCache.delete(rel);
-        }
-      }
+    const hadChanges = await applyPendingChanges();
+    if (!hadChanges && knownFiles.length === 0) {
+      knownFiles = await listFiles();
+      await hydrateCacheForFiles(knownFiles);
     }
 
-    for (const key of [...contentCache.keys()]) {
-      if (!files.includes(key)) contentCache.delete(key);
-    }
-
-    for (const file of files) {
-      if (!contentCache.has(file)) {
-        try {
-          contentCache.set(file, await readFile(file));
-        } catch {
-          contentCache.delete(file);
-        }
-      }
-    }
-
-    const graphData = await parseVault(resolvedRoot, files, contentCache);
+    const graphData = await parseVault(resolvedRoot, knownFiles, contentCache);
     win.webContents.send('vault:graphUpdate', graphData);
   } catch (err) {
     console.error('Error rebuilding graph:', err);
   }
 }
 
-export function startVaultWatcher(
+export async function startVaultWatcher(
   vaultRoot: string,
   getWindow: () => BrowserWindow | null
 ) {
   const resolvedRoot = path.resolve(vaultRoot);
   contentCache.clear();
   pendingChanges.clear();
+  knownFiles = await listFiles();
+  await hydrateCacheForFiles(knownFiles);
 
   watcher = watch(resolvedRoot, {
     ignored: [
@@ -109,6 +144,7 @@ export function stopVaultWatcher() {
   }
   pendingChanges.clear();
   contentCache.clear();
+  knownFiles = [];
   if (watcher) {
     watcher.close();
     watcher = null;

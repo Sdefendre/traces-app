@@ -52,7 +52,7 @@ function createWindow() {
 app.whenReady().then(() => {
   registerIpcHandlers(vaultPath);
   createWindow();
-  startVaultWatcher(vaultPath, () => mainWindow);
+  void startVaultWatcher(vaultPath, () => mainWindow);
 
   // IPC handler: open a native folder picker and switch the vault root
   ipcMain.handle('vault:openFolder', async () => {
@@ -76,7 +76,7 @@ app.whenReady().then(() => {
 
     // Restart the watcher on the new folder
     stopVaultWatcher();
-    startVaultWatcher(selectedPath, () => mainWindow);
+    void startVaultWatcher(selectedPath, () => mainWindow);
 
     return selectedPath;
   });
