@@ -1,7 +1,19 @@
 {
   "name": "traces",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "description": "Local-first knowledge workspace by Defendre Solutions — a 3D force-directed knowledge graph, markdown editor, and multi-provider AI assistant for exploring connections between your notes.",
+  "license": "MIT",
+  "author": {
+    "name": "Defendre Solutions LLC",
+    "email": "steve@defendresolutions.com",
+    "url": "https://defendresolutions.com"
+  },
+  "homepage": "https://defendresolutions.com/products",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sdefendre/traces-app.git"
+  },
   "main": "main/dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -55,5 +67,49 @@
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.3",
     "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.defendresolutions.traces",
+    "productName": "Traces",
+    "copyright": "Copyright © 2026 Defendre Solutions LLC",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main/dist/**/*",
+      "src/**/*",
+      ".next/**/*",
+      "next.config.*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "main/dist/main/index.js"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "darkModeSupport": true
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Sdefendre",
+      "repo": "traces-app",
+      "releaseType": "release"
+    }
   }
 }
