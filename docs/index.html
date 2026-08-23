@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traces — local-first knowledge workspace</title>
+  <meta name="description" content="Traces is a local-first desktop knowledge workspace: markdown notes, a 3D wiki-link graph, and TracesAI. A Defendre Solutions prototype. Clone it and run it.">
+  <meta name="theme-color" content="#050510">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="Traces — local-first knowledge workspace">
+  <meta property="og:description" content="3D graph, notes, and AI on your machine. Markdown vault. No hosted SaaS.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sdefendre.github.io/traces-app/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header class="nav">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="2.4" fill="#4a90f7"/>
+          <circle cx="8" cy="11" r="1.4" fill="#a855f7"/>
+          <circle cx="24" cy="12" r="1.5" fill="#2383e2"/>
+          <circle cx="11" cy="23" r="1.3" fill="#f97316"/>
+          <path d="M8 11L16 16L24 12M16 16L11 23" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+        </svg>
+        <span class="wordmark">TRACES</span>
+        <span class="badge">Prototype</span>
+      </div>
+      <nav class="nav-links">
+        <span>Defendre Solutions</span>
+        <a href="https://github.com/Sdefendre/traces-app">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h1>Traces</h1>
+      <p>Local-first knowledge workspace. 3D graph, notes, and AI — on your machine.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Sdefendre/traces-app">View on GitHub</a>
+        <a class="btn btn-ghost" href="#run">Clone and run</a>
+      </div>
+    </section>
+
+    <section class="app" aria-label="Traces desktop workspace">
+      <div class="chrome">
+        <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="chrome-title">Traces — local vault</div>
+      </div>
+
+      <div class="workspace">
+        <aside class="panel files-panel">
+          <div class="panel-head">FILES</div>
+          <div class="search">Search…</div>
+          <div class="tree">
+            <div class="folder">MEMORY</div>
+            <div class="file"><span class="dot" style="background:#4a90f7"></span>Index.md</div>
+            <div class="file active"><span class="dot" style="background:#f97316"></span>Architecture.md</div>
+            <div class="folder">PROJECTS</div>
+            <div class="file"><span class="dot" style="background:#22c55e"></span>Traces.md</div>
+            <div class="folder">DAILY</div>
+            <div class="file"><span class="dot" style="background:#a855f7"></span>2026-08-23.md</div>
+          </div>
+        </aside>
+
+        <div class="panel graph-panel">
+          <div class="panel-head"><span>GRAPH</span><span>Force · Bloom</span></div>
+          <svg viewBox="0 0 640 400" role="img" aria-label="Force-directed wiki-link constellation">
+            <defs>
+              <filter id="bloom" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="3.2" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#4a90f7" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <g opacity="0.45">
+              <circle cx="46" cy="38" r="0.8" fill="#fff"/>
+              <circle cx="118" cy="72" r="0.7" fill="#fff"/>
+              <circle cx="210" cy="28" r="1" fill="#fff"/>
+              <circle cx="302" cy="54" r="0.6" fill="#fff"/>
+              <circle cx="390" cy="22" r="0.8" fill="#fff"/>
+              <circle cx="488" cy="66" r="0.7" fill="#fff"/>
+              <circle cx="560" cy="34" r="1" fill="#fff"/>
+              <circle cx="70" cy="180" r="0.6" fill="#fff"/>
+              <circle cx="590" cy="190" r="0.8" fill="#fff"/>
+              <circle cx="42" cy="310" r="0.7" fill="#fff"/>
+              <circle cx="600" cy="320" r="0.6" fill="#fff"/>
+              <circle cx="250" cy="370" r="0.8" fill="#fff"/>
+            </g>
+            <g filter="url(#bloom)">
+              <line class="edge" x1="92" y1="88" x2="286" y2="196"/>
+              <line class="edge hot" x1="286" y1="196" x2="168" y2="236"/>
+              <line class="edge hot" x1="286" y1="196" x2="408" y2="148"/>
+              <line class="edge" x1="408" y1="148" x2="318" y2="72"/>
+              <line class="edge" x1="408" y1="148" x2="508" y2="104"/>
+              <line class="edge hot" x1="408" y1="148" x2="392" y2="292"/>
+              <line class="edge" x1="286" y1="196" x2="534" y2="238"/>
+              <line class="edge" x1="168" y1="236" x2="198" y2="332"/>
+              <line class="edge" x1="534" y1="238" x2="522" y2="328"/>
+              <line class="edge" x1="392" y1="292" x2="534" y2="238"/>
+              <line class="edge" x1="318" y1="72" x2="508" y2="104"/>
+              <line class="edge" x1="168" y1="236" x2="318" y2="72"/>
+              <circle class="pulse" cx="286" cy="196" r="16" fill="url(#nodeGlow)"/>
+              <circle cx="92" cy="88" r="5" fill="#a855f7"/>
+              <circle cx="286" cy="196" r="7" fill="#4a90f7"/>
+              <circle cx="168" cy="236" r="5.5" fill="#2383e2"/>
+              <circle cx="408" cy="148" r="6" fill="#f97316"/>
+              <circle cx="318" cy="72" r="5" fill="#4a90f7"/>
+              <circle cx="508" cy="104" r="5" fill="#a855f7"/>
+              <circle cx="392" cy="292" r="5" fill="#2383e2"/>
+              <circle cx="534" cy="238" r="6" fill="#a855f7"/>
+              <circle cx="198" cy="332" r="4.5" fill="#94a3b8"/>
+              <circle cx="522" cy="328" r="4.5" fill="#f97316"/>
+            </g>
+            <text class="node-label" x="102" y="82">Memory</text>
+            <text class="node-label" x="300" y="192">Index</text>
+            <text class="node-label" x="132" y="258">Vault</text>
+            <text class="node-label" x="420" y="142">Architecture</text>
+            <text class="node-label" x="288" y="62">Graph</text>
+            <text class="node-label" x="520" y="98">Wiki-links</text>
+            <text class="node-label" x="352" y="316">Editor</text>
+            <text class="node-label" x="548" y="236">TracesAI</text>
+            <text class="node-label" x="168" y="354">Local-first</text>
+            <text class="node-label" x="536" y="348">Chat</text>
+          </svg>
+        </div>
+
+        <section class="panel notes">
+          <div class="panel-head"><span>NOTES</span><span>Auto-save</span></div>
+          <div class="tabs">
+            <div class="tab active">Architecture.md</div>
+            <div class="tab">Index.md</div>
+          </div>
+          <div class="editor">
+            <div class="h1"># Architecture</div>
+            <div> </div>
+            <div>Notes live as markdown in a local vault.</div>
+            <div> </div>
+            <div>Link them with <span class="link">[[wiki-links]]</span>.</div>
+            <div>The graph draws every connection.</div>
+            <div> </div>
+            <div><span class="link">[[TracesAI]]</span> can read and write</div>
+            <div>those files — locally, or through</div>
+            <div>a provider you configure.</div>
+            <div> </div>
+            <div class="comment">Saved to disk. No cloud vault.</div>
+          </div>
+          <div class="status"><span>42 words · 1 min</span><span>CodeMirror 6</span></div>
+        </section>
+
+        <aside class="panel chat-panel chat">
+          <div class="panel-head"><span>CHAT</span><span>Ollama</span></div>
+          <div class="msg user">
+            <span class="who">YOU</span>
+            How do these notes connect?
+          </div>
+          <div class="msg ai">
+            <span class="who">TRACESAI</span>
+            Index links to Architecture and Vault. Architecture points at Graph, Editor, and wiki-links. I can open any of those files or draft a new note.
+          </div>
+          <div class="compose">Ask TracesAI…</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="features">
+      <article class="card">
+        <div class="kicker">GRAPH</div>
+        <h2>Wiki-links as a constellation</h2>
+        <p>A 3D force-directed graph of your notes. Starfield, bloom, collapse, or fullscreen. Built with React Three Fiber.</p>
+      </article>
+      <article class="card">
+        <div class="kicker">EDITOR</div>
+        <h2>Markdown that stays files</h2>
+        <p>CodeMirror 6 with <span class="link">[[wiki-links]]</span>, preview, and auto-save. Notes are markdown in a local vault — not a proprietary database.</p>
+      </article>
+      <article class="card">
+        <div class="kicker">TRACESAI</div>
+        <h2>Chat that can touch the vault</h2>
+        <p>Ollama on your machine, or Anthropic, OpenAI, Google, and xAI. The assistant can read and write notes through tools.</p>
+      </article>
+      <article class="card">
+        <div class="kicker">LOCAL-FIRST</div>
+        <h2>Four panels, your disk</h2>
+        <p>Files, Graph, Notes, Chat — collapse and resize them. Electron desktop app. No App Store build, no hosted SaaS.</p>
+      </article>
+    </section>
+
+    <section class="run" id="run">
+      <div>
+        <h2>Clone it. Run it.</h2>
+        <p>Working prototype. Electron, Next.js 15, React Three Fiber. MIT license. You need Node 18+, pnpm, and optionally Ollama for local models.</p>
+      </div>
+      <div class="term">
+        <button class="copy" type="button" data-copy>Copy</button>
+        <pre id="clone">git clone https://github.com/Sdefendre/traces-app.git
+cd traces-app
+pnpm install
+pnpm dev</pre>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div>MIT · Defendre Solutions · <a href="mailto:steve@defendresolutions.com">steve@defendresolutions.com</a></div>
+      <a href="https://github.com/Sdefendre/traces-app">github.com/Sdefendre/traces-app</a>
+    </footer>
+  </div>
+
+  <script>
+    const button = document.querySelector("[data-copy]");
+    const source = document.getElementById("clone");
+    if (button && source) {
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(source.textContent);
+          button.textContent = "Copied";
+          setTimeout(() => { button.textContent = "Copy"; }, 1400);
+        } catch {
+          button.textContent = "Copy failed";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
