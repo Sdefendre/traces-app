@@ -1,5 +1,7 @@
 # Traces
 
+**Marketing site:** https://sdefendre.github.io/traces-app/
+
 **A Defendre Solutions product.** A local-first knowledge workspace with a 3D force-directed knowledge graph, markdown editor, and multi-provider AI assistant. Built with Electron, Next.js 15, and React Three Fiber.
 
 ---
