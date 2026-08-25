@@ -19,14 +19,14 @@ Traces is a product of **Defendre Solutions LLC**.
 ## [0.2.0] - 2026-07-17
 
 ### Added
-- Productized packaging foundation for distribution as a Defendre Solutions product.
-- Version bumped from 0.1.0 to 0.2.0 to mark the start of the product line.
+- Packaging and branding so Traces can ship as a Defendre Solutions app.
+- Bumped the version from 0.1.0 to 0.2.0.
 
 ## [0.1.0]
 
 ### Added
 - Local-first note-taking with markdown files stored in a vault directory.
-- 3D force-directed knowledge graph (React Three Fiber) visualizing wiki-link connections.
+- 3D force-directed knowledge graph (React Three Fiber) of wiki-link connections.
 - CodeMirror 6 markdown editor with wiki-link autocomplete, auto-save, and light/dark themes.
 - Multi-provider AI assistant (TracesAI): Ollama, Anthropic, OpenAI, Google, xAI, with file read/write/edit tools.
 - Four-panel collapsible layout (Files, Graph, Notes, Chat) with draggable dividers.

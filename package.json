@@ -2,7 +2,7 @@
   "name": "traces",
   "version": "0.2.0",
   "private": true,
-  "description": "Local-first knowledge workspace by Defendre Solutions — a 3D force-directed knowledge graph, markdown editor, and multi-provider AI assistant for exploring connections between your notes.",
+  "description": "Local-first knowledge workspace by Defendre Solutions. Markdown notes, a 3D wiki-link graph, and a multi-provider AI assistant. Files stay on your machine.",
   "license": "MIT",
   "author": {
     "name": "Defendre Solutions LLC",

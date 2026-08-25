@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Traces',
-  description: 'Knowledge Management System',
+  description: 'Local-first notes, a 3D wiki-link graph, and TracesAI',
 };
 
 export default function RootLayout({
