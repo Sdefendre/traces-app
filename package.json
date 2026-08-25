@@ -22,6 +22,7 @@
     "verify:logic": "node scripts/verify-logic.mjs",
     "verify:editor": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-editor-store.js",
     "verify:byo": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-byo-agents.js",
+    "verify:particles": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-particle-layout.js",
     "verify:byo-runtime": "pnpm build:electron && node scripts/verify-byo-runtime.mjs",
     "verify:all": "bash scripts/run-verification.sh",
     "build": "pnpm build:next && pnpm build:electron",
