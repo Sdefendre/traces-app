@@ -123,7 +123,7 @@ export function GraphSettings() {
           onChange={(v) => updateSettings({ lowPowerMode: v })}
         />
         <p className="text-[10px] text-muted-foreground leading-tight">
-          Reduces stars, disables bloom, and simplifies terrain to save CPU/GPU.
+          Reduces stars and post-processing, simplifies terrain, and skips particle edge attraction.
         </p>
       </PopoverContent>
     </Popover>

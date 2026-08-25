@@ -1,28 +1,24 @@
-// @ts-nocheck — R3F JSX intrinsics not typed with React 19
 'use client';
 
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { GraphScene } from './GraphScene';
 import { ClusterScene } from './ClusterScene';
 import { TerrainScene } from './TerrainScene';
+import { ParticleScene } from './ParticleScene';
 
 import { BackgroundField } from './BackgroundField';
 import { useGraphStore } from '@/stores/graph-store';
 import * as THREE from 'three';
+import type { GraphControls, GraphControlsRef } from './graph-controls';
 
 /** Centralized Camera Controller to handle programmatic zoom and flying to nodes without fighting OrbitControls */
-function CameraController({ controlsRef }: { controlsRef: React.RefObject<any> }) {
-  const { zoomDistance, selectedNode, viewMode } = useGraphStore();
+function CameraController({ controlsRef }: { controlsRef: GraphControlsRef }) {
+  const zoomDistance = useGraphStore((state) => state.zoomDistance);
   const { camera } = useThree();
   const prevZoomRef = useRef(zoomDistance);
-  const prevNodeRef = useRef(selectedNode);
-  
-  // Need to get access to positions depending on viewMode
-  // For simplicity we will handle the "fly to node" locally in the scenes themselves, 
-  // but we must update OrbitControls target instead of just the camera!
   
   useFrame(() => {
     // Handle programmatic zoom from buttons
@@ -44,8 +40,9 @@ function CameraController({ controlsRef }: { controlsRef: React.RefObject<any> }
 }
 
 export function KnowledgeGraph() {
-  const { settings, viewMode } = useGraphStore();
-  const controlsRef = useRef(null);
+  const settings = useGraphStore((state) => state.settings);
+  const viewMode = useGraphStore((state) => state.viewMode);
+  const controlsRef = useRef<GraphControls>(null);
 
   // Always deep space navy-black regardless of theme
   const bgColor = useMemo(() => new THREE.Color('#050510'), []);
@@ -82,6 +79,7 @@ export function KnowledgeGraph() {
         {viewMode === 'galaxy' && <GraphScene controlsRef={controlsRef} />}
         {viewMode === 'terrain' && <TerrainScene controlsRef={controlsRef} />}
         {viewMode === 'cluster' && <ClusterScene controlsRef={controlsRef} />}
+        {viewMode === 'particle' && <ParticleScene controlsRef={controlsRef} />}
 
         {/* Bloom disabled in low power mode — post-processing is GPU-intensive */}
         {!settings.lowPowerMode && (

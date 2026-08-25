@@ -18,7 +18,9 @@ The interface is built around four collapsible panels -- Files, Graph, Notes, an
 
 ### 3D Knowledge Graph
 
-Interactive force-directed graph visualization of notes and their connections, rendered with React Three Fiber and Three.js. Nodes represent notes and edges represent wiki-links between them. Background starfield with bloom post-processing.
+Interactive 3D visualization of notes and their connections, rendered with React Three Fiber and Three.js. Switch among Galaxy, Terrain, Cluster, and Particle views while the background starfield and camera controls remain consistent.
+
+Particle View arranges one point per note across five deterministic surfaces: Möbius Strip, Toroidal Vortex, Spherical Harmonics, Lissajous Curve, and Fractal Branches. Shape changes morph smoothly without losing surviving note positions. Point color follows note category, point size follows markdown content length, hover reveals note details, and clicking a point opens and focuses that note. Low Power Mode keeps the particle layout deterministic while skipping graph-edge attraction, bloom, and high-density background effects.
 
 ### Markdown Editor
 
@@ -46,7 +48,7 @@ Full-screen settings overlay accessed via the gear icon (bottom-left) or closed 
 
 - **AI & Models** -- Sign in with your own Codex, Grok CLI, or Claude account. API key management for Anthropic, OpenAI, Google, and xAI. Ollama endpoint configuration. Per-provider model enable/disable checkboxes to control which models appear in the chat picker. Default provider and model selection. Custom system prompt.
 - **Editor** -- font size slider, light/dark mode toggle, spell check.
-- **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, and line color.
+- **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, line color, and low-power rendering.
 - **General** -- vault path display, startup behavior, clear chat on close.
 
 Settings persist across app restarts via Electron IPC (`settings.json` in user data directory).
@@ -208,10 +210,13 @@ traces-app/
 │   │   ├── graph/                 # 3D knowledge graph
 │   │   │   ├── KnowledgeGraph.tsx
 │   │   │   ├── GraphScene.tsx
+│   │   │   ├── ParticleScene.tsx
+│   │   │   ├── ShapePicker.tsx
 │   │   │   ├── GraphSettings.tsx
 │   │   │   ├── NeuralNode.tsx
 │   │   │   ├── Synapse.tsx
 │   │   │   ├── BackgroundField.tsx
+│   │   │   ├── useParticleLayout.ts
 │   │   │   └── useForceGraph.ts
 │   │   ├── editor/                # Markdown editor
 │   │   │   ├── EditorPanel.tsx
@@ -238,7 +243,10 @@ traces-app/
 │   │   └── utils.ts               # cn() utility
 │   └── types/                     # TypeScript type definitions
 ├── shared/
-│   └── byo-agents.ts              # BYO provider catalog and fail-closed helpers
+│   ├── byo-agents.ts              # BYO provider catalog and fail-closed helpers
+│   ├── particle-layout.ts         # Stable particle indexing and graph-aware layout
+│   ├── particle-rendering.ts      # Renderer-independent size and morph helpers
+│   └── particle-shapes.ts         # Deterministic five-shape generators
 ├── scripts/
 │   └── dev.mjs                    # Development script
 ├── components.json                # shadcn/ui config

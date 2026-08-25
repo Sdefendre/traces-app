@@ -12,8 +12,9 @@ import { Synapse } from './Synapse';
 import type { GraphNode } from '@/types';
 import { useRef } from 'react';
 import * as THREE from 'three';
+import type { GraphControlsRef } from './graph-controls';
 
-export function GraphScene({ controlsRef }: { controlsRef?: React.RefObject<any> }) {
+export function GraphScene({ controlsRef }: { controlsRef?: GraphControlsRef }) {
   const { graphData } = useVaultStore();
   const { openFile } = useEditorStore();
   const { hoveredNode, selectedNode, setSelectedNode, settings } = useGraphStore();
