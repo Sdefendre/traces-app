@@ -10,6 +10,7 @@ Traces is a product of **Defendre Solutions LLC**.
 ## [Unreleased]
 
 ### Added
+- Bring-your-own agent sign-in for Codex, Grok CLI, and Claude in Settings > AI & Models. Chat uses the CLI account on the machine and fails closed if that CLI is missing or logged out.
 - MIT license and Defendre Solutions LLC branding (LICENSE, package.json author/homepage/repository).
 - `electron-builder` publish config targeting GitHub Releases (macOS dmg/zip, Windows nsis, Linux AppImage/deb).
 - GitHub Actions release pipeline (`.github/workflows/release.yml`) that builds and publishes installers on `v*` tags.

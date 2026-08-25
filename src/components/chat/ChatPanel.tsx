@@ -8,9 +8,13 @@ import {
   useSettingsStore,
   ALL_VOICE_OPTIONS,
   ALL_GROK_VOICE_OPTIONS,
+  BYO_DEFAULT_MODEL,
+  isByoAgentId,
+  type Provider,
   type VoiceOption,
   type GrokVoiceOption,
 } from '@/stores/settings-store';
+import { BYO_AGENTS, BYO_AGENT_IDS } from '../../../shared/byo-agents';
 import { electronAPI } from '@/lib/electron-api';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
@@ -22,8 +26,6 @@ import { VoiceWaveform } from './VoiceWaveform';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
-
 interface ToolCall {
   name: string;
   args: Record<string, string>;
@@ -74,8 +76,11 @@ function buildSystemPrompt(
   customPrompt: string,
   currentNoteContext?: string
 ): string {
-  const displayName = MODEL_LABELS[model] || model;
-  const base = `You are TracesAI, an AI assistant embedded in a knowledge management app called Traces. You are currently running as ${displayName} (model ID: ${model}) from ${provider}. If the user asks what model you are, tell them you are ${displayName}. You can read, write, edit, search, and delete files in the user's vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.`;
+  const displayName = isByoAgentId(provider)
+    ? BYO_AGENTS[provider].label
+    : MODEL_LABELS[model] || model;
+  const source = isByoAgentId(provider) ? `${displayName} CLI sign-in` : provider;
+  const base = `You are TracesAI, an AI assistant embedded in a knowledge management app called Traces. You are currently running as ${displayName} (model ID: ${model}) from ${source}. If the user asks what model you are, tell them you are ${displayName}. You can read, write, edit, search, and delete files in the user's vault. Use tools to help the user manage their notes and knowledge base. Always be helpful and proactive.`;
   const withCustom = customPrompt ? `${customPrompt}\n\n${base}` : base;
   return currentNoteContext ? `${withCustom}${currentNoteContext}` : withCustom;
 }
@@ -505,7 +510,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
       const data = await electronAPI.chat({
         messages: [...messages, userMessage],
         provider,
-        model,
+        model: isByoAgentId(provider) ? BYO_DEFAULT_MODEL : model,
         systemPrompt,
         ...(apiKey ? { apiKey } : {}),
       });
@@ -520,8 +525,11 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
         },
       ]);
 
-      // Refresh files if AI modified any
-      handleFileRefresh(toolCalls);
+      if (isByoAgentId(provider)) {
+        refreshFiles();
+      } else {
+        handleFileRefresh(toolCalls);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to connect to AI service';
       setError(msg);
@@ -751,6 +759,13 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
                     paddingRight: 20,
                   }}
                 >
+                  <optgroup label="Bring your own agent">
+                    {BYO_AGENT_IDS.map((id) => (
+                      <option key={`${id}::${BYO_DEFAULT_MODEL}`} value={`${id}::${BYO_DEFAULT_MODEL}`}>
+                        {BYO_AGENTS[id].label}
+                      </option>
+                    ))}
+                  </optgroup>
                   {ollamaModels.length > 0 && (
                     <optgroup label="Ollama (local)">
                       {ollamaModels.map((m) => (

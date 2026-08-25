@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { isByoAgentId } from '../../../../shared/byo-agents';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
+type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google' | 'codex' | 'grok-cli' | 'claude';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -916,6 +917,16 @@ export async function POST(req: Request) {
 
     // Use custom system prompt if provided, otherwise default
     const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;
+
+    if (isByoAgentId(provider)) {
+      return NextResponse.json(
+        {
+          error:
+            'Bring-your-own agents run through the Traces desktop app, which can see your local Codex, Grok CLI, or Claude login. This browser-only path cannot sign in or call those CLIs, and it will not fall back to an API key.',
+        },
+        { status: 503 },
+      );
+    }
 
     // ----- Ollama (no key needed) -----
     if (provider === 'ollama') {

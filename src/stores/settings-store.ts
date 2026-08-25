@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import { electronAPI } from '@/lib/electron-api';
+import { BYO_DEFAULT_MODEL, isByoAgentId, type ByoAgentId } from '../../shared/byo-agents';
 
-export type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
+export type ApiProvider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
+export type Provider = ApiProvider | ByoAgentId;
+export { BYO_DEFAULT_MODEL, isByoAgentId };
+export type { ByoAgentId };
 
 export type VoiceOption = 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo' | 'sage' | 'shimmer' | 'verse';
 
