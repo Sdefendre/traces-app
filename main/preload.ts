@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   chat: (opts: { messages: unknown[]; provider: string; model: string; apiKey?: string; systemPrompt?: string }) =>
     ipcRenderer.invoke('chat:send', opts),
 
+  getByoAgentStatuses: () => ipcRenderer.invoke('agents:status'),
+  startByoAgentLogin: (id: string) => ipcRenderer.invoke('agents:login', id),
+
   onFileChange: (callback: (event: string, filePath: string) => void) => {
     const handler = (_: Electron.IpcRendererEvent, event: string, filePath: string) =>
       callback(event, filePath);

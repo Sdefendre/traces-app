@@ -14,6 +14,8 @@ import {
 import { parseVault } from './vault-parser';
 import { REALTIME_TOOLS } from './realtime-tools';
 import { handleChat } from './chat-handler';
+import { getByoAgentStatuses, startByoAgentLogin } from './byo-agents';
+import type { ByoAgentId } from '../../shared/byo-agents';
 
 const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
 const GROK_VOICES = ['Ara', 'Rex', 'Sal', 'Eve', 'Leo'];
@@ -226,5 +228,13 @@ export function registerIpcHandlers(vaultRoot: string) {
 
   ipcMain.handle('chat:send', async (_event, opts) => {
     return handleChat(opts);
+  });
+
+  ipcMain.handle('agents:status', async () => {
+    return getByoAgentStatuses();
+  });
+
+  ipcMain.handle('agents:login', async (_event, id: ByoAgentId) => {
+    return startByoAgentLogin(id);
   });
 }

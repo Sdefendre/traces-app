@@ -1,4 +1,5 @@
 import type { GraphData } from '@/types';
+import type { ByoAgentId, ByoAgentStatus } from '../../shared/byo-agents';
 
 export interface RealtimeSessionResult {
   clientSecret: string;
@@ -35,6 +36,8 @@ export interface ElectronAPI {
   loadSettings: () => Promise<Record<string, unknown>>;
   saveSettings: (data: Record<string, unknown>) => Promise<void>;
   chat: (opts: ChatRequest) => Promise<ChatResult>;
+  getByoAgentStatuses: () => Promise<ByoAgentStatus[]>;
+  startByoAgentLogin: (id: ByoAgentId) => Promise<{ started: boolean; detail: string }>;
   createRealtimeSession: (opts: { apiKey: string; voice?: string; instructions?: string }) => Promise<RealtimeSessionResult>;
   createGrokSession: (opts: { apiKey: string }) => Promise<GrokSessionResult>;
   executeRealtimeTool: (opts: { toolName: string; args: Record<string, string> }) => Promise<string>;
@@ -134,6 +137,26 @@ export const electronAPI = {
       throw new Error(data.error || `Request failed (${res.status})`);
     }
     return res.json();
+  },
+
+  async getByoAgentStatuses(): Promise<ByoAgentStatus[]> {
+    const api = getAPI();
+    if (!api || typeof api.getByoAgentStatuses !== 'function') {
+      throw new Error(
+        'Bring-your-own agents run in the Traces desktop app, which can see your local CLI logins. This browser-only path cannot check Codex, Grok CLI, or Claude.',
+      );
+    }
+    return api.getByoAgentStatuses();
+  },
+
+  async startByoAgentLogin(id: ByoAgentId): Promise<{ started: boolean; detail: string }> {
+    const api = getAPI();
+    if (!api || typeof api.startByoAgentLogin !== 'function') {
+      throw new Error(
+        'Sign-in has to run on your machine through the Traces desktop app. Open Settings > AI & Models there.',
+      );
+    }
+    return api.startByoAgentLogin(id);
   },
 
   async createRealtimeSession(opts: { apiKey: string; voice?: string; instructions?: string }): Promise<RealtimeSessionResult> {

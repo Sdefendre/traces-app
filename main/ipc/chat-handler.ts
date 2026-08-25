@@ -5,6 +5,8 @@ import {
   createFile,
   deleteFile,
 } from './file-system';
+import { isByoAgentId } from '../../shared/byo-agents';
+import { handleByoChat } from './byo-agents';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchJSON(res: Response): Promise<any> {
@@ -15,7 +17,7 @@ async function fetchJSON(res: Response): Promise<any> {
 // Types
 // ---------------------------------------------------------------------------
 
-type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
+type Provider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google' | 'codex' | 'grok-cli' | 'claude';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -700,6 +702,14 @@ export async function handleChat(opts: ChatRequest): Promise<ChatResult> {
   }
 
   const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;
+
+  if (isByoAgentId(provider)) {
+    return handleByoChat({
+      messages,
+      provider,
+      systemPrompt: sysPrompt,
+    });
+  }
 
   if (provider === 'ollama') {
     return handleOllama(messages, model, sysPrompt);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useGraphStore } from '@/stores/graph-store';
 import { useUIStore } from '@/stores/ui-store';
 import {
@@ -13,11 +13,12 @@ import {
   ALL_GROK_VOICE_OPTIONS,
 } from '@/stores/settings-store';
 import type { VoiceOption, GrokVoiceOption, VoiceProvider } from '@/stores/settings-store';
-import type { Provider } from '@/stores/settings-store';
+import { BYO_DEFAULT_MODEL, isByoAgentId, type Provider } from '@/stores/settings-store';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { X, Eye, EyeOff, Bot, Type, GitBranch, Cog } from 'lucide-react';
 import { electronAPI } from '@/lib/electron-api';
+import { BYO_AGENTS, BYO_AGENT_IDS, type ByoAgentId, type ByoAgentStatus } from '../../../shared/byo-agents';
 
 // ---------------------------------------------------------------------------
 // Shared row components — bigger text, more breathing room
@@ -159,6 +160,71 @@ const SECTIONS: { id: Section; label: string; icon: React.ComponentType<{ classN
 // Model checklist for a provider
 // ---------------------------------------------------------------------------
 
+function statusTone(
+  status: ByoAgentStatus | undefined,
+  busy: boolean,
+): { label: string; className: string } {
+  if (!status) return { label: busy ? 'Checking…' : 'Unavailable', className: busy ? 'text-zinc-500' : 'text-red-400' };
+  if (status.signedIn) return { label: 'Signed in', className: 'text-emerald-400' };
+  if (status.installed) return { label: 'Installed, not signed in', className: 'text-amber-400' };
+  return { label: 'Not installed', className: 'text-red-400' };
+}
+
+function AgentSignInCard({
+  id,
+  status,
+  busy,
+  onRecheck,
+  onSignIn,
+}: {
+  id: ByoAgentId;
+  status: ByoAgentStatus | undefined;
+  busy: boolean;
+  onRecheck: () => void;
+  onSignIn: () => void;
+}) {
+  const def = BYO_AGENTS[id];
+  const tone = statusTone(status, busy);
+
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-medium text-zinc-100">{def.label}</h4>
+          <p className="text-xs text-zinc-500 mt-1">{def.installHint}</p>
+        </div>
+        <span className={`text-xs font-medium whitespace-nowrap ${tone.className}`}>{tone.label}</span>
+      </div>
+      {status?.detail && (
+        <p className="text-xs text-zinc-500 font-mono break-words">{status.detail}</p>
+      )}
+      <p className="text-xs text-zinc-600">
+        Terminal command: <span className="font-mono text-zinc-400">{def.loginCommand}</span>
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={busy || !status?.installed}
+          onClick={onSignIn}
+          className="text-sm px-3 py-1.5 rounded-lg border border-white/[0.1] hover:bg-white/[0.06]"
+        >
+          Sign in
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={busy}
+          onClick={onRecheck}
+          className="text-sm px-3 py-1.5 rounded-lg border border-white/[0.1] hover:bg-white/[0.06]"
+        >
+          Recheck
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ModelChecklist({
   allModels,
   enabledModels,
@@ -208,10 +274,45 @@ export function SettingsPanel() {
   const [activeSection, setActiveSection] = useState<Section>('ai');
   const [vaultPath, setVaultPath] = useState<string>('');
   const [apiKeysSavedAt, setApiKeysSavedAt] = useState<number | null>(null);
+  const [byoStatuses, setByoStatuses] = useState<Partial<Record<ByoAgentId, ByoAgentStatus>>>({});
+  const [byoBusy, setByoBusy] = useState(false);
+  const [byoMessage, setByoMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  const refreshByoStatuses = useCallback(async () => {
+    setByoBusy(true);
+    try {
+      const list = await electronAPI.getByoAgentStatuses();
+      const next: Partial<Record<ByoAgentId, ByoAgentStatus>> = {};
+      for (const status of list) next[status.id] = status;
+      setByoStatuses(next);
+    } catch (error) {
+      setByoMessage(error instanceof Error ? error.message : 'Could not check agent sign-in.');
+    } finally {
+      setByoBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSection !== 'ai') return;
+    void refreshByoStatuses();
+  }, [activeSection, refreshByoStatuses]);
+
+  const handleByoSignIn = async (id: ByoAgentId) => {
+    setByoBusy(true);
+    setByoMessage(null);
+    try {
+      const result = await electronAPI.startByoAgentLogin(id);
+      setByoMessage(result.detail);
+    } catch (error) {
+      setByoMessage(error instanceof Error ? error.message : 'Sign-in failed.');
+    } finally {
+      setByoBusy(false);
+    }
+  };
 
   // Clear "Saved" indicator after 2 seconds
   useEffect(() => {
@@ -249,6 +350,9 @@ export function SettingsPanel() {
   };
 
   const providerOptions: { value: Provider; label: string }[] = [
+    { value: 'codex', label: 'Codex (signed-in CLI)' },
+    { value: 'grok-cli', label: 'Grok CLI (signed-in CLI)' },
+    { value: 'claude', label: 'Claude (signed-in CLI)' },
     { value: 'ollama', label: 'Ollama (Local)' },
     { value: 'anthropic', label: 'Anthropic' },
     { value: 'openai', label: 'OpenAI' },
@@ -257,7 +361,7 @@ export function SettingsPanel() {
   ];
 
   const defaultProviderModels =
-    settings.defaultProvider === 'ollama'
+    settings.defaultProvider === 'ollama' || isByoAgentId(settings.defaultProvider)
       ? []
       : settings.enabledModels[settings.defaultProvider] || [];
 
@@ -328,6 +432,33 @@ export function SettingsPanel() {
             {/* ============ AI & Models ============ */}
             {activeSection === 'ai' && (
               <>
+                {/* Bring-your-own agents */}
+                <div>
+                  <SectionHeader>Bring your own agent</SectionHeader>
+                  <p className="text-sm text-zinc-500 mb-5 -mt-2">
+                    Sign in with the Codex, Grok CLI, or Claude account already on this machine.
+                    Traces does not store those logins. If a CLI is missing or logged out, chat
+                    stops for that agent. It does not fall back to an API key.
+                  </p>
+                  <div className="space-y-3">
+                    {BYO_AGENT_IDS.map((id) => (
+                      <AgentSignInCard
+                        key={id}
+                        id={id}
+                        status={byoStatuses[id]}
+                        busy={byoBusy}
+                        onRecheck={() => void refreshByoStatuses()}
+                        onSignIn={() => void handleByoSignIn(id)}
+                      />
+                    ))}
+                  </div>
+                  {byoMessage && (
+                    <p className="text-xs text-zinc-400 mt-3">{byoMessage}</p>
+                  )}
+                </div>
+
+                <div className="border-t border-white/[0.04]" />
+
                 {/* API Keys */}
                 <div>
                   <div className="flex items-center gap-3 mb-4">
@@ -434,9 +565,13 @@ export function SettingsPanel() {
                       <span className="text-sm text-zinc-400">Default Provider</span>
                       <select
                         value={settings.defaultProvider}
-                        onChange={(e) =>
-                          updateSettings({ defaultProvider: e.target.value as Provider })
-                        }
+                        onChange={(e) => {
+                          const next = e.target.value as Provider;
+                          updateSettings({
+                            defaultProvider: next,
+                            defaultModel: isByoAgentId(next) ? BYO_DEFAULT_MODEL : settings.defaultModel,
+                          });
+                        }}
                         className={selectClass}
                       >
                         {providerOptions.map((p) => (

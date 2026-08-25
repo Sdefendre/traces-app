@@ -44,7 +44,7 @@ A MessageCircle button in the editor header opens the AI chat panel directly fro
 
 Full-screen settings overlay accessed via the gear icon (bottom-left) or closed with Escape. Sidebar navigation with four sections:
 
-- **AI & Models** -- API key management for Anthropic, OpenAI, Google, and xAI. Ollama endpoint configuration. Per-provider model enable/disable checkboxes to control which models appear in the chat picker. Default provider and model selection. Custom system prompt.
+- **AI & Models** -- Sign in with your own Codex, Grok CLI, or Claude account. API key management for Anthropic, OpenAI, Google, and xAI. Ollama endpoint configuration. Per-provider model enable/disable checkboxes to control which models appear in the chat picker. Default provider and model selection. Custom system prompt.
 - **Editor** -- font size slider, light/dark mode toggle, spell check.
 - **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, and line color.
 - **General** -- vault path display, startup behavior, clear chat on close.
@@ -55,13 +55,16 @@ Settings persist across app restarts via Electron IPC (`settings.json` in user d
 
 Multi-provider chat panel supporting:
 
+- **Codex, Grok CLI, and Claude** -- sign in with the account already on your machine
 - **Ollama** -- local models, no API key required
-- **Anthropic Claude**
-- **OpenAI GPT**
-- **Google Gemini**
-- **xAI Grok**
+- **Anthropic Claude** -- API key
+- **OpenAI GPT** -- API key
+- **Google Gemini** -- API key
+- **xAI Grok** -- API key
 
-The assistant has model identity awareness and access to file tools (read, write, edit, search, delete) for working directly with vault files through tool calls.
+The assistant has model identity awareness. API-key providers use file tools (read, write, edit, search, delete). Signed-in CLIs run in your vault directory and can edit notes there.
+
+If a bring-your-own CLI is missing or logged out, Traces stops and tells you. It does not fall back to another provider or an API key.
 
 ### File Tree Sidebar
 
@@ -107,6 +110,7 @@ Frosted glass panels with backdrop blur, built on shadcn/ui with custom glass an
 - [Node.js](https://nodejs.org/) (v18 or later)
 - [pnpm](https://pnpm.io/)
 - [Ollama](https://ollama.ai/) (optional, for local AI models)
+- Codex CLI, Grok CLI, or Claude Code (optional, to sign in with your own agent account)
 
 ### Installation
 
@@ -127,18 +131,35 @@ pnpm build
 pnpm start
 ```
 
+### Sign in with Codex, Grok CLI, or Claude
+
+Traces does not ship API keys or store CLI tokens. You sign in with the CLI already installed on your computer.
+
+1. Install the CLI you want:
+   - Codex: [OpenAI Codex CLI](https://developers.openai.com/codex/cli)
+   - Grok CLI: [xAI Grok CLI](https://docs.x.ai/build/cli/reference)
+   - Claude: [Claude Code](https://code.claude.com/docs/en/authentication)
+2. Open **Settings > AI & Models**.
+3. Under **Bring your own agent**, click **Sign in** (or run `codex login`, `grok login`, or `claude auth login` in a terminal).
+4. Click **Recheck**. The row should say Signed in.
+5. In Chat, pick Codex, Grok CLI, or Claude from **Bring your own agent**.
+
+If the CLI is missing, the login expired, or the command fails, chat stops for that agent. Traces will not silently use an API key instead.
+
+API-key providers still work the same way as before.
+
 ### API Keys
 
 API keys can be configured directly in the app via **Settings > AI & Models**. Alternatively, create a `.env.local` file in the project root:
 
 ```
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=AIza...
-XAI_API_KEY=xai-...
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
+XAI_API_KEY=
 ```
 
-Ollama runs locally and requires no API key.
+Those keys are only for the Anthropic / OpenAI / Google / xAI API-key providers. They are not used for Codex, Grok CLI, or Claude sign-in. Ollama runs locally and requires no API key.
 
 ---
 
@@ -167,7 +188,8 @@ traces-app/
 │       ├── handlers.ts            # IPC handler registration
 │       ├── file-system.ts         # File system operations
 │       ├── vault-parser.ts        # Vault parsing and graph data
-│       └── vault-watcher.ts       # File watching with chokidar
+│       ├── vault-watcher.ts       # File watching with chokidar
+│       └── byo-agents.ts          # Codex / Grok CLI / Claude sign-in and chat
 ├── src/
 │   ├── app/
 │   │   ├── api/chat/              # Multi-provider AI chat route
@@ -215,6 +237,8 @@ traces-app/
 │   │   ├── electron-api.ts        # Electron API wrapper
 │   │   └── utils.ts               # cn() utility
 │   └── types/                     # TypeScript type definitions
+├── shared/
+│   └── byo-agents.ts              # BYO provider catalog and fail-closed helpers
 ├── scripts/
 │   └── dev.mjs                    # Development script
 ├── components.json                # shadcn/ui config

@@ -49,6 +49,7 @@ head -12 "$SCRATCH/launch-full.log" | tee "$SCRATCH/launch.log"
 # Step 4 (plan): editor store — run twice for consistency
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store.log"
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store2.log"
+pnpm verify:byo 2>&1 | tee "$SCRATCH/byo-agents.log"
 
 # Step 5 (plan): source inspection
 {
