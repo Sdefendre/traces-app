@@ -7,6 +7,8 @@ export interface GraphNode {
   label: string;
   category: string;
   path: string;
+  /** Loaded markdown content length used for relative node sizing; 0 when unavailable. */
+  fileSize: number;
 }
 
 export interface GraphEdge {
@@ -54,6 +56,7 @@ export async function parseVault(
   // File ID → relative path mapping for link resolution
   const idToPath = new Map<string, string>();
   const pathToId = new Map<string, string>();
+  const fileSizeById = new Map<string, number>();
 
   // Build node list
   for (const file of files) {
@@ -64,6 +67,7 @@ export async function parseVault(
       label: basenameWithoutExt(normalized),
       category: getCategory(normalized),
       path: normalized,
+      fileSize: 0,
     });
     idToPath.set(basenameWithoutExt(normalized).toLowerCase(), normalized);
     pathToId.set(normalized, id);
@@ -97,6 +101,7 @@ export async function parseVault(
     if (content === undefined) continue;
 
     const sourceId = pathToId.get(normalized)!;
+    fileSizeById.set(sourceId, content.length);
     let match: RegExpExecArray | null;
     const regex = new RegExp(WIKI_LINK_REGEX.source, WIKI_LINK_REGEX.flags);
 
@@ -217,6 +222,10 @@ export async function parseVault(
         }
       }
     }
+  }
+
+  for (const node of nodes) {
+    node.fileSize = fileSizeById.get(node.id) ?? 0;
   }
 
   return { nodes, edges };

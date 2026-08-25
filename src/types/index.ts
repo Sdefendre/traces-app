@@ -3,6 +3,8 @@ export interface GraphNode {
   label: string;
   category: string;
   path: string;
+  /** Loaded markdown content length used for relative node sizing; 0 when unavailable. */
+  fileSize: number;
 }
 
 export interface GraphEdge {
