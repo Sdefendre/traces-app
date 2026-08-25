@@ -16,13 +16,15 @@
   "include": [
     "scripts/verify-editor-store.ts",
     "scripts/verify-byo-agents.ts",
+    "scripts/verify-particle-layout.ts",
     "shared/byo-agents.ts",
+    "shared/particle-layout.ts",
+    "shared/particle-shapes.ts",
     "src/stores/create-editor-store.ts",
     "src/stores/editor-store-factory.ts",
     "src/types/index.ts",
     "shared/paths.ts",
     "shared/tab-close-policy.ts",
-    "src/lib/paths.ts",
-
+    "src/lib/paths.ts"
   ]
 }

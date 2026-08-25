@@ -51,6 +51,7 @@ head -12 "$SCRATCH/launch-full.log" | tee "$SCRATCH/launch.log"
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store.log"
 pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store2.log"
 pnpm verify:byo 2>&1 | tee "$SCRATCH/byo-agents.log"
+pnpm verify:particles 2>&1 | tee "$SCRATCH/particle-layout.log"
 
 # Step 5 (plan): source inspection
 {
