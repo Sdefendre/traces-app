@@ -1,8 +1,11 @@
-import { create } from 'zustand';
+import { create, type StateCreator } from 'zustand';
+import type { ParticleShape } from '../../shared/particle-shapes';
 
-export type ViewMode = 'galaxy' | 'terrain' | 'cluster';
+export type { ParticleShape } from '../../shared/particle-shapes';
 
-interface GraphSettings {
+export type ViewMode = 'galaxy' | 'terrain' | 'cluster' | 'particle';
+
+export interface GraphSettings {
   nodeSize: number;
   showLabels: boolean;
   lineThickness: number;
@@ -15,8 +18,9 @@ interface GraphSettings {
   lowPowerMode: boolean;
 }
 
-interface GraphState {
+export interface GraphState {
   viewMode: ViewMode;
+  particleShape: ParticleShape;
   hoveredNode: string | null;
   selectedNode: string | null;
   cameraTarget: [number, number, number] | null;
@@ -24,6 +28,7 @@ interface GraphState {
   settings: GraphSettings;
 
   setViewMode: (mode: ViewMode) => void;
+  setParticleShape: (shape: ParticleShape) => void;
   setHoveredNode: (id: string | null) => void;
   setSelectedNode: (id: string | null) => void;
   setCameraTarget: (pos: [number, number, number] | null) => void;
@@ -32,8 +37,10 @@ interface GraphState {
   updateSettings: (partial: Partial<GraphSettings>) => void;
 }
 
-export const useGraphStore = create<GraphState>((set) => ({
+/** Shared creator keeps the React store and renderer-independent verification in sync. */
+export const graphStateCreator: StateCreator<GraphState> = (set) => ({
   viewMode: 'galaxy',
+  particleShape: 'mobius',
   hoveredNode: null,
   selectedNode: null,
   cameraTarget: null,
@@ -51,6 +58,7 @@ export const useGraphStore = create<GraphState>((set) => ({
   },
 
   setViewMode: (mode) => set({ viewMode: mode }),
+  setParticleShape: (shape) => set({ particleShape: shape }),
   setHoveredNode: (id) => set({ hoveredNode: id }),
   setSelectedNode: (id) => set({ selectedNode: id }),
   setCameraTarget: (pos) => set({ cameraTarget: pos }),
@@ -58,4 +66,6 @@ export const useGraphStore = create<GraphState>((set) => ({
   zoomOut: () => set((s) => ({ zoomDistance: Math.min(500, s.zoomDistance * 1.35) })),
   updateSettings: (partial) =>
     set((s) => ({ settings: { ...s.settings, ...partial } })),
-}));
+});
+
+export const useGraphStore = create<GraphState>(graphStateCreator);

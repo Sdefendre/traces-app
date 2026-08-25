@@ -11,6 +11,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
 import { ViewToggle } from '@/components/graph/ViewToggle';
+import { ShapePicker } from '@/components/graph/ShapePicker';
 import { EditorPanel } from '@/components/editor/EditorPanel';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
@@ -37,7 +38,8 @@ export function AppShell() {
     settingsOpen,
     toggleSettings,
   } = useUIStore();
-  const { zoomIn, zoomOut } = useGraphStore();
+  const zoomIn = useGraphStore((state) => state.zoomIn);
+  const zoomOut = useGraphStore((state) => state.zoomOut);
   const { loadSettings } = useSettingsStore();
   const editorDividerRef = useRef<HTMLDivElement>(null);
   const sidebarDividerRef = useRef<HTMLDivElement>(null);
@@ -234,6 +236,7 @@ export function AppShell() {
           <KnowledgeGraph />
         </ErrorBoundary>
         <ViewToggle useSafeArea />
+        <ShapePicker useSafeArea />
         <div className="fixed top-12 right-3 z-[120] flex gap-1 rounded-xl px-2 py-1.5 glass">
           <Button variant="ghost" size="icon-xs" onClick={toggleGraphFullscreen} title="Exit fullscreen" className="titlebar-no-drag">
             <X className="size-3.5" />
@@ -337,6 +340,7 @@ export function AppShell() {
         )}
 
         {!graphCollapsed && !settingsOpen && <ViewToggle />}
+        {!graphCollapsed && !settingsOpen && <ShapePicker />}
 
         {!graphCollapsed && !settingsOpen && (
           <div className="absolute top-12 right-3 z-30 flex items-center gap-0.5 rounded-xl px-1.5 py-1 glass titlebar-no-drag">

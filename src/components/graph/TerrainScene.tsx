@@ -12,8 +12,9 @@ import { TerrainNode } from './TerrainNode';
 import { TerrainMesh } from './TerrainMesh';
 import type { GraphNode } from '@/types';
 import * as THREE from 'three';
+import type { GraphControlsRef } from './graph-controls';
 
-export function TerrainScene({ controlsRef }: { controlsRef?: React.RefObject<any> }) {
+export function TerrainScene({ controlsRef }: { controlsRef?: GraphControlsRef }) {
   const { graphData } = useVaultStore();
   const { openFile } = useEditorStore();
   const { selectedNode, setSelectedNode, settings } = useGraphStore();

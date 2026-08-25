@@ -10,6 +10,14 @@ import {
   createStableParticleNodeIndex,
   type ParticleLayoutData,
 } from '../shared/particle-layout';
+import {
+  advanceParticleMorph,
+  createParticleVisualBuffers,
+  easeParticleMorph,
+  haveDifferentParticlePositions,
+} from '../shared/particle-rendering';
+import { createStore } from 'zustand/vanilla';
+import { graphStateCreator } from '../src/stores/graph-store';
 
 function expect(condition: boolean, label: string): void {
   if (!condition) throw new Error(label);
@@ -315,6 +323,122 @@ for (const layout of allLayouts) {
   expect(layout.targetPositions.length === layout.positions.length, 'target/render buffer parity');
 }
 
+const zeroSizeVisuals = createParticleVisualBuffers(
+  [
+    { id: 'zero-a', fileSize: 0, color: '#000000' },
+    { id: 'zero-b', fileSize: Number.NaN, color: '#fff' },
+  ],
+  ['zero-b', 'zero-a'],
+  { minPointSize: 2, maxPointSize: 8 },
+);
+expect(zeroSizeVisuals.colors.length === 6, 'visual colors use exact RGB buffer length');
+expect(zeroSizeVisuals.sizes.length === 2, 'visual sizes use exact node buffer length');
+expect(
+  zeroSizeVisuals.sizes.every((size) => size === 2),
+  'zero and invalid file sizes remain finite at the minimum point size',
+);
+expectEqualBuffers(
+  zeroSizeVisuals.colors,
+  new Float32Array([1, 1, 1, 0, 0, 0]),
+  'visual colors follow the stable node index rather than input order',
+);
+
+const equalSizeVisuals = createParticleVisualBuffers(
+  [
+    { id: 'equal-a', fileSize: 500, color: '#123456' },
+    { id: 'equal-b', fileSize: 500, color: 'invalid' },
+  ],
+  ['equal-a', 'equal-b'],
+  { minPointSize: 2, maxPointSize: 8, fallbackColor: '#abcdef' },
+);
+expect(
+  equalSizeVisuals.sizes.every((size) => size === 5),
+  'equal positive file sizes use the midpoint instead of dividing by zero',
+);
+expectFinite(equalSizeVisuals.colors, 'deterministic visual colors');
+expectFinite(equalSizeVisuals.sizes, 'equal visual sizes');
+
+const rangedSizeVisuals = createParticleVisualBuffers(
+  [
+    { id: 'small', fileSize: 0 },
+    { id: 'medium', fileSize: 1_000 },
+    { id: 'maximum', fileSize: Number.MAX_VALUE },
+  ],
+  ['small', 'medium', 'maximum'],
+  { minPointSize: 3, maxPointSize: 9 },
+);
+expect(rangedSizeVisuals.sizes[0] === 3, 'zero file size maps to the minimum');
+expect(
+  rangedSizeVisuals.sizes[1] > 3 && rangedSizeVisuals.sizes[1] < 9,
+  'intermediate file size remains within the visual range',
+);
+expect(rangedSizeVisuals.sizes[2] === 9, 'finite maximum file size maps without overflow');
+expectFinite(rangedSizeVisuals.sizes, 'ranged visual sizes');
+expectThrows(
+  () => createParticleVisualBuffers([], [], { minPointSize: 5, maxPointSize: 4 }),
+  'inverted visual size ranges fail explicitly',
+);
+
+const morphSource = new Float32Array([0, 0, 0, -10, 10, 20]);
+const morphTarget = new Float32Array([10, -10, 5, 10, -10, -20]);
+const morphDestination = new Float32Array(6);
+const halfwayProgress = advanceParticleMorph(
+  morphDestination,
+  morphSource,
+  morphTarget,
+  0,
+  0.5,
+  1,
+);
+expect(halfwayProgress === 0.5, 'morph progress advances by elapsed duration');
+expect(easeParticleMorph(0.5) === 0.5, 'morph easing is centered and deterministic');
+expectEqualBuffers(
+  morphDestination,
+  new Float32Array([5, -5, 2.5, 0, 0, 0]),
+  'halfway morph writes exact interpolated coordinates',
+);
+expect(haveDifferentParticlePositions(morphSource, morphTarget), 'morph detects changed targets');
+expect(
+  !haveDifferentParticlePositions(morphSource, Float32Array.from(morphSource)),
+  'morph skips identical targets',
+);
+
+const extremeMorph = new Float32Array(3);
+advanceParticleMorph(
+  extremeMorph,
+  new Float32Array([3e38, -3e38, 3e38]),
+  new Float32Array([-3e38, 3e38, -3e38]),
+  0,
+  0.5,
+  1,
+);
+expectFinite(extremeMorph, 'extreme finite morph coordinates');
+expectThrows(
+  () => advanceParticleMorph(new Float32Array(3), new Float32Array(6), new Float32Array(3), 0, 0.1),
+  'mismatched morph buffers fail explicitly',
+);
+expectThrows(
+  () => advanceParticleMorph(new Float32Array(3), new Float32Array(3), new Float32Array(3), 0, -0.1),
+  'negative morph deltas fail explicitly',
+);
+
+const graphStore = createStore(graphStateCreator);
+expect(graphStore.getState().viewMode === 'galaxy', 'graph store keeps the existing default view');
+expect(graphStore.getState().particleShape === 'mobius', 'graph store defaults to Möbius particles');
+graphStore.getState().setViewMode('particle');
+expect(graphStore.getState().viewMode === 'particle', 'graph store selects Particle View');
+for (const shape of PARTICLE_SHAPES) {
+  graphStore.getState().setParticleShape(shape);
+  expect(graphStore.getState().particleShape === shape, `graph store selects ${shape}`);
+}
+const originalNodeSize = graphStore.getState().settings.nodeSize;
+graphStore.getState().updateSettings({ lowPowerMode: true });
+expect(graphStore.getState().settings.lowPowerMode, 'graph store enables low-power particle behavior');
+expect(
+  graphStore.getState().settings.nodeSize === originalNodeSize,
+  'partial graph settings updates preserve unrelated settings',
+);
+
 console.log(
-  `particle verification passed: ${PARTICLE_SHAPES.length} shapes, deterministic finite buffers, layout growth/shrink, stable mapping, low-power mode, and edge attraction`,
+  `particle verification passed: ${PARTICLE_SHAPES.length} shapes, deterministic finite buffers, exact visual sizing, smooth morphing, layout growth/shrink, stable mapping, low-power mode, edge attraction, and graph store controls`,
 );

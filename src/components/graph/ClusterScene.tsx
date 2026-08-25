@@ -12,8 +12,9 @@ import { Synapse } from './Synapse';
 import { Text } from '@react-three/drei';
 import type { GraphNode } from '@/types';
 import * as THREE from 'three';
+import type { GraphControlsRef } from './graph-controls';
 
-export function ClusterScene({ controlsRef }: { controlsRef?: React.RefObject<any> }) {
+export function ClusterScene({ controlsRef }: { controlsRef?: GraphControlsRef }) {
   const { graphData } = useVaultStore();
   const { openFile } = useEditorStore();
   const { hoveredNode, selectedNode, setSelectedNode, settings } = useGraphStore();

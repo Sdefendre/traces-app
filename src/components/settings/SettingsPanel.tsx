@@ -73,7 +73,7 @@ function ToggleRow({
   return (
     <div className="flex justify-between items-center py-2">
       <span className="text-sm text-zinc-300">{label}</span>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
@@ -791,6 +791,15 @@ export function SettingsPanel() {
                       className="w-8 h-6 border border-white/10 rounded-md cursor-pointer p-0 bg-transparent"
                     />
                   </div>
+                  <ToggleRow
+                    label="Low Power Mode"
+                    checked={graphSettings.lowPowerMode}
+                    onChange={(v) => updateGraphSettings({ lowPowerMode: v })}
+                  />
+                  <p className="text-xs leading-relaxed text-zinc-500">
+                    Reduces background and post-processing work, simplifies terrain,
+                    and skips particle edge attraction.
+                  </p>
                 </div>
               </div>
             )}
