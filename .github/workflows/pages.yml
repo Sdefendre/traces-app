@@ -23,6 +23,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Verify Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! build_type="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '.build_type')"; then
+            echo "::error title=GitHub Pages is not configured::A repository administrator must enable Pages and set its source to GitHub Actions in Settings > Pages."
+            exit 1
+          fi
+
+          if [[ "${build_type}" != "workflow" ]]; then
+            echo "::error title=Incorrect Pages source::A repository administrator must set the Pages source to GitHub Actions in Settings > Pages (found: ${build_type})."
+            exit 1
+          fi
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload
