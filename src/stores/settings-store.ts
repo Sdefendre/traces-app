@@ -44,9 +44,22 @@ export interface AppSettings {
   // Editor
   editorFontSize: number;
   spellCheck: boolean;
+  editorLightMode: boolean;
+
+  // Graph (the on-screen sliders; terrain extras stay session-only)
+  graphVisual: {
+    nodeSize: number;
+    showLabels: boolean;
+    lineThickness: number;
+    autoRotate: boolean;
+    rotateSpeed: number;
+    lineColor: string;
+    lowPowerMode: boolean;
+  };
 
   // General
   startupBehavior: 'graph' | 'lastNote' | 'empty';
+  lastNotePath: string | null;
   clearChatOnClose: boolean;
 }
 
@@ -77,8 +90,20 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
   editorFontSize: 14,
   spellCheck: false,
+  editorLightMode: false,
+
+  graphVisual: {
+    nodeSize: 1.5,
+    showLabels: true,
+    lineThickness: 1,
+    autoRotate: true,
+    rotateSpeed: 0.15,
+    lineColor: '#7b8cb3',
+    lowPowerMode: false,
+  },
 
   startupBehavior: 'graph',
+  lastNotePath: null,
   clearChatOnClose: false,
 };
 
@@ -110,6 +135,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       }
       if (saved.voice) {
         merged.voice = { ...DEFAULT_SETTINGS.voice, ...(saved as Record<string, unknown>).voice as VoiceSettings };
+      }
+      if (saved.graphVisual) {
+        merged.graphVisual = {
+          ...DEFAULT_SETTINGS.graphVisual,
+          ...(saved as Record<string, unknown>).graphVisual as AppSettings['graphVisual'],
+        };
       }
       set({ settings: merged, loaded: true });
     } else {

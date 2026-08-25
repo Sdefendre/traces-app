@@ -5,6 +5,7 @@ import { useEditorStore } from '@/stores/editor-store';
 import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
+import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
 import { MarkdownEditor } from './MarkdownEditor';
 import { MarkdownPreview } from './MarkdownPreview';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,7 @@ export function EditorPanel() {
     const characters = text.length;
     const words = trimmed === '' ? 0 : trimmed.split(/\s+/).length;
     const lines = text === '' ? 0 : text.split('\n').length;
-    const readingTime = Math.max(1, Math.ceil(words / 200));
+    const readingTime = words === 0 ? 0 : Math.max(1, Math.ceil(words / 200));
     return { words, characters, lines, readingTime };
   }, [activeTab?.content]);
 
@@ -80,10 +81,15 @@ export function EditorPanel() {
       setNewName('');
       return;
     }
-    const fileName = newName.endsWith('.md') ? newName : `${newName}.md`;
-    const filePath = `Memory/${fileName}`;
+    const title = noteTitleFromName(newName);
+    if (!title) {
+      setCreating(false);
+      setNewName('');
+      return;
+    }
+    const filePath = buildNewNotePath(title, activeFile);
     try {
-      await electronAPI.createFile(filePath, `# ${newName.replace('.md', '')}\n\n`);
+      await electronAPI.createFile(filePath, `# ${title}\n\n`);
       await refreshFiles();
       setActiveFile(filePath);
       await openFile(filePath);
@@ -93,7 +99,7 @@ export function EditorPanel() {
       setCreating(false);
       setNewName('');
     }
-  }, [newName, refreshFiles, setActiveFile, openFile]);
+  }, [newName, refreshFiles, setActiveFile, openFile, activeFile]);
 
   if (!activeTab) {
     return (

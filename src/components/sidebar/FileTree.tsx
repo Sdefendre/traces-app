@@ -7,6 +7,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { FileTreeItem } from './FileTreeItem';
 import { buildTree } from '@/lib/build-tree';
 import { electronAPI } from '@/lib/electron-api';
+import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, FolderOpen, Plus } from 'lucide-react';
 
@@ -64,10 +65,11 @@ export function FileTree() {
 
   const handleCreate = useCallback(async () => {
     if (!newFileName.trim()) return;
-    const fileName = newFileName.endsWith('.md') ? newFileName : `${newFileName}.md`;
-    const filePath = `Memory/${fileName}`;
+    const title = noteTitleFromName(newFileName);
+    if (!title) return;
+    const filePath = buildNewNotePath(title, activeFile);
     try {
-      await electronAPI.createFile(filePath, `# ${newFileName.replace('.md', '')}\n\n`);
+      await electronAPI.createFile(filePath, `# ${title}\n\n`);
       await refreshFiles();
       handleSelect(filePath);
     } catch (err) {
@@ -76,10 +78,12 @@ export function FileTree() {
       setCreating(false);
       setNewFileName('');
     }
-  }, [newFileName, refreshFiles, handleSelect]);
+  }, [newFileName, refreshFiles, handleSelect, activeFile]);
 
   const handleDelete = useCallback(
     async (path: string) => {
+      const name = path.split('/').pop()?.replace(/\.md$/i, '') || path;
+      if (!window.confirm(`Delete “${name}”? This cannot be undone.`)) return;
       try {
         await electronAPI.deleteFile(path);
         await refreshFiles();
@@ -98,7 +102,7 @@ export function FileTree() {
         console.error('Failed to delete note:', err);
       }
     },
-    [refreshFiles]
+    [refreshFiles, closeTab]
   );
 
   return (
@@ -188,8 +192,8 @@ export function FileTree() {
         ))}
       </div>
 
-      {/* Bottom bar: file count */}
-      <div className="py-3" style={{ paddingLeft: 12, paddingRight: 20, borderTop: '1px solid var(--border)' }}>
+      {/* Bottom bar: file count — leave room for the settings gear */}
+      <div className="pt-3" style={{ paddingLeft: 12, paddingRight: 20, paddingBottom: 56, borderTop: '1px solid var(--border)' }}>
         <div className="text-xs text-left" style={{ color: 'var(--text-dim)' }}>
           {files.length} notes
         </div>

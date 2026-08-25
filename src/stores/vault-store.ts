@@ -3,6 +3,7 @@ import type { GraphData, GraphNode, GraphEdge } from '@/types';
 import { electronAPI } from '@/lib/electron-api';
 import { normalizeRelativePath } from '@/lib/paths';
 import { useEditorStore } from '@/stores/editor-store';
+import { useSettingsStore } from '@/stores/settings-store';
 
 interface VaultState {
   files: string[];
@@ -46,7 +47,12 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     }
   },
 
-  setActiveFile: (path) => set({ activeFile: path }),
+  setActiveFile: (path) => {
+    set({ activeFile: path });
+    if (path) {
+      useSettingsStore.getState().updateSettings({ lastNotePath: path });
+    }
+  },
 
   setGraphData: (data) => set({ graphData: data }),
 

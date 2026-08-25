@@ -42,6 +42,9 @@ function renderMarkdown(source: string): string {
     }
 
     // Headings
+    if (/^#### /.test(block)) {
+      return `<h4 class="md-h4">${applyInline(block.slice(5))}</h4>`;
+    }
     if (/^### /.test(block)) {
       return `<h3 class="md-h3">${applyInline(block.slice(4))}</h3>`;
     }
@@ -52,14 +55,33 @@ function renderMarkdown(source: string): string {
       return `<h1 class="md-h1">${applyInline(block.slice(2))}</h1>`;
     }
 
-    // Bullet lists: consecutive lines starting with "- "
     const lines = block.split('\n');
+
+    // Block quotes (escaped to &gt; because we HTML-escape before parsing)
+    if (lines.every((l) => /^(&gt;|>) /.test(l.trim()) || l.trim() === '')) {
+      const quoted = lines
+        .filter((l) => l.trim() !== '')
+        .map((l) => applyInline(l.trim().replace(/^(&gt;|>)\s?/, '')))
+        .join('<br />');
+      return `<blockquote class="md-quote">${quoted}</blockquote>`;
+    }
+
+    // Bullet lists: consecutive lines starting with "- "
     if (lines.every((l) => /^- /.test(l.trim()) || l.trim() === '')) {
       const items = lines
         .filter((l) => l.trim() !== '')
         .map((l) => `<li>${applyInline(l.trim().slice(2))}</li>`)
         .join('');
       return `<ul class="md-list">${items}</ul>`;
+    }
+
+    // Numbered lists: "1. item"
+    if (lines.every((l) => /^\d+\. /.test(l.trim()) || l.trim() === '')) {
+      const items = lines
+        .filter((l) => l.trim() !== '')
+        .map((l) => `<li>${applyInline(l.trim().replace(/^\d+\.\s+/, ''))}</li>`)
+        .join('');
+      return `<ol class="md-list">${items}</ol>`;
     }
 
     // Default: paragraph
@@ -69,6 +91,13 @@ function renderMarkdown(source: string): string {
   return rendered.join('');
 }
 
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
 function applyInline(text: string): string {
   // Inline code
   let result = text.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
@@ -76,11 +105,11 @@ function applyInline(text: string): string {
   result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   // Italic
   result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  // Wiki-links
-  result = result.replace(
-    /\[\[([^\]]+)\]\]/g,
-    '<a class="md-wiki-link" data-wiki-target="$1" href="#">$1</a>'
-  );
+  // Wiki-links — escape the attribute so a quote in the note name cannot break the tag
+  result = result.replace(/\[\[([^\]]+)\]\]/g, (_match, target: string) => {
+    const safe = escapeAttr(target);
+    return `<a class="md-wiki-link" data-wiki-target="${safe}" href="#">${safe}</a>`;
+  });
   return result;
 }
 
@@ -134,17 +163,36 @@ export function MarkdownPreview({ content, editorLightMode }: MarkdownPreviewPro
           color: ${textColor};
           line-height: 1.3;
         }
+        .md-preview h4.md-h4 {
+          font-size: 1.05em;
+          font-weight: 600;
+          margin: 0.5em 0 0.25em;
+          color: ${textColor};
+          line-height: 1.3;
+        }
         .md-preview p.md-p {
           margin: 0.5em 0;
           line-height: 1.7;
           color: ${textColor};
         }
-        .md-preview ul.md-list {
+        .md-preview ul.md-list,
+        .md-preview ol.md-list {
           margin: 0.5em 0;
           padding-left: 1.5em;
-          list-style-type: disc;
           color: ${textColor};
           line-height: 1.7;
+        }
+        .md-preview ul.md-list {
+          list-style-type: disc;
+        }
+        .md-preview ol.md-list {
+          list-style-type: decimal;
+        }
+        .md-preview .md-quote {
+          margin: 0.5em 0;
+          padding: 0.4em 0.9em;
+          border-left: 3px solid ${linkColor};
+          color: ${mutedColor};
         }
         .md-preview ul.md-list li {
           margin: 0.2em 0;

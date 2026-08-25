@@ -51,7 +51,8 @@ export const graphStateCreator: StateCreator<GraphState> = (set) => ({
     lineThickness: 1,
     autoRotate: true,
     rotateSpeed: 0.15,
-    lineColor: '#27272a',
+    // Slate-blue, not near-black — #27272a disappeared on the #050510 graph background.
+    lineColor: '#7b8cb3',
     terrainOpacity: 0.12,
     terrainWireframe: true,
     lowPowerMode: false,
