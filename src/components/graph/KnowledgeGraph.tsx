@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -14,7 +14,31 @@ import { useGraphStore } from '@/stores/graph-store';
 import * as THREE from 'three';
 import type { GraphControls, GraphControlsRef } from './graph-controls';
 
-/** Centralized Camera Controller to handle programmatic zoom and flying to nodes without fighting OrbitControls */
+/** Reset orbit camera when switching Galaxy / Terrain / Cluster / Particle. */
+function ResetFramingOnViewChange({
+  viewMode,
+  controlsRef,
+}: {
+  viewMode: string;
+  controlsRef: GraphControlsRef;
+}) {
+  const { camera } = useThree();
+  const prevView = useRef(viewMode);
+
+  useEffect(() => {
+    if (prevView.current === viewMode) return;
+    prevView.current = viewMode;
+    camera.position.set(0, 0, 160);
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
+    // Stop leftover fly-to from the previous view, which left particles as specks.
+    useGraphStore.setState({ selectedNode: null, zoomDistance: 160, cameraTarget: null });
+  }, [viewMode, camera, controlsRef]);
+
+  return null;
+}
 function CameraController({ controlsRef }: { controlsRef: GraphControlsRef }) {
   const zoomDistance = useGraphStore((state) => state.zoomDistance);
   const { camera } = useThree();
@@ -75,6 +99,7 @@ export function KnowledgeGraph() {
         />
 
         <CameraController controlsRef={controlsRef} />
+        <ResetFramingOnViewChange viewMode={viewMode} controlsRef={controlsRef} />
         
         {viewMode === 'galaxy' && <GraphScene controlsRef={controlsRef} />}
         {viewMode === 'terrain' && <TerrainScene controlsRef={controlsRef} />}
