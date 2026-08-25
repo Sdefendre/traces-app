@@ -1,117 +1,88 @@
 # Traces
 
-**Marketing site:** https://sdefendre.github.io/traces-app/
+Marketing site: https://sdefendre.github.io/traces-app/
 
-**A Defendre Solutions product.** A local-first knowledge workspace with a 3D force-directed knowledge graph, markdown editor, and multi-provider AI assistant. Built with Electron, Next.js 15, and React Three Fiber.
+A Defendre Solutions product. Markdown notes on disk, a 3D wiki-link graph, and a multi-provider AI assistant that can edit those files. Electron, Next.js 15, React Three Fiber. No hosted vault.
 
----
+## Notes, graph, chat
 
-## Overview
+Notes are `.md` files in a folder you pick. Wiki-links (`[[note name]]`) become edges in a live 3D graph. Chat can read and write the same files.
 
-Traces is a local-first note-taking and knowledge management tool designed for exploring connections between ideas. Notes are stored as markdown files in a vault directory on your machine. A real-time 3D graph visualizes how notes link to each other through wiki-links, while an integrated AI assistant can read, write, and edit files directly in your vault.
+Four panels: Files, Graph, Notes, Chat. Collapse or resize any of them. That is the whole layout.
 
-The interface is built around four collapsible panels -- Files, Graph, Notes, and Chat -- that can each be independently toggled and resized to fit your workflow.
+## Graph
 
----
+React Three Fiber and Three.js. Galaxy, Terrain, Cluster, and Particle views share one starfield and one camera.
 
-## Features
+Particle View puts one point per note on five fixed surfaces: Möbius Strip, Toroidal Vortex, Spherical Harmonics, Lissajous Curve, and Fractal Branches. Switching shapes morphs the points that still exist. Color is category. Size is markdown length. Hover for details. Click a point to open that note. Low Power Mode keeps the layout and drops edge attraction, bloom, and the dense background.
 
-### 3D Knowledge Graph
+## Editor
 
-Interactive 3D visualization of notes and their connections, rendered with React Three Fiber and Three.js. Switch among Galaxy, Terrain, Cluster, and Particle views while the background starfield and camera controls remain consistent.
+CodeMirror 6 with wiki-links, autocomplete, auto-save, and light or dark themes.
 
-Particle View arranges one point per note across five deterministic surfaces: Möbius Strip, Toroidal Vortex, Spherical Harmonics, Lissajous Curve, and Fractal Branches. Shape changes morph smoothly without losing surviving note positions. Point color follows note category, point size follows markdown content length, hover reveals note details, and clicking a point opens and focuses that note. Low Power Mode keeps the particle layout deterministic while skipping graph-edge attraction, bloom, and high-density background effects.
+Preview renders headings, bold, italic, inline code, fenced blocks, bullets, and clickable wiki-links. Use the Preview/Edit button in the toolbar.
 
-### Markdown Editor
+Change the `# Title` heading and the file renames after 1.5 seconds. The file tree, tab, and breadcrumb follow.
 
-CodeMirror 6-based editor with wiki-link support (`[[note name]]`) for navigating between notes. Features syntax highlighting, auto-save, light and dark themes, and wiki-link autocomplete.
+The status bar under the editor shows word count, character count, reading time, and line count.
 
-### Markdown Preview
+The MessageCircle button in the editor header opens Chat when that panel is closed.
 
-Toggle between edit mode and a rendered preview of the current note. The preview supports headings, bold, italic, inline code, fenced code blocks, bullet lists, and clickable wiki-links. Switch modes with the Preview/Edit button in the editor toolbar.
+## Settings
 
-### Note Title Sync
+Gear icon, bottom left. Escape closes it.
 
-Changing the `# Title` heading in a note automatically renames the underlying file after a 1.5-second debounce. The file tree, active tab, and editor breadcrumb all update to reflect the new name without manual intervention.
+- **AI & Models.** Sign in with Codex, Grok CLI, or Claude. API keys for Anthropic, OpenAI, Google, and xAI. Ollama endpoint. Checkboxes for which models show in the chat picker. Default provider and model. Custom system prompt.
+- **Editor.** Font size, light or dark, spell check.
+- **Graph.** Node size, labels, line thickness, auto-rotate, rotate speed, line color, low-power rendering.
+- **General.** Vault path, startup behavior, clear chat on close.
 
-### Word Count Status Bar
+Settings write to `settings.json` in the Electron user data directory.
 
-The bottom of the editor displays a persistent status bar showing word count, character count, estimated reading time, and line count for the current note.
+## Chat
 
-### Open Chat from Notes
+TracesAI talks to the provider you pick.
 
-A MessageCircle button in the editor header opens the AI chat panel directly from the notes view, making it easy to invoke the AI assistant while writing. The button appears when the chat panel is closed.
+- **Codex, Grok CLI, and Claude.** Sign in with the account already on your machine.
+- **Ollama.** Local models. No API key.
+- **Anthropic, OpenAI, Google, xAI.** API key.
 
-### Full Settings Page
+The assistant knows which model it is. API-key providers get file tools (read, write, edit, search, delete). Signed-in CLIs run in the vault and can edit notes there.
 
-Full-screen settings overlay accessed via the gear icon (bottom-left) or closed with Escape. Sidebar navigation with four sections:
+If a bring-your-own CLI is missing or logged out, Traces stops and tells you. It does not fall back to another provider or an API key. I would rather fail closed than silently switch you.
 
-- **AI & Models** -- Sign in with your own Codex, Grok CLI, or Claude account. API key management for Anthropic, OpenAI, Google, and xAI. Ollama endpoint configuration. Per-provider model enable/disable checkboxes to control which models appear in the chat picker. Default provider and model selection. Custom system prompt.
-- **Editor** -- font size slider, light/dark mode toggle, spell check.
-- **Graph** -- node size, show labels, line thickness, auto-rotate, rotate speed, line color, and low-power rendering.
-- **General** -- vault path display, startup behavior, clear chat on close.
+## Files and layout
 
-Settings persist across app restarts via Electron IPC (`settings.json` in user data directory).
+File tree with search, context menus, and new note or folder. Open any folder as a vault.
 
-### AI Chat (TracesAI)
+Collapse a panel and it becomes a tab on the left. Drag the borders between Files, Graph, Notes, and Chat to resize. Hover or drag lights the divider.
 
-Multi-provider chat panel supporting:
+Panels use frosted glass on shadcn/ui, with glass and gradient button variants.
 
-- **Codex, Grok CLI, and Claude** -- sign in with the account already on your machine
-- **Ollama** -- local models, no API key required
-- **Anthropic Claude** -- API key
-- **OpenAI GPT** -- API key
-- **Google Gemini** -- API key
-- **xAI Grok** -- API key
-
-The assistant has model identity awareness. API-key providers use file tools (read, write, edit, search, delete). Signed-in CLIs run in your vault directory and can edit notes there.
-
-If a bring-your-own CLI is missing or logged out, Traces stops and tells you. It does not fall back to another provider or an API key.
-
-### File Tree Sidebar
-
-Hierarchical file browser with search, context menus, and new note/folder creation. Open any folder on your system as a vault.
-
-### Collapsible Panel Layout
-
-Four panels (Files, Graph, Notes, Chat) can be independently collapsed to a vertical tab strip on the left side of the window. Dynamic resizing fills available space when panels are collapsed.
-
-### Draggable Panel Dividers
-
-All panel borders -- sidebar-to-graph, graph-to-editor, and editor-to-chat -- are draggable dividers that allow resizing panels by click-and-drag. Dividers highlight on hover and during drag for clear visual feedback.
-
-### Glass UI
-
-Frosted glass panels with backdrop blur, built on shadcn/ui with custom glass and gradient button variants.
-
----
-
-## Tech Stack
+## Tech stack
 
 | Category | Technology |
 | --- | --- |
 | Framework | Next.js 15 (App Router) |
-| UI Library | React 19 |
-| Desktop Runtime | Electron 34 |
+| UI library | React 19 |
+| Desktop runtime | Electron 34 |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4, tw-animate-css |
 | Components | shadcn/ui (New York style, CVA variants) |
-| State Management | Zustand |
+| State management | Zustand |
 | Editor | CodeMirror 6 |
-| 3D Rendering | React Three Fiber, Three.js, @react-three/drei, @react-three/postprocessing |
-| Graph Physics | D3 Force 3D |
+| 3D rendering | React Three Fiber, Three.js, @react-three/drei, @react-three/postprocessing |
+| Graph physics | D3 Force 3D |
 | Icons | Lucide React |
-| Package Manager | pnpm |
+| Package manager | pnpm |
 
----
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or later)
 - [pnpm](https://pnpm.io/)
-- [Ollama](https://ollama.ai/) (optional, for local AI models)
+- [Ollama](https://ollama.ai/) (optional, for local models)
 - Codex CLI, Grok CLI, or Claude Code (optional, to sign in with your own agent account)
 
 ### Installation
@@ -150,9 +121,9 @@ If the CLI is missing, the login expired, or the command fails, chat stops for t
 
 API-key providers still work the same way as before.
 
-### API Keys
+### API keys
 
-API keys can be configured directly in the app via **Settings > AI & Models**. Alternatively, create a `.env.local` file in the project root:
+API keys go in **Settings > AI & Models**. Or create a `.env.local` file in the project root:
 
 ```
 OPENAI_API_KEY=
@@ -161,11 +132,9 @@ GOOGLE_API_KEY=
 XAI_API_KEY=
 ```
 
-Those keys are only for the Anthropic / OpenAI / Google / xAI API-key providers. They are not used for Codex, Grok CLI, or Claude sign-in. Ollama runs locally and requires no API key.
+Those keys are only for the Anthropic / OpenAI / Google / xAI API-key providers. They are not used for Codex, Grok CLI, or Claude sign-in. Ollama runs locally and needs no API key.
 
----
-
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 | --- | --- |
@@ -177,9 +146,7 @@ Those keys are only for the Anthropic / OpenAI / Google / xAI API-key providers.
 | `Cmd + F` | Search |
 | `Cmd + \` | Fullscreen graph |
 
----
-
-## Project Structure
+## Project structure
 
 ```
 traces-app/
@@ -253,8 +220,6 @@ traces-app/
 ├── package.json
 └── tsconfig.json
 ```
-
----
 
 ## License
 

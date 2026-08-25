@@ -609,7 +609,7 @@ export function SettingsPanel() {
                   <SectionHeader>System Prompt</SectionHeader>
                   <div className="flex flex-col gap-1.5">
                     <span className="text-sm text-zinc-500">
-                      Custom instructions prepended to every chat message
+                      Added to the start of every chat
                     </span>
                     <textarea
                       value={settings.customSystemPrompt}
