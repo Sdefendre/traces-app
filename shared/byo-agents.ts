@@ -121,7 +121,7 @@ export function interpretStatusProbe(input: {
 }): { signedIn: boolean; detail: string } {
   const def = BYO_AGENTS[input.id];
   if (!input.installed) {
-    return { signedIn: false, detail: `${def.label} CLI was not found on PATH.` };
+    return { signedIn: false, detail: `${def.label} was not found on PATH.` };
   }
   if (!input.result) {
     return {

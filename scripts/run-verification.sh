@@ -35,6 +35,7 @@ pnpm build 2>&1 | tee "$SCRATCH/build2.log"
 # Step 2 (plan): after build:electron, load real compiled exports
 pnpm build:electron 2>&1 | tee -a "$SCRATCH/build2.log"
 node scripts/verify-logic.mjs 2>&1 | tee "$SCRATCH/logic.log"
+node scripts/verify-byo-runtime.mjs 2>&1 | tee "$SCRATCH/byo-runtime.log"
 
 # Step 3 (plan): launch — capture startup only (no wait-on HEAD flood)
 lsof -ti:3333 | xargs kill -9 2>/dev/null || true
