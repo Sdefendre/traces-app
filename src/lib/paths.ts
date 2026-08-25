@@ -3,4 +3,6 @@ export {
   normalizeRelativePath,
   basenameWithoutExt,
   dirnameRelative,
+  noteTitleFromName,
+  buildNewNotePath,
 } from '../../shared/paths';

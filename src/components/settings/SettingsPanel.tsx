@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { X, Eye, EyeOff, Bot, Type, GitBranch, Cog } from 'lucide-react';
 import { electronAPI } from '@/lib/electron-api';
 import { BYO_AGENTS, BYO_AGENT_IDS, type ByoAgentId, type ByoAgentStatus } from '../../../shared/byo-agents';
+import { useVaultStore } from '@/stores/vault-store';
 
 // ---------------------------------------------------------------------------
 // Shared row components — bigger text, more breathing room
@@ -44,7 +45,7 @@ function SliderRow({
       <div className="flex justify-between items-center">
         <span className="text-sm text-zinc-300">{label}</span>
         <span className="text-sm tabular-nums text-zinc-100 font-medium">
-          {value.toFixed(step < 0.1 ? 2 : 1)}
+          {step >= 1 ? value.toFixed(0) : value.toFixed(step < 0.1 ? 2 : 1)}
         </span>
       </div>
       <input
@@ -271,6 +272,7 @@ export function SettingsPanel() {
   const { settings: graphSettings, updateSettings: updateGraphSettings } = useGraphStore();
   const { toggleSettings, editorLightMode, toggleEditorTheme } = useUIStore();
   const { settings, loadSettings, updateSettings, setApiKey, toggleModel } = useSettingsStore();
+  const vaultName = useVaultStore((s) => s.vaultName);
   const [activeSection, setActiveSection] = useState<Section>('ai');
   const [vaultPath, setVaultPath] = useState<string>('');
   const [apiKeysSavedAt, setApiKeysSavedAt] = useState<number | null>(null);
@@ -339,14 +341,36 @@ export function SettingsPanel() {
   }, [toggleSettings]);
 
   useEffect(() => {
-    setVaultPath('~/Desktop/Traces Notes');
-  }, []);
+    let cancelled = false;
+    electronAPI.getVaultPath().then((p) => {
+      if (!cancelled && p) setVaultPath(p);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [vaultName]);
 
   const handleChangeVault = async () => {
-    const selected = await electronAPI.openFolder();
-    if (selected) {
-      setVaultPath(selected);
-    }
+    // Use the vault store so the file tree, graph, and open tabs refresh too.
+    await useVaultStore.getState().openFolder();
+    const p = await electronAPI.getVaultPath();
+    if (p) setVaultPath(p);
+  };
+
+  const persistGraph = (partial: Parameters<typeof updateGraphSettings>[0]) => {
+    updateGraphSettings(partial);
+    const next = useGraphStore.getState().settings;
+    updateSettings({
+      graphVisual: {
+        nodeSize: next.nodeSize,
+        showLabels: next.showLabels,
+        lineThickness: next.lineThickness,
+        autoRotate: next.autoRotate,
+        rotateSpeed: next.rotateSpeed,
+        lineColor: next.lineColor,
+        lowPowerMode: next.lowPowerMode,
+      },
+    });
   };
 
   const providerOptions: { value: Provider; label: string }[] = [
@@ -751,12 +775,12 @@ export function SettingsPanel() {
                     min={0.5}
                     max={4.0}
                     step={0.1}
-                    onChange={(v) => updateGraphSettings({ nodeSize: v })}
+                      onChange={(v) => persistGraph({ nodeSize: v })}
                   />
                   <ToggleRow
                     label="Show Labels"
                     checked={graphSettings.showLabels}
-                    onChange={(v) => updateGraphSettings({ showLabels: v })}
+                    onChange={(v) => persistGraph({ showLabels: v })}
                   />
                   <SliderRow
                     label="Line Thickness"
@@ -764,12 +788,12 @@ export function SettingsPanel() {
                     min={0.5}
                     max={3.0}
                     step={0.1}
-                    onChange={(v) => updateGraphSettings({ lineThickness: v })}
+                    onChange={(v) => persistGraph({ lineThickness: v })}
                   />
                   <ToggleRow
                     label="Auto Rotate"
                     checked={graphSettings.autoRotate}
-                    onChange={(v) => updateGraphSettings({ autoRotate: v })}
+                    onChange={(v) => persistGraph({ autoRotate: v })}
                   />
                   <SliderRow
                     label="Rotate Speed"
@@ -777,24 +801,24 @@ export function SettingsPanel() {
                     min={0}
                     max={1.0}
                     step={0.05}
-                    onChange={(v) => updateGraphSettings({ rotateSpeed: v })}
+                    onChange={(v) => persistGraph({ rotateSpeed: v })}
                   />
                   <div className="flex justify-between items-center py-2">
                     <span className="text-sm text-zinc-300">Line Color</span>
                     <input
                       type="color"
-                      value={graphSettings.lineColor || '#27272a'}
+                      value={graphSettings.lineColor || '#7b8cb3'}
                       onInput={(e) =>
-                        updateGraphSettings({ lineColor: (e.target as HTMLInputElement).value })
+                        persistGraph({ lineColor: (e.target as HTMLInputElement).value })
                       }
-                      onChange={(e) => updateGraphSettings({ lineColor: e.target.value })}
+                      onChange={(e) => persistGraph({ lineColor: e.target.value })}
                       className="w-8 h-6 border border-white/10 rounded-md cursor-pointer p-0 bg-transparent"
                     />
                   </div>
                   <ToggleRow
                     label="Low Power Mode"
                     checked={graphSettings.lowPowerMode}
-                    onChange={(v) => updateGraphSettings({ lowPowerMode: v })}
+                    onChange={(v) => persistGraph({ lowPowerMode: v })}
                   />
                   <p className="text-xs leading-relaxed text-zinc-500">
                     Reduces background and post-processing work, simplifies terrain,

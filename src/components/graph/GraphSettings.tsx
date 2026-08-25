@@ -111,7 +111,7 @@ export function GraphSettings() {
           <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Line Color</span>
           <input
             type="color"
-            value={settings.lineColor || '#27272a'}
+                      value={settings.lineColor || '#7b8cb3'}
             onInput={(e) => updateSettings({ lineColor: (e.target as HTMLInputElement).value })}
             onChange={(e) => updateSettings({ lineColor: e.target.value })}
             className="w-7 h-5 border border-white/10 rounded cursor-pointer p-0 bg-transparent"

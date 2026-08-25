@@ -499,14 +499,19 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
     if (!input.trim() || loading) return;
 
     const userMessage: Message = { role: 'user', content: input };
+    const apiKey = getApiKey(provider);
+
+    if (!isByoAgentId(provider) && provider !== 'ollama' && !apiKey) {
+      setError('Add an API key for this provider in Settings > AI & Models.');
+      return;
+    }
+
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
     setError(null);
 
     try {
-      const apiKey = getApiKey(provider);
-
       const data = await electronAPI.chat({
         messages: [...messages, userMessage],
         provider,
@@ -809,7 +814,13 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
               {/* Voice provider toggle + mic */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
                 <button
-                  onClick={() => setVoiceProvider(voiceProvider === 'openai' ? 'grok' : 'openai')}
+                  onClick={() => {
+                    const next = voiceProvider === 'openai' ? 'grok' : 'openai';
+                    setVoiceProvider(next);
+                    updateSettings({
+                      voice: { ...appSettings.voice, voiceProvider: next },
+                    });
+                  }}
                   title={`Voice: ${voiceProvider === 'openai' ? 'OpenAI' : 'Grok'} (click to switch)`}
                   className="flex items-center justify-center h-6 px-1.5 rounded-md text-[10px] font-medium transition-colors hover:bg-white/[0.1]"
                   style={{ color: 'var(--text-secondary)' }}

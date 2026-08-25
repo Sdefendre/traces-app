@@ -36,14 +36,18 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
   const { files } = useVaultStore();
   const { settings: appSettings } = useSettingsStore();
 
-  // Wiki-link autocomplete
+  // Wiki-link autocomplete — read files from a ref so the list stays current
+  // without tearing down the editor (which would drop undo history).
+  const filesRef = useRef(files);
+  filesRef.current = files;
+
   const wikiLinkCompletion = useCallback(
     (context: CompletionContext) => {
       const before = context.matchBefore(/\[\[[^\]]*$/);
       if (!before) return null;
 
       const query = before.text.slice(2).toLowerCase();
-      const options = files
+      const options = filesRef.current
         .map((f) => {
           const name = basenameWithoutExt(f);
           return { label: name, apply: `${name}]]`, type: 'text' };
@@ -56,7 +60,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
         filter: false,
       };
     },
-    [files]
+    []
   );
 
   useEffect(() => {
@@ -144,13 +148,19 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
     }
   }, [content]);
 
-  // Apply font size from settings
+  // Apply font size and spell check from settings
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    const el = view.dom;
-    el.style.fontSize = `${appSettings.editorFontSize}px`;
-  }, [appSettings.editorFontSize]);
+    view.contentDOM.spellcheck = appSettings.spellCheck;
+    view.dom.style.setProperty('--editor-font-size', `${appSettings.editorFontSize}px`);
+  }, [appSettings.editorFontSize, appSettings.spellCheck]);
 
-  return <div ref={containerRef} className="h-full overflow-auto" />;
+  return (
+    <div
+      ref={containerRef}
+      className="h-full overflow-auto"
+      style={{ ['--editor-font-size' as string]: `${appSettings.editorFontSize}px` }}
+    />
+  );
 }

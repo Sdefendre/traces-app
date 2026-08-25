@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useSettingsStore } from './settings-store';
 
 interface UIState {
   sidebarWidth: number;
@@ -24,6 +25,7 @@ interface UIState {
   toggleEditorCollapsed: () => void;
   setEditorCollapsed: (v: boolean) => void;
   toggleEditorTheme: () => void;
+  setEditorLightMode: (v: boolean) => void;
   togglePreview: () => void;
   toggleSettings: () => void;
 }
@@ -55,8 +57,14 @@ export const useUIStore = create<UIState>((set) => ({
   toggleEditorCollapsed: () =>
     set((s) => ({ editorCollapsed: !s.editorCollapsed })),
   setEditorCollapsed: (v) => set({ editorCollapsed: v }),
+  setEditorLightMode: (v) => set({ editorLightMode: v }),
   toggleEditorTheme: () =>
-    set((s) => ({ editorLightMode: !s.editorLightMode })),
+    set((s) => {
+      const editorLightMode = !s.editorLightMode;
+      // Keep Settings > Editor > Light Mode in sync across restarts.
+      useSettingsStore.getState().updateSettings({ editorLightMode });
+      return { editorLightMode };
+    }),
   togglePreview: () =>
     set((s) => ({ previewMode: !s.previewMode })),
   toggleSettings: () =>

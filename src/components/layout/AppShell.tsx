@@ -40,7 +40,7 @@ export function AppShell() {
   } = useUIStore();
   const zoomIn = useGraphStore((state) => state.zoomIn);
   const zoomOut = useGraphStore((state) => state.zoomOut);
-  const { loadSettings } = useSettingsStore();
+  const { loadSettings, settings, loaded } = useSettingsStore();
   const editorDividerRef = useRef<HTMLDivElement>(null);
   const sidebarDividerRef = useRef<HTMLDivElement>(null);
   const chatDividerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +97,22 @@ export function AppShell() {
     loadVault();
     loadSettings();
   }, [loadVault, loadSettings]);
+
+  const didHydrate = useRef(false);
+  useEffect(() => {
+    if (!loaded || loading || didHydrate.current) return;
+    didHydrate.current = true;
+
+    // Restore sliders / theme that used to reset every launch.
+    useUIStore.setState({ editorLightMode: settings.editorLightMode });
+    useGraphStore.getState().updateSettings(settings.graphVisual);
+
+    const { startupBehavior, lastNotePath } = settings;
+    if (startupBehavior === 'lastNote' && lastNotePath) {
+      useVaultStore.getState().setActiveFile(lastNotePath);
+      void useEditorStore.getState().openFile(lastNotePath);
+    }
+  }, [loaded, loading, settings]);
 
   useEffect(() => {
     const unsubFile = electronAPI.onFileChange((event, filePath) => {
@@ -276,7 +292,7 @@ export function AppShell() {
 
       {/* Collapsed panel strip — vertical tabs on the left, aligned to the edge */}
       {(sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen) && (
-        <div className="flex-shrink-0 flex flex-col items-stretch gap-3 panel-glass" style={{ paddingTop: 52, minWidth: 75, borderRight: '1px solid var(--glass-border)' }}>
+        <div className="flex-shrink-0 flex flex-col items-stretch gap-3 panel-glass" style={{ paddingTop: 52, paddingBottom: 56, minWidth: 75, borderRight: '1px solid var(--glass-border)' }}>
           {sidebarCollapsed && (
             <CollapsedTab label="Files" icon={ChevronRight} onClick={toggleSidebar} title="Expand sidebar" />
           )}
@@ -332,11 +348,17 @@ export function AppShell() {
           pointerEvents: graphCollapsed ? 'none' : 'auto',
         }}
       >
-        {/* Only mount 3D canvas when graph is visible — saves CPU/GPU when collapsed */}
-        {!graphCollapsed && !settingsOpen && (
-          <ErrorBoundary>
-            <KnowledgeGraph />
-          </ErrorBoundary>
+        {/* Keep the 3D graph mounted under Settings so camera position is not lost.
+            visibility:hidden also hides drei HTML labels, which sit above z-[200]. */}
+        {!graphCollapsed && (
+          <div
+            className="absolute inset-0"
+            style={{ visibility: settingsOpen ? 'hidden' : 'visible' }}
+          >
+            <ErrorBoundary>
+              <KnowledgeGraph />
+            </ErrorBoundary>
+          </div>
         )}
 
         {!graphCollapsed && !settingsOpen && <ViewToggle />}
@@ -393,8 +415,8 @@ export function AppShell() {
         </div>
       )}
 
-      {/* Chat resize divider */}
-      {chatOpen && !editorCollapsed && (
+      {/* Chat resize divider — show whenever chat is beside another panel */}
+      {chatOpen && !chatFlex && (
         <div
           ref={chatDividerRef}
           onMouseDown={handleChatDividerDrag}
@@ -428,12 +450,13 @@ export function AppShell() {
       {/* Settings overlay — full screen */}
       {settingsOpen && <SettingsPanel />}
 
-      {/* Settings button — fixed bottom-left */}
+      {/* Settings button — sits above the notes count / collapsed tabs, not on top of them */}
       <button
         onClick={toggleSettings}
         title="Settings"
-        className="fixed bottom-3 left-3 z-[60] flex items-center justify-center size-8 rounded-lg titlebar-no-drag text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-colors"
+        className="fixed bottom-3 z-[60] flex items-center justify-center size-8 rounded-lg titlebar-no-drag text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-colors"
         style={{
+          left: sidebarCollapsed ? 12 : (sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen) ? 87 : 12,
           backgroundColor: settingsOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
         }}
       >
