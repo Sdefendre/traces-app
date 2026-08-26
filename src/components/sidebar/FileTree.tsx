@@ -36,11 +36,24 @@ export function FileTree() {
       searchInputRef.current?.focus();
     };
 
+    const handleSearchNotes = (event: Event) => {
+      const query =
+        event instanceof CustomEvent && typeof event.detail?.query === 'string'
+          ? event.detail.query
+          : '';
+      const { sidebarCollapsed } = useUIStore.getState();
+      if (sidebarCollapsed) useUIStore.getState().toggleSidebar();
+      setSearch(query);
+      searchInputRef.current?.focus();
+    };
+
     window.addEventListener('traces:new-note', handleNewNote);
     window.addEventListener('traces:focus-search', handleFocusSearch);
+    window.addEventListener('traces:search-notes', handleSearchNotes);
     return () => {
       window.removeEventListener('traces:new-note', handleNewNote);
       window.removeEventListener('traces:focus-search', handleFocusSearch);
+      window.removeEventListener('traces:search-notes', handleSearchNotes);
     };
   }, []);
 

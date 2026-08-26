@@ -23,6 +23,7 @@
     "verify:editor": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-editor-store.js",
     "verify:byo": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-byo-agents.js",
     "verify:particles": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-particle-layout.js",
+    "verify:webmcp": "tsc -p tsconfig.verify.json && node scripts/verify-webmcp.mjs",
     "verify:byo-runtime": "pnpm build:electron && node scripts/verify-byo-runtime.mjs",
     "verify:all": "bash scripts/run-verification.sh",
     "build": "pnpm build:next && pnpm build:electron",
@@ -69,7 +70,8 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.3",
-    "wait-on": "^8.0.3"
+    "wait-on": "^8.0.3",
+    "webmcp-types": "0.1.5"
   },
   "build": {
     "appId": "com.defendresolutions.traces",
