@@ -12,6 +12,10 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+function sameJson(actual, expected) {
+  assert.equal(JSON.stringify(actual), JSON.stringify(expected));
+}
+
 function createFakeModelContext() {
   const tools = new Map();
   return {
@@ -94,7 +98,7 @@ async function verifyMarketingTools() {
   await waitForTools(modelContext, 4);
 
   const names = [...modelContext.tools.keys()].sort();
-  assert.deepEqual(names, [
+  sameJson(names, [
     'get-github-url',
     'get-install-instructions',
     'get-product-info',
@@ -107,7 +111,7 @@ async function verifyMarketingTools() {
   assert.equal(product.github, 'https://github.com/Sdefendre/traces-app');
 
   const install = await modelContext.executeTool({ name: 'get-install-instructions' });
-  assert.ok(install.commands.includes('pnpm dev'));
+  assert.ok(Array.from(install.commands).includes('pnpm dev'));
 
   const github = await modelContext.executeTool({ name: 'get-github-url' });
   assert.equal(github.url, 'https://github.com/Sdefendre/traces-app');
@@ -124,7 +128,7 @@ async function verifyMarketingTools() {
     { section: 'billing' }
   );
   assert.equal(missing.scrolled, false);
-  assert.deepEqual(missing.available, ['overview', 'features', 'run']);
+  sameJson(missing.available, ['overview', 'features', 'run']);
 
   const cancelled = new AbortController();
   cancelled.abort(new Error('stop'));
