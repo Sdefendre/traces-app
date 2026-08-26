@@ -27,6 +27,7 @@
     "src/types/index.ts",
     "shared/paths.ts",
     "shared/tab-close-policy.ts",
-    "src/lib/paths.ts"
+    "src/lib/paths.ts",
+    "src/lib/webmcp-notes.ts"
   ]
 }

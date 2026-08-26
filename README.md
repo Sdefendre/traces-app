@@ -221,6 +221,14 @@ traces-app/
 └── tsconfig.json
 ```
 
+## WebMCP
+
+The marketing site registers a few read-only tools when the browser has [`document.modelContext`](https://webmachinelearning.github.io/webmcp/) (19 August 2026 draft). Without that API the page is unchanged.
+
+Marketing tools: `get-product-info`, `get-install-instructions`, `get-github-url`, `jump-to-section`.
+
+The desktop renderer does the same for `search-notes` and `open-note`. Those return paths, not note bodies.
+
 ## License
 
 MIT

@@ -17,9 +17,11 @@ import { ChatPanel } from '@/components/chat/ChatPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useWebMcpTools } from '@/hooks/useWebMcpTools';
 import { ChevronRight, ChevronLeft, Minus, Plus, Maximize, X, Settings } from 'lucide-react';
 
 export function AppShell() {
+  useWebMcpTools();
   const { loadVault, setGraphData, refreshFiles, loading } = useVaultStore();
   const {
     sidebarWidth,
