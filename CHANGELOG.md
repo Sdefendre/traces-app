@@ -9,6 +9,9 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
+### Fixed
+- Preview wiki-links with aliases (`[[Note|label]]`) now show the label and open the note, matching the editor and graph.
+
 ### Added
 - WebMCP tools on the GitHub Pages site via `document.modelContext` (19 August 2026 draft). The desktop renderer registers the same feature-detect for `search-notes` and `open-note`.
 - Particle View with five deterministic shapes, smooth node-ID-preserving morphs, file-size-based points, hover details, click-to-open selection, fullscreen controls, and low-power rendering.

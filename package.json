@@ -24,6 +24,7 @@
     "verify:byo": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-byo-agents.js",
     "verify:particles": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-particle-layout.js",
     "verify:webmcp": "tsc -p tsconfig.verify.json && node scripts/verify-webmcp.mjs",
+    "verify:wiki-link": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-wiki-link.js",
     "verify:byo-runtime": "pnpm build:electron && node scripts/verify-byo-runtime.mjs",
     "verify:all": "bash scripts/run-verification.sh",
     "build": "pnpm build:next && pnpm build:electron",

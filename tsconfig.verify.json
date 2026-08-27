@@ -28,6 +28,8 @@
     "shared/paths.ts",
     "shared/tab-close-policy.ts",
     "src/lib/paths.ts",
-    "src/lib/webmcp-notes.ts"
+    "src/lib/webmcp-notes.ts",
+    "src/lib/wiki-link.ts",
+    "scripts/verify-wiki-link.ts"
   ]
 }
