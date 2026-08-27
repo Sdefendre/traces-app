@@ -6,6 +6,8 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
 import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
+import { resolveNotePath } from '@/lib/webmcp-notes';
+import { parseWikiLink } from '@/lib/wiki-link';
 import { MarkdownEditor } from './MarkdownEditor';
 import { MarkdownPreview } from './MarkdownPreview';
 import { Button } from '@/components/ui/button';
@@ -57,11 +59,8 @@ export function EditorPanel() {
       if (detail?.target) {
         const { openFile } = useEditorStore.getState();
         const { files, setActiveFile } = useVaultStore.getState();
-        const match = files.find(
-          (f) =>
-            f.split('/').pop()?.replace('.md', '').toLowerCase() ===
-            detail.target.toLowerCase()
-        );
+        const { target } = parseWikiLink(String(detail.target));
+        const match = resolveNotePath(files, target).path;
         if (match) {
           setActiveFile(match);
           openFile(match);

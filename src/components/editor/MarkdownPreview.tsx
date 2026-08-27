@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { applyWikiLinks } from '@/lib/wiki-link';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -105,11 +106,8 @@ function applyInline(text: string): string {
   result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   // Italic
   result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  // Wiki-links — escape the attribute so a quote in the note name cannot break the tag
-  result = result.replace(/\[\[([^\]]+)\]\]/g, (_match, target: string) => {
-    const safe = escapeAttr(target);
-    return `<a class="md-wiki-link" data-wiki-target="${safe}" href="#">${safe}</a>`;
-  });
+  // Wiki-links — aliases use the note name as the target and the label as text
+  result = applyWikiLinks(result, escapeAttr);
   return result;
 }
 
