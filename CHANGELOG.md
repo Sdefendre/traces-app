@@ -13,7 +13,7 @@ Traces is a product of **Defendre Solutions LLC**.
 - Preview wiki-links with aliases (`[[Note|label]]`) now show the label and open the note, matching the editor and graph.
 
 ### Added
-- WebMCP tools on the GitHub Pages site via `document.modelContext` (19 August 2026 draft). The desktop renderer registers the same feature-detect for `search-notes` and `open-note`.
+- WebMCP tools on the GitHub Pages site via `document.modelContext || navigator.modelContext` (26 August 2026 draft), then `registerTool`. Marketing tools include `get-contact` for the public footer email. The desktop renderer uses the same feature-detect for `search-notes` and `open-note`.
 - Particle View with five deterministic shapes, smooth node-ID-preserving morphs, file-size-based points, hover details, click-to-open selection, fullscreen controls, and low-power rendering.
 - Bring-your-own agent sign-in for Codex, Grok CLI, and Claude in Settings > AI & Models. Chat uses the CLI account on the machine and fails closed if that CLI is missing or logged out.
 - MIT license and Defendre Solutions LLC branding (LICENSE, package.json author/homepage/repository).

@@ -1,6 +1,7 @@
 /**
- * Exercise marketing WebMCP registration with a fake document.modelContext.
- * Also checks the in-app path helpers compiled from TypeScript.
+ * Exercise marketing WebMCP registration with a fake modelContext.
+ * Feature-detect is document.modelContext || navigator.modelContext, then registerTool.
+ * Also checks the in-app path helpers and the shared context resolver.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -78,10 +79,64 @@ async function waitForTools(modelContext, count) {
   }
 }
 
+const TOOL_NAME = /^[A-Za-z0-9_.-]{1,128}$/;
+const MARKETING_TOOLS = [
+  'get-contact',
+  'get-github-url',
+  'get-install-instructions',
+  'get-product-info',
+  'jump-to-section',
+];
+
+function assertToolNames(names) {
+  for (const name of names) {
+    assert.match(name, TOOL_NAME);
+  }
+}
+
 async function verifyMarketingNoop() {
   const document = {};
   loadMarketingScript(document);
   assert.equal(document.modelContext, undefined);
+}
+
+async function verifyMarketingNoopWithoutRegisterTool() {
+  const document = {
+    modelContext: {},
+  };
+  loadMarketingScript(document);
+  assert.equal(typeof document.modelContext.registerTool, 'undefined');
+}
+
+async function verifyMarketingNavigatorFallback() {
+  const modelContext = createFakeModelContext();
+  const document = {
+    getElementById() {
+      return null;
+    },
+  };
+  loadMarketingScript(document, {
+    window: { navigator: { modelContext } },
+  });
+  await waitForTools(modelContext, MARKETING_TOOLS.length);
+  const names = [...modelContext.tools.keys()].sort();
+  sameJson(names, MARKETING_TOOLS);
+}
+
+async function verifyMarketingDocumentWinsOverNavigator() {
+  const documentContext = createFakeModelContext();
+  const navigatorContext = createFakeModelContext();
+  const document = {
+    modelContext: documentContext,
+    getElementById() {
+      return null;
+    },
+  };
+  loadMarketingScript(document, {
+    window: { navigator: { modelContext: navigatorContext } },
+  });
+  await waitForTools(documentContext, MARKETING_TOOLS.length);
+  assert.equal(navigatorContext.tools.size, 0);
 }
 
 async function verifyMarketingTools() {
@@ -95,15 +150,11 @@ async function verifyMarketingTools() {
   };
 
   const { listeners } = loadMarketingScript(document);
-  await waitForTools(modelContext, 4);
+  await waitForTools(modelContext, MARKETING_TOOLS.length);
 
   const names = [...modelContext.tools.keys()].sort();
-  sameJson(names, [
-    'get-github-url',
-    'get-install-instructions',
-    'get-product-info',
-    'jump-to-section',
-  ]);
+  sameJson(names, MARKETING_TOOLS);
+  assertToolNames(names);
 
   const product = await modelContext.executeTool({ name: 'get-product-info' });
   assert.equal(product.name, 'Traces');
@@ -115,6 +166,10 @@ async function verifyMarketingTools() {
 
   const github = await modelContext.executeTool({ name: 'get-github-url' });
   assert.equal(github.url, 'https://github.com/Sdefendre/traces-app');
+
+  const contact = await modelContext.executeTool({ name: 'get-contact' });
+  assert.equal(contact.email, 'steve@defendresolutions.com');
+  assert.equal(contact.sendsMail, false);
 
   const jumped = await modelContext.executeTool(
     { name: 'jump-to-section' },
@@ -161,7 +216,31 @@ function verifyNoteHelpers() {
   assert.equal(resolveNotePath(files, 'missing').path, null);
 }
 
+function verifyContextResolver() {
+  const {
+    resolveModelContext,
+  } = require(path.join(root, 'scripts/.verify-out/src/lib/webmcp-context.js'));
+
+  const documentContext = { registerTool() {} };
+  const navigatorContext = { registerTool() {} };
+
+  assert.equal(resolveModelContext(undefined, undefined), undefined);
+  assert.equal(resolveModelContext({ modelContext: {} }, undefined), undefined);
+  assert.equal(
+    resolveModelContext({ modelContext: documentContext }, { modelContext: navigatorContext }),
+    documentContext
+  );
+  assert.equal(
+    resolveModelContext({}, { modelContext: navigatorContext }),
+    navigatorContext
+  );
+}
+
 await verifyMarketingNoop();
+await verifyMarketingNoopWithoutRegisterTool();
+await verifyMarketingNavigatorFallback();
+await verifyMarketingDocumentWinsOverNavigator();
 await verifyMarketingTools();
 verifyNoteHelpers();
+verifyContextResolver();
 console.log('webmcp verification ok');

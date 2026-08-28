@@ -1,15 +1,20 @@
 import { useEditorStore } from '@/stores/editor-store';
 import { useUIStore } from '@/stores/ui-store';
 import { useVaultStore } from '@/stores/vault-store';
+import { resolveModelContext } from '@/lib/webmcp-context';
 import { matchNotePaths, resolveNotePath } from '@/lib/webmcp-notes';
 
+export { resolveModelContext } from '@/lib/webmcp-context';
 export { matchNotePaths, resolveNotePath } from '@/lib/webmcp-notes';
 
 export const SEARCH_NOTES_EVENT = 'traces:search-notes';
 
 function getModelContext(): WebMCP.ModelContext | undefined {
   if (typeof document === 'undefined') return undefined;
-  return document.modelContext;
+  return resolveModelContext(
+    document,
+    typeof navigator === 'undefined' ? undefined : navigator
+  );
 }
 
 function throwIfAborted(signal: AbortSignal) {
@@ -128,7 +133,8 @@ async function registerAppTools(
 }
 
 /**
- * Register in-app WebMCP tools when document.modelContext exists.
+ * Register in-app WebMCP tools when document.modelContext or
+ * navigator.modelContext exists and has registerTool.
  * Returns an unregister function. Missing API is a no-op.
  */
 export function registerTracesAppWebMcp(): () => void {
