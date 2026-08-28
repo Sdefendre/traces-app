@@ -32,7 +32,7 @@ source /tmp/traces-verify-<run-id>/run.env
 3. Seeds `Verify Alpha.md` and `Verify Beta.md` in that vault. Alpha wiki-links to Beta.
 4. Compiles the Electron main process with `pnpm exec tsc -p tsconfig.electron.json`.
 5. Starts `pnpm exec next dev -p 3333 --turbo` in its own session.
-6. Starts `pnpm exec electron .` with `HOME` set to the fake home, `--user-data-dir` under the run dir, `--remote-debugging-port` (default 9333), `--no-sandbox`, and `--disable-gpu`.
+6. Starts `pnpm exec electron .` with `HOME` set to the fake home, the real `XAUTHORITY` and `DISPLAY` (a fake HOME hides `~/.Xauthority` and Electron exits), `--user-data-dir` under the run dir, `--remote-debugging-port` (default 9333), `--no-sandbox`, and `--disable-gpu`.
 7. Waits until Next answers, CDP lists a page on `http://localhost:3333`, `document.title` is `Traces`, `window.electronAPI` exists, and the loading copy is gone.
 8. Writes `state.json` and `run.env`. Evidence directory: `.cursor/skills/verify-traces/evidence/<run-id>/`.
 

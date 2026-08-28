@@ -47,7 +47,7 @@ Preconditions:
 
 - Files header title is `New Note`. Empty-editor header title is `New note`. The empty-state CTA uses visible text `New Note`.
 - A new note is created next to the active file, or at the vault root if nothing is open. Baseline seeds sit at the vault root, so `Verify Gamma.md` is the usual path.
-- CodeMirror does not update if you set `innerText` from `eval`. Use `type --focus-editor` or real key events.
+- CodeMirror does not update if you set `innerText` from `eval`. Use `type --focus-editor` or real key events. `Input.insertText` lands at the current cursor, often the start of the file, so the typed line can prepend `# Title`. That still proves autosave. Arrow to the end first if you need the body after the heading.
 - Auto-save is 800 ms. Heading rename is 1500 ms. Assert disk, not only the tab label.
 - Titles are trimmed and `.md` is stripped from the typed name. Assert the rendered name `Verify Gamma`, not `Verify Gamma.md`.
 - Browser-only Next.js will show `No note selected` forever. Doctor must have seen `electronAPI`.

@@ -94,14 +94,24 @@ done
 
 ELECTRON_BIN="$REPO_ROOT/node_modules/.bin/electron"
 DISPLAY_VALUE="${DISPLAY:-:1}"
+# Keep the real X cookie. A fake HOME would hide ~/.Xauthority and Electron
+# exits with "Authorization required" / "Missing X server or $DISPLAY".
+REAL_XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+REAL_XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}"
 
-echo "verify-traces: starting Electron (HOME=$VERIFY_HOME, CDP=$CDP_PORT)"
+echo "verify-traces: starting Electron (HOME=$VERIFY_HOME, CDP=$CDP_PORT, DISPLAY=$DISPLAY_VALUE)"
+ELECTRON_ENV=(
+  HOME="$VERIFY_HOME"
+  DISPLAY="$DISPLAY_VALUE"
+  XAUTHORITY="$REAL_XAUTHORITY"
+  ELECTRON_ENABLE_LOGGING=1
+)
+if [ -n "$REAL_XDG_RUNTIME_DIR" ]; then
+  ELECTRON_ENV+=(XDG_RUNTIME_DIR="$REAL_XDG_RUNTIME_DIR")
+fi
 (
   cd "$REPO_ROOT"
-  setsid env \
-    HOME="$VERIFY_HOME" \
-    DISPLAY="$DISPLAY_VALUE" \
-    ELECTRON_ENABLE_LOGGING=1 \
+  setsid env "${ELECTRON_ENV[@]}" \
     "$ELECTRON_BIN" . \
     --user-data-dir="$RUN_DIR/user-data" \
     --remote-debugging-port="$CDP_PORT" \
