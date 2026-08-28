@@ -1,0 +1,4 @@
+=== feature id ===
+feature: notes-editor
+entry: notes-create-files + notes-edit-autosave
+handle: button title New Note, placeholder Note name..., .cm-content
