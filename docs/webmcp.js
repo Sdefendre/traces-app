@@ -1,9 +1,10 @@
 /**
  * WebMCP tools for the Traces marketing site.
  *
- * Spec: https://webmachinelearning.github.io/webmcp/ (19 August 2026)
- * The API lives on document.modelContext. Older articles mention
- * navigator.modelContext; do not use that here.
+ * Spec: https://webmachinelearning.github.io/webmcp/ (26 August 2026)
+ * Canonical getter: document.modelContext.
+ * Feature-detect: document.modelContext || navigator.modelContext, then registerTool.
+ * Aborting the register signal unregisters. There is no unregisterTool.
  *
  * If the browser has no WebMCP (most browsers today), this file does nothing
  * and the page keeps working as a normal website.
@@ -14,8 +15,9 @@
   if (!doc) return;
 
   // Feature-detect. SecureContext + Permissions-Policy "tools" (default: self).
-  const modelContext = doc.modelContext;
-  if (!modelContext) return;
+  const nav = global.navigator;
+  const modelContext = doc.modelContext || (nav && nav.modelContext);
+  if (!modelContext || typeof modelContext.registerTool !== 'function') return;
 
   const GITHUB_URL = 'https://github.com/Sdefendre/traces-app';
   const SITE_URL = 'https://sdefendre.github.io/traces-app/';
@@ -44,6 +46,13 @@
       'pnpm dev',
     ],
     github: GITHUB_URL,
+  };
+
+  // Same public email already shown in the page footer. This tool never sends mail.
+  const CONTACT = {
+    email: 'steve@defendresolutions.com',
+    name: 'Defendre Solutions',
+    sendsMail: false,
   };
 
   const SECTIONS = {
@@ -123,6 +132,22 @@
 
     await modelContext.registerTool(
       {
+        name: 'get-contact',
+        title: 'Get contact email',
+        description:
+          'Return the public Defendre Solutions email shown on this page. Does not send mail.',
+        inputSchema: emptyInputSchema,
+        annotations: { readOnlyHint: true, untrustedContentHint: false },
+        execute: async (_input, { signal }) => {
+          throwIfAborted(signal);
+          return CONTACT;
+        },
+      },
+      { signal: controller.signal }
+    );
+
+    await modelContext.registerTool(
+      {
         name: 'jump-to-section',
         title: 'Jump to a page section',
         description:
@@ -168,7 +193,7 @@
     );
   }
 
-  // Aborting the register signal unregisters every tool (spec 19 August 2026).
+  // Aborting the register signal unregisters every tool (spec 26 August 2026).
   if (typeof global.addEventListener === 'function') {
     global.addEventListener('pagehide', unregister, { once: true });
   }

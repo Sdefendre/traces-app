@@ -2,7 +2,7 @@
 
 /**
  * webmcp-types@0.1.5 follows document.modelContext but omits executeTool.
- * The 19 August 2026 spec includes it: https://webmachinelearning.github.io/webmcp/
+ * The 26 August 2026 spec includes it: https://webmachinelearning.github.io/webmcp/
  */
 declare namespace WebMCP {
   interface ModelContextExecuteToolOptions {
@@ -16,4 +16,11 @@ declare namespace WebMCP {
       options?: ModelContextExecuteToolOptions
     ): Promise<string>;
   }
+}
+
+/**
+ * Canonical getter is document.modelContext. Older builds used navigator.
+ */
+interface Navigator {
+  readonly modelContext?: WebMCP.ModelContext;
 }

@@ -3,7 +3,7 @@ import { registerTracesAppWebMcp } from '@/lib/webmcp';
 
 /**
  * Feature-detect WebMCP and register in-app tools for the life of the app shell.
- * No-ops when document.modelContext is missing.
+ * No-ops when neither document.modelContext nor navigator.modelContext has registerTool.
  */
 export function useWebMcpTools() {
   useEffect(() => registerTracesAppWebMcp(), []);
