@@ -26,7 +26,7 @@ const _dir = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 const _quat = new THREE.Quaternion();
 
-export function Synapse({ edge, getPositions, sourcePos, targetPos, sourceCategory, highlighted, lineThickness, lineColor: lineColorProp, variant = 'default' }: SynapseProps) {
+export function Synapse({ edge, getPositions, sourcePos, targetPos, highlighted, lineThickness, lineColor: lineColorProp, variant = 'default' }: SynapseProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const defaultColor = useMemo(() => new THREE.Color(lineColorProp), [lineColorProp]);
   const holoScratch = useMemo(() => new THREE.Color(), []);

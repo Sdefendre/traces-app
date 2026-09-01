@@ -15,7 +15,7 @@ import {
 
 let watcher: FSWatcher | null = null;
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
+const pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
 
 const REBUILD_DEBOUNCE_MS = 400;
 const READ_RETRY_DELAY_MS = 100;
@@ -24,7 +24,6 @@ const READ_RETRY_COUNT = 2;
 export { resetVaultFileCache };
 
 async function readFileWithRetry(rel: string): Promise<string | null> {
-  const contentCache = getContentCache();
   for (let attempt = 0; attempt < READ_RETRY_COUNT; attempt++) {
     try {
       return await readFile(rel);

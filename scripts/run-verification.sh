@@ -53,6 +53,8 @@ pnpm verify:editor 2>&1 | tee "$SCRATCH/editor-store2.log"
 pnpm verify:byo 2>&1 | tee "$SCRATCH/byo-agents.log"
 pnpm verify:particles 2>&1 | tee "$SCRATCH/particle-layout.log"
 pnpm verify:wiki-link 2>&1 | tee "$SCRATCH/wiki-link.log"
+pnpm verify:note-stats 2>&1 | tee "$SCRATCH/note-stats.log"
+pnpm verify:api-errors 2>&1 | tee "$SCRATCH/api-errors.log"
 pnpm verify:webmcp 2>&1 | tee "$SCRATCH/webmcp.log"
 
 # Step 5 (plan): source inspection

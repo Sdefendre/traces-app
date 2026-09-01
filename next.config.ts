@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   ...(process.env.BUILD_STATIC === '1' && { output: 'export' }),
   images: { unoptimized: true },
   typescript: { ignoreBuildErrors: false },
+  // The sidebar's Settings gear lives bottom-left; keep the dev overlay badge off it.
+  devIndicators: { position: 'bottom-right' },
 };
 
 export default nextConfig;

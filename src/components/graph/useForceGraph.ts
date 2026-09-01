@@ -44,7 +44,7 @@ export function useForceGraph(nodes: GraphNode[], edges: GraphEdge[]) {
 
       if (cancelled) return;
 
-      const simNodes: SimNode[] = nodes.map((n, i) => ({
+      const simNodes: SimNode[] = nodes.map((n) => ({
         id: n.id,
         x: (Math.random() - 0.5) * 300,
         y: (Math.random() - 0.5) * 300,

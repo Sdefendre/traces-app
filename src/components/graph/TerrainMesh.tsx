@@ -16,7 +16,7 @@ export function TerrainMesh({ config }: TerrainMeshProps) {
   const mousePos = useRef(new THREE.Vector3(0, -9999, 0));
   const lowPowerMode = useGraphStore((s) => s.settings.lowPowerMode);
 
-  const { geometry, colors, originalPositions, currentY } = useMemo(() => {
+  const { geometry, originalPositions, currentY } = useMemo(() => {
     const size = config.maxRadius * 2.5; // Scale grid to encompass mountain
     const segments = lowPowerMode ? 50 : 120; // Lower resolution in low power mode
     const geo = new THREE.PlaneGeometry(size, size, segments, segments);
@@ -64,7 +64,7 @@ export function TerrainMesh({ config }: TerrainMeshProps) {
     geo.setAttribute('color', new THREE.BufferAttribute(colorAttr, 3));
     geo.computeVertexNormals();
 
-    return { geometry: geo, colors: colorAttr, originalPositions, currentY };
+    return { geometry: geo, originalPositions, currentY };
   }, [config, lowPowerMode]);
 
   // Liquid hover physics + scanning wireframe effect (simplified in low power mode)

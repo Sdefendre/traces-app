@@ -6,8 +6,10 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
 import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
-import { resolveWikiLink, sanitizeNoteTitle } from '@/lib/wiki-links';
+import { parseWikiLink } from '@/lib/wiki-link';
+import { resolveWikiLinkTarget, sanitizeNoteTitle } from '@/lib/wiki-links';
 import { computeNoteStats } from '@/lib/note-stats';
+import { SEARCH_NOTES_EVENT } from '@/lib/webmcp';
 import { MarkdownEditor } from './MarkdownEditor';
 import { MarkdownPreview } from './MarkdownPreview';
 import { Button } from '@/components/ui/button';
@@ -40,7 +42,6 @@ export function EditorPanel() {
   const editorText = editorLightMode ? '#09090b' : 'var(--text)';
   const editorSecondary = editorLightMode ? '#71717a' : 'var(--text-secondary)';
   const editorBorder = editorLightMode ? '#e4e4e7' : 'var(--border)';
-  const editorHover = editorLightMode ? '#f4f4f5' : 'rgba(255,255,255,0.04)';
 
   const noteStats = useMemo(() => computeNoteStats(activeTab?.content ?? ''), [activeTab?.content]);
 
@@ -54,7 +55,19 @@ export function EditorPanel() {
         const { openFile } = useEditorStore.getState();
         const { files, activeFile, setActiveFile, refreshFiles } = useVaultStore.getState();
 
-        const existing = resolveWikiLink(files, String(target));
+        const resolution = resolveWikiLinkTarget(files, String(target));
+        if (!resolution.path && resolution.candidates.length > 1) {
+          // Several notes share this name: let the user pick from the sidebar
+          // instead of guessing (or silently creating a third copy).
+          window.dispatchEvent(
+            new CustomEvent(SEARCH_NOTES_EVENT, {
+              detail: { query: parseWikiLink(String(target)).target },
+            })
+          );
+          return;
+        }
+
+        const existing = resolution.path;
         let path = existing;
         if (!path) {
           const title = sanitizeNoteTitle(String(target));

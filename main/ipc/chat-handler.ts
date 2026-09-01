@@ -6,6 +6,7 @@ import {
   deleteFile,
 } from './file-system';
 import { isByoAgentId } from '../../shared/byo-agents';
+import { formatUpstreamError } from '../../shared/api-errors';
 import { handleByoChat } from './byo-agents';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -359,7 +360,7 @@ async function handleAnthropic(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Anthropic error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Anthropic', res.status, text));
     }
 
     const data = await fetchJSON(res);
@@ -429,7 +430,7 @@ async function handleOpenAI(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OpenAI error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('OpenAI', res.status, text));
     }
 
     const data = await fetchJSON(res);
@@ -495,7 +496,7 @@ async function handleXAI(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`xAI error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('xAI', res.status, text));
     }
 
     const data = await fetchJSON(res);
@@ -572,13 +573,13 @@ async function handleOllama(
         });
         if (!fallbackRes.ok) {
           const text = await fallbackRes.text();
-          throw new Error(`Ollama error (${fallbackRes.status}): ${text}`);
+          throw new Error(formatUpstreamError('Ollama', fallbackRes.status, text));
         }
         const fallbackData = await fetchJSON(fallbackRes);
         return { message: fallbackData.message?.content ?? 'No response from Ollama', toolCalls: [] };
       }
       const text = await res.text();
-      throw new Error(`Ollama error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Ollama', res.status, text));
     }
 
     const data = await fetchJSON(res);
@@ -648,7 +649,7 @@ async function handleGoogle(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Gemini error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Gemini', res.status, text));
     }
 
     const data = await fetchJSON(res);

@@ -19,7 +19,7 @@ export function ClusterScene({ controlsRef }: { controlsRef?: GraphControlsRef }
   const { openFile } = useEditorStore();
   const { hoveredNode, selectedNode, setSelectedNode, settings } = useGraphStore();
   const { setActiveFile } = useVaultStore();
-  const { positions, categoryCenters } = useClusterLayout(graphData.nodes, graphData.edges);
+  const { positions, categoryCenters } = useClusterLayout(graphData.nodes);
   const { camera } = useThree();
   const cameraTargetPosRef = useRef<THREE.Vector3 | null>(null);
   const cameraLerpFrames = useRef(0);

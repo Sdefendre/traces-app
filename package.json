@@ -25,6 +25,11 @@
     "verify:particles": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-particle-layout.js",
     "verify:webmcp": "tsc -p tsconfig.verify.json && node scripts/verify-webmcp.mjs",
     "verify:wiki-link": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-wiki-link.js",
+    "verify:note-stats": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-note-stats.js",
+    "verify:api-errors": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-api-errors.js",
+    "test": "tsc -p tsconfig.verify.json && for f in editor-store byo-agents particle-layout wiki-link note-stats api-errors; do node scripts/.verify-out/scripts/verify-$f.js || exit 1; done && node scripts/verify-webmcp.mjs",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.electron.json",
+    "lint": "eslint .",
     "verify:byo-runtime": "pnpm build:electron && node scripts/verify-byo-runtime.mjs",
     "verify:all": "bash scripts/run-verification.sh",
     "build": "pnpm build:next && pnpm build:electron",
@@ -60,6 +65,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4.0.9",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
@@ -68,6 +74,8 @@
     "concurrently": "^9.1.2",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.25",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.9",
     "typescript": "^5.7.3",
