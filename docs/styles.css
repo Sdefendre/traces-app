@@ -8,7 +8,8 @@
   --orange: #f97316;
   --text: #f4f4f5;
   --muted: #a1a1aa;
-  --dim: #71717a;
+  /* 5.9:1 on --void — passes WCAG AA for body-size text (#71717a was ~4.2:1). */
+  --dim: #8a8a94;
   --line: rgba(255, 255, 255, 0.06);
   --glass: rgba(8, 8, 20, 0.72);
   --radius: 16px;
@@ -25,8 +26,10 @@
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -504,10 +507,15 @@ button {
 
 .run {
   display: grid;
-  grid-template-columns: 1fr 1.1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 28px;
   align-items: center;
   padding: 36px 0 56px;
+}
+
+/* Grid items default to min-width:auto, which lets the long clone URL widen the page. */
+.run > * {
+  min-width: 0;
 }
 
 .run h2 {
@@ -552,6 +560,11 @@ button {
   color: var(--text);
 }
 
+.copy.is-error {
+  color: var(--orange);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
 .foot {
   display: flex;
   justify-content: space-between;
@@ -586,8 +599,9 @@ button {
     width: min(1240px, calc(100% - 28px));
   }
 
+  /* Files, Notes and Chat are all hidden here, so Graph is the only panel left. */
   .workspace {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .files-panel,
@@ -635,5 +649,11 @@ button {
   .sky::after,
   .pulse {
     animation: none;
+  }
+
+  .btn,
+  .btn:hover {
+    transition: none;
+    transform: none;
   }
 }

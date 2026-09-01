@@ -1,5 +1,6 @@
 import type { GraphData } from '@/types';
 import type { ByoAgentId, ByoAgentStatus } from '../../shared/byo-agents';
+import { formatUpstreamError } from '../../shared/api-errors';
 
 export interface RealtimeSessionResult {
   clientSecret: string;
@@ -173,7 +174,7 @@ export const electronAPI = {
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Realtime session error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('OpenAI voice', res.status, text));
     }
     return await res.json();
   },
@@ -190,7 +191,7 @@ export const electronAPI = {
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Grok session error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Grok voice', res.status, text));
     }
     return await res.json();
   },

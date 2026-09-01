@@ -267,18 +267,8 @@ export function ParticleScene({ controlsRef }: ParticleSceneProps) {
     cameraFocusSecondsRef.current = Math.max(0, cameraFocusSecondsRef.current - delta);
   });
 
-  if (layout.nodeAtIndex.length === 0) {
-    return (
-      <Html center style={{ pointerEvents: 'none' }}>
-        <div
-          role="status"
-          className="whitespace-nowrap rounded-xl border border-white/[0.08] bg-[rgba(5,5,16,0.72)] px-4 py-2 text-center text-xs text-zinc-400 shadow-lg backdrop-blur-md"
-        >
-          No notes to arrange in Particle View
-        </div>
-      </Html>
-    );
-  }
+  // KnowledgeGraph renders the shared empty state over every view when there are no notes.
+  if (layout.nodeAtIndex.length === 0) return null;
 
   const hoveredIndex = hoveredNode ? layout.indexOfNode.get(hoveredNode) : undefined;
   const hoveredNote = hoveredNode ? nodeMap.get(hoveredNode) : undefined;

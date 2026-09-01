@@ -13,8 +13,11 @@ interface UIState {
   editorLightMode: boolean;
   previewMode: boolean;
   settingsOpen: boolean;
+  /** Lives here (not in FileTree) so the query survives collapsing the sidebar. */
+  sidebarSearch: string;
 
   setSidebarWidth: (w: number) => void;
+  setSidebarSearch: (q: string) => void;
   setEditorWidth: (w: number) => void;
   toggleChat: () => void;
   setChatOpen: (v: boolean) => void;
@@ -42,8 +45,10 @@ export const useUIStore = create<UIState>((set) => ({
   editorLightMode: false,
   previewMode: false,
   settingsOpen: false,
+  sidebarSearch: '',
 
   setSidebarWidth: (w) => set({ sidebarWidth: w }),
+  setSidebarSearch: (q) => set({ sidebarSearch: q }),
   setEditorWidth: (w) => set({ editorWidth: w }),
   toggleChat: () => set((s) => ({ chatOpen: !s.chatOpen })),
   setChatOpen: (v) => set({ chatOpen: v }),

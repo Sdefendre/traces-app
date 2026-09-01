@@ -6,8 +6,8 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useUIStore } from '@/stores/ui-store';
 import { electronAPI } from '@/lib/electron-api';
 import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
-import { resolveNotePath } from '@/lib/webmcp-notes';
-import { parseWikiLink } from '@/lib/wiki-link';
+import { resolveWikiLink, sanitizeNoteTitle } from '@/lib/wiki-links';
+import { computeNoteStats } from '@/lib/note-stats';
 import { MarkdownEditor } from './MarkdownEditor';
 import { MarkdownPreview } from './MarkdownPreview';
 import { Button } from '@/components/ui/button';
@@ -42,33 +42,40 @@ export function EditorPanel() {
   const editorBorder = editorLightMode ? '#e4e4e7' : 'var(--border)';
   const editorHover = editorLightMode ? '#f4f4f5' : 'rgba(255,255,255,0.04)';
 
-  const noteStats = useMemo(() => {
-    const text = activeTab?.content ?? '';
-    const trimmed = text.trim();
-    const characters = text.length;
-    const words = trimmed === '' ? 0 : trimmed.split(/\s+/).length;
-    const lines = text === '' ? 0 : text.split('\n').length;
-    const readingTime = words === 0 ? 0 : Math.max(1, Math.ceil(words / 200));
-    return { words, characters, lines, readingTime };
-  }, [activeTab?.content]);
+  const noteStats = useMemo(() => computeNoteStats(activeTab?.content ?? ''), [activeTab?.content]);
 
-  // Listen for wiki-link navigation events
+  // Wiki-link navigation: open the matching note, or create it when it does not exist yet.
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.target) {
+      const target = (e as CustomEvent<{ target?: string }>).detail?.target;
+      if (!target) return;
+
+      void (async () => {
         const { openFile } = useEditorStore.getState();
-        const { files, setActiveFile } = useVaultStore.getState();
-        const { target } = parseWikiLink(String(detail.target));
-        const match = resolveNotePath(files, target).path;
-        if (match) {
-          setActiveFile(match);
-          openFile(match);
-          // Auto-expand if collapsed
-          const { editorCollapsed, setEditorCollapsed } = useUIStore.getState();
-          if (editorCollapsed) setEditorCollapsed(false);
+        const { files, activeFile, setActiveFile, refreshFiles } = useVaultStore.getState();
+
+        const existing = resolveWikiLink(files, String(target));
+        let path = existing;
+        if (!path) {
+          const title = sanitizeNoteTitle(String(target));
+          if (!title) return;
+          path = buildNewNotePath(title, activeFile);
+          try {
+            await electronAPI.createFile(path, `# ${title}\n\n`);
+            await refreshFiles();
+          } catch (err) {
+            console.error('Failed to create note from wiki-link:', err);
+            return;
+          }
         }
-      }
+
+        setActiveFile(path);
+        await openFile(path);
+        const { editorCollapsed, setEditorCollapsed, previewMode, togglePreview } = useUIStore.getState();
+        if (editorCollapsed) setEditorCollapsed(false);
+        // A freshly created note is empty, so drop the user into the editor rather than a blank preview.
+        if (previewMode && !existing) togglePreview();
+      })();
     };
     window.addEventListener('traces:open-note', handler);
     return () => window.removeEventListener('traces:open-note', handler);

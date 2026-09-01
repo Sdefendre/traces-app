@@ -10,7 +10,9 @@ import { TerrainScene } from './TerrainScene';
 import { ParticleScene } from './ParticleScene';
 
 import { BackgroundField } from './BackgroundField';
+import { GraphEmptyState } from './GraphEmptyState';
 import { useGraphStore } from '@/stores/graph-store';
+import { useVaultStore } from '@/stores/vault-store';
 import * as THREE from 'three';
 import type { GraphControls, GraphControlsRef } from './graph-controls';
 
@@ -66,6 +68,7 @@ function CameraController({ controlsRef }: { controlsRef: GraphControlsRef }) {
 export function KnowledgeGraph() {
   const settings = useGraphStore((state) => state.settings);
   const viewMode = useGraphStore((state) => state.viewMode);
+  const hasNotes = useVaultStore((state) => state.graphData.nodes.length > 0);
   const controlsRef = useRef<GraphControls>(null);
 
   // Always deep space navy-black regardless of theme
@@ -119,6 +122,7 @@ export function KnowledgeGraph() {
         )}
       </Canvas>
 
+      {!hasNotes && <GraphEmptyState />}
     </div>
   );
 }

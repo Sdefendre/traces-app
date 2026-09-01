@@ -203,7 +203,7 @@
         <p>Working prototype. Electron, Next.js 15, React Three Fiber. MIT license. You need Node 18+, pnpm, and optionally Ollama for local models.</p>
       </div>
       <div class="term">
-        <button class="copy" type="button" data-copy>Copy</button>
+        <button class="copy" type="button" data-copy aria-live="polite">Copy</button>
         <pre id="clone">git clone https://github.com/Sdefendre/traces-app.git
 cd traces-app
 pnpm install
@@ -221,13 +221,58 @@ pnpm dev</pre>
     const button = document.querySelector("[data-copy]");
     const source = document.getElementById("clone");
     if (button && source) {
+      let resetTimer = null;
+
+      const setLabel = (label, isError) => {
+        button.textContent = label;
+        button.classList.toggle("is-error", Boolean(isError));
+        if (resetTimer) clearTimeout(resetTimer);
+        if (label !== "Copy") {
+          resetTimer = setTimeout(() => setLabel("Copy", false), isError ? 2400 : 1400);
+        }
+      };
+
+      // Older browsers and non-secure contexts do not expose navigator.clipboard.
+      const legacyCopy = (text) => {
+        const scratch = document.createElement("textarea");
+        scratch.value = text;
+        scratch.setAttribute("readonly", "");
+        scratch.style.position = "fixed";
+        scratch.style.opacity = "0";
+        document.body.appendChild(scratch);
+        scratch.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch { ok = false; }
+        document.body.removeChild(scratch);
+        return ok;
+      };
+
+      const selectSource = () => {
+        const selection = window.getSelection();
+        if (!selection) return;
+        const range = document.createRange();
+        range.selectNodeContents(source);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+
       button.addEventListener("click", async () => {
+        const text = source.textContent;
         try {
-          await navigator.clipboard.writeText(source.textContent);
-          button.textContent = "Copied";
-          setTimeout(() => { button.textContent = "Copy"; }, 1400);
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else if (!legacyCopy(text)) {
+            throw new Error("execCommand copy failed");
+          }
+          setLabel("Copied", false);
         } catch {
-          button.textContent = "Copy failed";
+          if (legacyCopy(text)) {
+            setLabel("Copied", false);
+            return;
+          }
+          // Leave the commands highlighted so the user can Cmd/Ctrl+C manually.
+          selectSource();
+          setLabel("Select + Cmd/Ctrl+C", true);
         }
       });
     }

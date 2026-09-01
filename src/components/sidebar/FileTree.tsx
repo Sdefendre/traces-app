@@ -9,13 +9,12 @@ import { buildTree } from '@/lib/build-tree';
 import { electronAPI } from '@/lib/electron-api';
 import { buildNewNotePath, noteTitleFromName } from '@/lib/paths';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, FolderOpen, Plus } from 'lucide-react';
+import { ChevronLeft, FolderOpen, Plus, SearchX } from 'lucide-react';
 
 export function FileTree() {
   const { files, activeFile, setActiveFile, refreshFiles, openFolder, vaultName } = useVaultStore();
   const { openFile, closeTab } = useEditorStore();
-  const { toggleSidebar } = useUIStore();
-  const [search, setSearch] = useState('');
+  const { toggleSidebar, sidebarSearch: search, setSidebarSearch: setSearch } = useUIStore();
   const [creating, setCreating] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -193,16 +192,47 @@ export function FileTree() {
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1 text-left flex flex-col">
-        {tree.map((node) => (
-          <FileTreeItem
-            key={node.path}
-            node={node}
-            depth={0}
-            activeFile={activeFile}
-            onSelect={handleSelect}
-            onDelete={handleDelete}
-          />
-        ))}
+        {files.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+            <div className="space-y-1">
+              <div className="text-[13px] font-medium" style={{ color: 'var(--text)' }}>No notes yet</div>
+              <div className="text-[12px] text-muted-foreground/80 leading-relaxed">
+                Create your first note or open a folder of markdown files.
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 w-full max-w-[180px]">
+              <Button variant="cta" size="sm" onClick={() => setCreating(true)} className="justify-center">
+                <Plus className="size-3.5" />
+                New Note
+              </Button>
+              <Button variant="outline" size="sm" onClick={openFolder} className="justify-center">
+                <FolderOpen className="size-3.5" />
+                Open Folder
+              </Button>
+            </div>
+          </div>
+        ) : tree.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+            <SearchX className="size-5 text-muted-foreground/60" aria-hidden="true" />
+            <div className="text-[12px] text-muted-foreground/80 leading-relaxed">
+              No notes match &ldquo;{search}&rdquo;
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSearch('')} className="text-muted-foreground hover:text-foreground">
+              Clear search
+            </Button>
+          </div>
+        ) : (
+          tree.map((node) => (
+            <FileTreeItem
+              key={node.path}
+              node={node}
+              depth={0}
+              activeFile={activeFile}
+              onSelect={handleSelect}
+              onDelete={handleDelete}
+            />
+          ))
+        )}
       </div>
 
       {/* Bottom bar: file count — leave room for the settings gear */}

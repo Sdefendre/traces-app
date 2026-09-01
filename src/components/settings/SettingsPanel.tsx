@@ -114,10 +114,14 @@ function ApiKeyInput({
           className="flex-1 text-sm rounded-lg px-4 py-3 bg-white/[0.05] border border-white/[0.1] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-[#6366f1]/60 focus:ring-1 focus:ring-[#6366f1]/20 transition-all"
         />
         <button
+          type="button"
           onClick={() => setVisible(!visible)}
+          aria-label={visible ? `Hide ${label} API key` : `Show ${label} API key`}
+          aria-pressed={visible}
+          title={visible ? 'Hide key' : 'Show key'}
           className="flex items-center justify-center size-9 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06] transition-colors"
         >
-          {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          {visible ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
         </button>
       </div>
     </div>
@@ -622,6 +626,15 @@ export function SettingsPanel() {
                         </select>
                       </div>
                     )}
+
+                    {settings.defaultProvider !== 'ollama' &&
+                      !isByoAgentId(settings.defaultProvider) &&
+                      defaultProviderModels.length === 0 && (
+                        <p role="alert" className="text-sm text-amber-300/90">
+                          No models are enabled for this provider. Enable one under Enabled Models above, or pick a
+                          different default provider — chat will fall back to another provider until you do.
+                        </p>
+                      )}
                   </div>
                 </div>
 

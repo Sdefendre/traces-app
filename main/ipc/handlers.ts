@@ -16,6 +16,7 @@ import { REALTIME_TOOLS } from './realtime-tools';
 import { handleChat } from './chat-handler';
 import { getByoAgentStatuses, startByoAgentLogin } from './byo-agents';
 import type { ByoAgentId } from '../../shared/byo-agents';
+import { formatUpstreamError } from '../../shared/api-errors';
 
 const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
 const GROK_VOICES = ['Ara', 'Rex', 'Sal', 'Eve', 'Leo'];
@@ -113,7 +114,7 @@ export function registerIpcHandlers(vaultRoot: string) {
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`OpenAI Realtime session error (${res.status}): ${text}`);
+        throw new Error(formatUpstreamError('OpenAI voice', res.status, text));
       }
       const data = (await res.json()) as { value: string; session?: { id?: string } };
       return {
@@ -138,7 +139,7 @@ export function registerIpcHandlers(vaultRoot: string) {
       });
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`xAI Realtime session error (${res.status}): ${text}`);
+        throw new Error(formatUpstreamError('Grok voice', res.status, text));
       }
       const data = (await res.json()) as { value?: string; client_secret?: string };
       return {

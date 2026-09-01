@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { extractErrorMessage } from '../../../../../shared/api-errors';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   if (!res.ok) {
     const text = await res.text();
     return NextResponse.json(
-      { error: `xAI error (${res.status}): ${text}` },
+      { error: extractErrorMessage(text) || res.statusText || 'xAI rejected the request' },
       { status: res.status }
     );
   }

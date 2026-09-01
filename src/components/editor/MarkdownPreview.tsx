@@ -1,14 +1,19 @@
 'use client';
 
 import { useMemo } from 'react';
-import { applyWikiLinks } from '@/lib/wiki-link';
+import { useVaultStore } from '@/stores/vault-store';
+import { parseWikiLink } from '@/lib/wiki-link';
+import { resolveWikiLink } from '@/lib/wiki-links';
 
 interface MarkdownPreviewProps {
   content: string;
   editorLightMode: boolean;
 }
 
-function renderMarkdown(source: string): string {
+type WikiResolver = (target: string) => boolean;
+
+function renderMarkdown(source: string, resolve: WikiResolver): string {
+  const applyInline = (text: string) => applyInlineWith(text, resolve);
   // Escape HTML entities to prevent injection
   let html = source
     .replace(/&/g, '&amp;')
@@ -99,20 +104,38 @@ function escapeAttr(value: string): string {
     .replace(/</g, '&lt;');
 }
 
-function applyInline(text: string): string {
+/** Undo the entity escaping done at the top of renderMarkdown so link targets match file names. */
+function unescapeEntities(value: string): string {
+  return value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+function applyInlineWith(text: string, resolve: WikiResolver): string {
   // Inline code
   let result = text.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
   // Bold
   result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   // Italic
   result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  // Wiki-links — aliases use the note name as the target and the label as text
-  result = applyWikiLinks(result, escapeAttr);
+  // Wiki-links — [[Note|label]] targets Note; unresolved targets get a distinct class.
+  // The attribute is escaped so a quote in the note name cannot break the tag.
+  result = result.replace(/\[\[([^\]]+)\]\]/g, (_match, raw: string) => {
+    const { target, display } = parseWikiLink(unescapeEntities(raw));
+    const safeTarget = escapeAttr(target);
+    const label = escapeAttr(display);
+    const isResolved = resolve(target);
+    const cls = isResolved ? 'md-wiki-link' : 'md-wiki-link is-unresolved';
+    const title = isResolved ? '' : ` title="Note does not exist yet — click to create it"`;
+    return `<a class="${cls}" data-wiki-target="${safeTarget}" href="#"${title}>${label}</a>`;
+  });
   return result;
 }
 
 export function MarkdownPreview({ content, editorLightMode }: MarkdownPreviewProps) {
-  const html = useMemo(() => renderMarkdown(content), [content]);
+  const files = useVaultStore((state) => state.files);
+  const html = useMemo(
+    () => renderMarkdown(content, (target) => resolveWikiLink(files, target) !== null),
+    [content, files]
+  );
 
   const handleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -231,6 +254,10 @@ export function MarkdownPreview({ content, editorLightMode }: MarkdownPreviewPro
         }
         .md-preview a.md-wiki-link:hover {
           opacity: 0.8;
+        }
+        .md-preview a.md-wiki-link.is-unresolved {
+          color: ${mutedColor};
+          text-decoration-style: dashed;
         }
         .md-preview strong {
           font-weight: 700;

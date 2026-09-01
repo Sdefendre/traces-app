@@ -171,11 +171,36 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const updated = models.includes(model)
       ? models.filter((m) => m !== model)
       : [...models, model];
-    const newSettings = {
+    const newSettings: AppSettings = {
       ...current,
       enabledModels: { ...current.enabledModels, [provider]: updated },
     };
+    // Disabling the model that is currently the default would leave <select>s pointing
+    // at a value with no option, so fall back to the first model still enabled.
+    if (current.defaultProvider === provider && !updated.includes(current.defaultModel)) {
+      newSettings.defaultModel = updated[0] ?? '';
+    }
     set({ settings: newSettings });
     electronAPI.saveSettings(newSettings as unknown as Record<string, unknown>);
   },
 }));
+
+/** Enabled models for a provider; BYO agents and Ollama are not gated by the enabled list. */
+export function getEnabledModelsFor(settings: AppSettings, provider: Provider): string[] | null {
+  switch (provider) {
+    case 'openai':
+    case 'anthropic':
+    case 'xai':
+    case 'google':
+      return settings.enabledModels[provider];
+    case 'ollama':
+      return null;
+    default:
+      if (isByoAgentId(provider)) return null;
+      return assertNever(provider);
+  }
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled provider: ${String(value)}`);
+}

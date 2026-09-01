@@ -20,6 +20,14 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useWebMcpTools } from '@/hooks/useWebMcpTools';
 import { ChevronRight, ChevronLeft, Minus, Plus, Maximize, X, Settings } from 'lucide-react';
 
+/** Narrowest the graph may get before Notes/Chat start shrinking; keeps both toolbars from overlapping. */
+const GRAPH_MIN_WIDTH = 320;
+const SIDEBAR_MIN_WIDTH = 180;
+const SIDEBAR_MAX_WIDTH = 400;
+const EDITOR_MIN_WIDTH = 300;
+const CHAT_MIN_WIDTH = 280;
+const CHAT_MAX_WIDTH = 800;
+
 export function AppShell() {
   useWebMcpTools();
   const { loadVault, setGraphData, refreshFiles, loading } = useVaultStore();
@@ -46,6 +54,7 @@ export function AppShell() {
   const editorDividerRef = useRef<HTMLDivElement>(null);
   const sidebarDividerRef = useRef<HTMLDivElement>(null);
   const chatDividerRef = useRef<HTMLDivElement>(null);
+  const graphPanelRef = useRef<HTMLDivElement>(null);
   const [editorDividerHover, setEditorDividerHover] = useState(false);
   const [sidebarDividerHover, setSidebarDividerHover] = useState(false);
   const [chatDividerHover, setChatDividerHover] = useState(false);
@@ -56,6 +65,16 @@ export function AppShell() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape leaves fullscreen graph (Settings handles its own Escape and sits on top).
+      if (e.key === 'Escape') {
+        const { graphFullscreen: isFullscreen, settingsOpen: isSettingsOpen } = useUIStore.getState();
+        if (isFullscreen && !isSettingsOpen) {
+          e.preventDefault();
+          toggleGraphFullscreen();
+        }
+        return;
+      }
+
       // Only handle Cmd (Mac) / Ctrl (Win) combos
       if (!(e.metaKey || e.ctrlKey)) return;
 
@@ -153,17 +172,24 @@ export function AppShell() {
     };
   }, [refreshFiles, setGraphData]);
 
+  /** How much wider a neighbouring panel may grow before the graph drops below its minimum. */
+  const graphSlack = useCallback(() => {
+    const graphWidth = graphPanelRef.current?.getBoundingClientRect().width;
+    if (graphWidth === undefined || useUIStore.getState().graphCollapsed) return Number.POSITIVE_INFINITY;
+    return Math.max(0, graphWidth - GRAPH_MIN_WIDTH);
+  }, []);
+
   const handleEditorDividerDrag = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
     const startWidth = useUIStore.getState().editorWidth;
-    const maxWidth = Math.floor(window.innerWidth * 0.8);
+    const maxWidth = Math.min(Math.floor(window.innerWidth * 0.8), startWidth + graphSlack());
 
     setEditorDragging(true);
 
     const onMouseMove = (e: MouseEvent) => {
       const delta = startX - e.clientX;
-      const newWidth = Math.max(300, Math.min(maxWidth, startWidth + delta));
+      const newWidth = Math.max(EDITOR_MIN_WIDTH, Math.min(maxWidth, startWidth + delta));
       useUIStore.getState().setEditorWidth(newWidth);
     };
 
@@ -179,18 +205,19 @@ export function AppShell() {
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  }, []);
+  }, [graphSlack]);
 
   const handleSidebarDividerDrag = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
     const startWidth = useUIStore.getState().sidebarWidth;
+    const maxWidth = Math.min(SIDEBAR_MAX_WIDTH, startWidth + graphSlack());
 
     setSidebarDragging(true);
 
     const onMouseMove = (e: MouseEvent) => {
       const delta = e.clientX - startX;
-      const newWidth = Math.max(180, Math.min(400, startWidth + delta));
+      const newWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(maxWidth, startWidth + delta));
       useUIStore.getState().setSidebarWidth(newWidth);
     };
 
@@ -206,18 +233,19 @@ export function AppShell() {
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  }, []);
+  }, [graphSlack]);
 
   const handleChatDividerDrag = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const startX = e.clientX;
     const startWidth = useUIStore.getState().chatWidth;
+    const maxWidth = Math.min(CHAT_MAX_WIDTH, startWidth + graphSlack());
 
     setChatDragging(true);
 
     const onMouseMove = (e: MouseEvent) => {
       const delta = startX - e.clientX;
-      const newWidth = Math.max(280, Math.min(800, startWidth + delta));
+      const newWidth = Math.max(CHAT_MIN_WIDTH, Math.min(maxWidth, startWidth + delta));
       useUIStore.getState().setChatWidth(newWidth);
     };
 
@@ -233,7 +261,7 @@ export function AppShell() {
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  }, []);
+  }, [graphSlack]);
 
   if (loading) {
     return (
@@ -316,8 +344,9 @@ export function AppShell() {
           <div
             className="panel-glass overflow-hidden relative z-[45]"
             style={{
-              width: sidebarWidth,
-              flexShrink: 0,
+              // Shrinks at half the rate of Notes/Chat so the search box stays readable.
+              flex: `0 0.5 ${sidebarWidth}px`,
+              minWidth: SIDEBAR_MIN_WIDTH,
               borderRight: '1px solid var(--glass-border)',
             }}
           >
@@ -339,11 +368,13 @@ export function AppShell() {
         </>
       )}
 
-      {/* Graph — always flex-grow so layout never breaks */}
+      {/* Graph — always flex-grow so layout never breaks; minWidth keeps its toolbars from overlapping */}
       <div
-        className="relative min-w-0 transition-all duration-300 ease-in-out"
+        ref={graphPanelRef}
+        className="relative transition-all duration-300 ease-in-out"
         style={{
           flex: '1 1 0%',
+          minWidth: graphCollapsed ? 0 : GRAPH_MIN_WIDTH,
           overflow: graphCollapsed ? 'hidden' : 'visible',
           maxWidth: graphCollapsed ? 0 : undefined,
           opacity: graphCollapsed ? 0 : 1,
@@ -409,7 +440,7 @@ export function AppShell() {
         <div
           className="panel-glass overflow-hidden transition-all duration-300 ease-in-out relative z-[45]"
           style={{
-            ...(editorFlex ? { flex: '1 1 0%' } : { width: editorWidth, flexShrink: 0 }),
+            ...(editorFlex ? { flex: '1 1 0%' } : { flex: `0 1 ${editorWidth}px`, minWidth: EDITOR_MIN_WIDTH }),
             borderLeft: '1px solid var(--glass-border)',
           }}
         >
@@ -439,7 +470,7 @@ export function AppShell() {
         <div
           className="panel-glass overflow-hidden relative z-[45]"
           style={{
-            ...(chatFlex ? { flex: '1 1 0%' } : { width: chatWidth, flexShrink: 0 }),
+            ...(chatFlex ? { flex: '1 1 0%' } : { flex: `0 1 ${chatWidth}px`, minWidth: CHAT_MIN_WIDTH }),
             borderLeft: '1px solid var(--glass-border)',
           }}
         >

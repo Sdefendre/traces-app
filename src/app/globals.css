@@ -85,16 +85,12 @@
   --ring: #2383e2;
 }
 
+/* Tailwind preflight already resets margin/padding/box-sizing inside @layer base.
+   An un-layered reset here would outrank every padding/margin utility, so keep resets in the layer. */
 @layer base {
   * {
     @apply border-border;
   }
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 html, body {
@@ -209,10 +205,45 @@ body::after {
   100% { stroke-dashoffset: -20; }
 }
 
-/* CodeMirror overrides */
+/* ---- CodeMirror theme tokens ----
+   The editor theme + syntax highlighter (extensions/theme.ts) read these vars,
+   so flipping [data-editor-theme] recolors headings, bold, lists, links, etc. */
+[data-editor-theme="dark"],
+.cm-editor {
+  --cm-bg: transparent;
+  --cm-text: #e4e4e7;
+  --cm-heading: #f4f4f5;
+  --cm-secondary: #a1a1aa;
+  --cm-muted: #71717a;
+  --cm-accent: #2383e2;
+  --cm-link: #7cb3f0;
+  --cm-code: #f0a5a5;
+  --cm-border: var(--border);
+  --cm-gutter-bg: rgba(5, 5, 16, 0.5);
+  --cm-tooltip-bg: rgba(10, 10, 20, 0.97);
+  --cm-selection: rgba(100, 100, 200, 0.25);
+  --cm-active-line: rgba(255, 255, 255, 0.03);
+}
+
+[data-editor-theme="light"],
+[data-editor-theme="light"] .cm-editor {
+  --cm-bg: #ffffff;
+  --cm-text: #37352f;
+  --cm-heading: #1f1e1b;
+  --cm-secondary: #787774;
+  --cm-muted: #a1a1aa;
+  --cm-accent: #2383e2;
+  --cm-link: #2383e2;
+  --cm-code: #eb5757;
+  --cm-border: #e4e4e7;
+  --cm-gutter-bg: #fafafa;
+  --cm-tooltip-bg: #ffffff;
+  --cm-selection: rgba(35, 131, 226, 0.12);
+  --cm-active-line: #f4f4f5;
+}
+
 .cm-editor {
   height: 100%;
-  background: transparent !important;
   padding: 0 8px;
 }
 
@@ -223,55 +254,21 @@ body::after {
   padding: 16px 12px;
 }
 
-.cm-editor .cm-gutters {
-  background: rgba(5, 5, 16, 0.5) !important;
-  border-right: 1px solid var(--border) !important;
-  color: var(--text-dim) !important;
-}
-
-.cm-editor .cm-content {
-  color: var(--text);
-  padding: 16px 24px;
-}
-
-.cm-editor .cm-cursor {
-  border-left-color: var(--text) !important;
-}
-
-.cm-editor .cm-activeLine {
-  background: rgba(255, 255, 255, 0.03) !important;
-}
-
-.cm-editor .cm-selectionBackground,
 .cm-editor ::selection {
-  background: rgba(100, 100, 200, 0.2) !important;
+  background: var(--cm-selection);
 }
 
-/* Editor light mode overrides */
-[data-editor-theme="light"] .cm-editor {
-  background: #ffffff !important;
+/* Wiki-link decorations rendered by extensions/wikiLink.ts */
+.cm-wiki-link {
+  color: var(--cm-link);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--cm-link) 45%, transparent);
+  text-underline-offset: 3px;
 }
 
-[data-editor-theme="light"] .cm-editor .cm-content {
-  color: #09090b;
-  padding: 16px 24px;
-}
-
-[data-editor-theme="light"] .cm-editor .cm-gutters {
-  background: #fafafa !important;
-  border-right: 1px solid #e4e4e7 !important;
-  color: #a1a1aa !important;
-}
-
-[data-editor-theme="light"] .cm-editor .cm-cursor {
-  border-left-color: #09090b !important;
-}
-
-[data-editor-theme="light"] .cm-editor .cm-activeLine {
-  background: #f4f4f5 !important;
-}
-
-[data-editor-theme="light"] .cm-editor .cm-selectionBackground,
-[data-editor-theme="light"] .cm-editor ::selection {
-  background: rgba(100, 100, 200, 0.15) !important;
+.cm-wiki-link.is-unresolved {
+  color: var(--cm-secondary);
+  text-decoration-style: dashed;
+  text-decoration-color: color-mix(in srgb, var(--cm-secondary) 60%, transparent);
 }

@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { electronAPI } from '@/lib/electron-api';
+import { formatUpstreamError } from '../../shared/api-errors';
 
 export type VoiceState = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -325,7 +326,7 @@ export function useRealtimeVoice({
 
       if (!sdpRes.ok) {
         const text = await sdpRes.text();
-        throw new Error(`SDP exchange failed (${sdpRes.status}): ${text}`);
+        throw new Error(formatUpstreamError('OpenAI voice', sdpRes.status, text));
       }
 
       const answerSdp = await sdpRes.text();

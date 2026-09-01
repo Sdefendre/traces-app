@@ -10,6 +10,7 @@ import {
   ALL_GROK_VOICE_OPTIONS,
   BYO_DEFAULT_MODEL,
   isByoAgentId,
+  getEnabledModelsFor,
   type Provider,
   type VoiceOption,
   type GrokVoiceOption,
@@ -43,6 +44,9 @@ interface OllamaModel {
   name: string;
   model: string;
 }
+
+/** Order to try when the current provider has no enabled models left. */
+const API_PROVIDER_ORDER = ['anthropic', 'openai', 'google', 'xai'] as const;
 
 // Friendly display names
 const MODEL_LABELS: Record<string, string> = {
@@ -373,22 +377,52 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
     if (voiceMode) {
       voiceDisconnect();
       setVoiceMode(false);
-    } else {
-      setVoiceMode(true);
-      setError(null);
-      voiceConnect().catch((err) => {
-        const msg = err instanceof Error ? err.message : 'Voice connection failed';
-        setError(msg);
-        setVoiceMode(false);
-      });
+      return;
     }
-  }, [voiceMode, voiceConnect, voiceDisconnect]);
+
+    // Pre-flight: never start a session (or flip the UI) without a key for the chosen voice provider.
+    const voiceKey = voiceProvider === 'grok' ? appSettings.apiKeys.xai : appSettings.apiKeys.openai;
+    if (!voiceKey.trim()) {
+      const providerLabel = voiceProvider === 'grok' ? 'an xAI' : 'an OpenAI';
+      setError(`Voice needs ${providerLabel} API key. Add it in Settings > AI & Models.`);
+      return;
+    }
+
+    setVoiceMode(true);
+    setError(null);
+    voiceConnect().catch((err) => {
+      const msg = err instanceof Error ? err.message : 'Voice connection failed';
+      setError(msg);
+      setVoiceMode(false);
+    });
+  }, [voiceMode, voiceConnect, voiceDisconnect, voiceProvider, appSettings.apiKeys]);
 
   // Get enabled models from settings
   const enabledAnthropicModels = appSettings.enabledModels.anthropic;
   const enabledOpenaiModels = appSettings.enabledModels.openai;
   const enabledGoogleModels = appSettings.enabledModels.google;
   const enabledXaiModels = appSettings.enabledModels.xai;
+
+  // If the selected model gets disabled in Settings, move to a model that still exists in the
+  // picker so what the user sees is what gets sent.
+  useEffect(() => {
+    if (!initialized) return;
+    const enabledForProvider = getEnabledModelsFor(appSettings, provider);
+    if (enabledForProvider === null || enabledForProvider.includes(model)) return;
+
+    if (enabledForProvider.length > 0) {
+      setModel(enabledForProvider[0]);
+      return;
+    }
+    const fallback = API_PROVIDER_ORDER.find((p) => appSettings.enabledModels[p].length > 0);
+    if (fallback) {
+      setProvider(fallback);
+      setModel(appSettings.enabledModels[fallback][0]);
+    } else {
+      setProvider(BYO_AGENT_IDS[0]);
+      setModel(BYO_DEFAULT_MODEL);
+    }
+  }, [appSettings, provider, model, initialized]);
 
   // System prompt — includes current model info + custom prompt + current note context
   const activeTab = getActiveTab();

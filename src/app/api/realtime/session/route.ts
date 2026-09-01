@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { extractErrorMessage } from '../../../../../shared/api-errors';
 
 const REALTIME_TOOLS = [
   {
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
   if (!res.ok) {
     const text = await res.text();
     return NextResponse.json(
-      { error: `OpenAI error (${res.status}): ${text}` },
+      { error: extractErrorMessage(text) || res.statusText || 'OpenAI rejected the request' },
       { status: res.status }
     );
   }
