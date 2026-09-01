@@ -5,11 +5,11 @@ import { registerIpcHandlers } from './ipc/handlers';
 import { setVaultRoot } from './ipc/file-system';
 import { resetVaultFileCache, startVaultWatcher, stopVaultWatcher } from './ipc/vault-watcher';
 
-let vaultPath = path.join(
-  app.getPath('home'),
-  'Desktop',
-  'Traces Notes'
-);
+// TRACES_VAULT_DIR lets automated checks point the app at a scratch vault
+// instead of the user's notes. Normal launches ignore it.
+let vaultPath = process.env.TRACES_VAULT_DIR
+  ? path.resolve(process.env.TRACES_VAULT_DIR)
+  : path.join(app.getPath('home'), 'Desktop', 'Traces Notes');
 
 // Ensure default vault directory exists so first boot doesn't crash
 fs.mkdirSync(vaultPath, { recursive: true });

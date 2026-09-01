@@ -19,7 +19,7 @@ import { BYO_AGENTS, BYO_AGENT_IDS } from '../../../shared/byo-agents';
 import { electronAPI } from '@/lib/electron-api';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Send, ChevronLeft, ChevronRight, Eraser, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { Send, ChevronLeft, ChevronRight, Eraser, Mic, PhoneOff } from 'lucide-react';
 import { useRealtimeVoice, type TranscriptEvent, type VoiceToolCallEvent } from '@/hooks/useRealtimeVoice';
 import { useGrokVoice } from '@/hooks/useGrokVoice';
 import { VoiceWaveform } from './VoiceWaveform';

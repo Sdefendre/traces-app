@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import type { GraphNode, GraphEdge } from '@/types';
+import type { GraphNode } from '@/types';
 
-export function useClusterLayout(nodes: GraphNode[], edges: GraphEdge[]) {
+export function useClusterLayout(nodes: GraphNode[]) {
   const layout = useMemo(() => {
     const positions = new Map<string, THREE.Vector3>();
     const categoryCenters = new Map<string, THREE.Vector3>();
@@ -60,7 +60,7 @@ export function useClusterLayout(nodes: GraphNode[], edges: GraphEdge[]) {
     });
 
     return { positions, categoryCenters };
-  }, [nodes, edges]);
+  }, [nodes]);
 
   return layout;
 }

@@ -54,7 +54,7 @@ export function FileTree() {
       window.removeEventListener('traces:focus-search', handleFocusSearch);
       window.removeEventListener('traces:search-notes', handleSearchNotes);
     };
-  }, []);
+  }, [setSearch]);
 
   const filteredFiles = useMemo(() => {
     if (!search) return files;

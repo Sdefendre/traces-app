@@ -2,7 +2,7 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useVaultStore } from '@/stores/vault-store';
 import { useEditorStore } from '@/stores/editor-store';
 import { useGraphStore } from '@/stores/graph-store';

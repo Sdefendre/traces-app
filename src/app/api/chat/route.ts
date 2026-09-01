@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { isByoAgentId } from '../../../../shared/byo-agents';
+import { formatUpstreamError } from '../../../../shared/api-errors';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,43 +29,6 @@ interface ToolCallRecord {
   args: Record<string, string>;
   result: string;
 }
-
-// ---------------------------------------------------------------------------
-// Tool definitions
-// ---------------------------------------------------------------------------
-
-const TOOLS = [
-  {
-    name: 'list_files',
-    description: 'List all files in the current vault',
-    parameters: {},
-  },
-  {
-    name: 'read_file',
-    description: 'Read the contents of a file',
-    parameters: { path: 'string - the file path relative to vault root' },
-  },
-  {
-    name: 'write_file',
-    description: 'Write or create a file with given content',
-    parameters: { path: 'string', content: 'string' },
-  },
-  {
-    name: 'edit_file',
-    description: 'Edit a file by replacing old text with new text',
-    parameters: { path: 'string', old_text: 'string', new_text: 'string' },
-  },
-  {
-    name: 'delete_file',
-    description: 'Delete a file',
-    parameters: { path: 'string' },
-  },
-  {
-    name: 'search_files',
-    description: 'Search for text across all files in the vault',
-    parameters: { query: 'string' },
-  },
-] as const;
 
 // ---------------------------------------------------------------------------
 // System prompt for all providers
@@ -376,7 +340,7 @@ async function handleAnthropic(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Anthropic error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Anthropic', res.status, text));
     }
 
     const data = await res.json();
@@ -471,7 +435,7 @@ async function handleOpenAI(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OpenAI error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('OpenAI', res.status, text));
     }
 
     const data = await res.json();
@@ -566,7 +530,7 @@ async function handleXAI(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`xAI error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('xAI', res.status, text));
     }
 
     const data = await res.json();
@@ -674,7 +638,7 @@ async function handleOllama(
 
         if (!fallbackRes.ok) {
           const text = await fallbackRes.text();
-          throw new Error(`Ollama error (${fallbackRes.status}): ${text}`);
+          throw new Error(formatUpstreamError('Ollama', fallbackRes.status, text));
         }
 
         const fallbackData = await fallbackRes.json();
@@ -685,7 +649,7 @@ async function handleOllama(
       }
 
       const text = await res.text();
-      throw new Error(`Ollama error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Ollama', res.status, text));
     }
 
     const data = await res.json();
@@ -838,7 +802,7 @@ async function handleGoogle(
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Gemini error (${res.status}): ${text}`);
+      throw new Error(formatUpstreamError('Gemini', res.status, text));
     }
 
     const data = await res.json();

@@ -134,7 +134,10 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
       if (renameTimerRef.current) clearTimeout(renameTimerRef.current);
       view.destroy();
     };
-  }, [tabId]); // Only recreate when tab changes
+    // Only recreate the CodeMirror view when the tab changes; content and store
+    // actions are read through refs/closures so edits do not tear down the editor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabId]);
 
   // Sync external content changes (e.g. AI edits) into the editor
   useEffect(() => {

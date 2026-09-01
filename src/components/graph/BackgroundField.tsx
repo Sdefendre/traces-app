@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — R3F JSX intrinsics not typed with React 19
 'use client';
 
 import { useRef, useMemo } from 'react';

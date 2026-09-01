@@ -189,7 +189,7 @@ export function useGrokVoice({
 
     playbackTimeRef.current = 0;
     setAudioLevel(0);
-  }, []);
+  }, [stopPlayback]);
 
   const disconnect = useCallback(() => {
     cleanup();

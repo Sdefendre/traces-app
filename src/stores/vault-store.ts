@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GraphData, GraphNode, GraphEdge } from '@/types';
+import type { GraphData } from '@/types';
 import { electronAPI } from '@/lib/electron-api';
 import { normalizeRelativePath } from '@/lib/paths';
 import { useEditorStore } from '@/stores/editor-store';

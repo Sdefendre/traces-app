@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseWikiLink, applyWikiLinks } from '../src/lib/wiki-link';
 import { resolveNotePath } from '../src/lib/webmcp-notes';
+import { resolveWikiLink as resolveWikiLinkPath, sanitizeNoteTitle } from '../src/lib/wiki-links';
 
 function repoRoot(start: string): string {
   let dir = start;
@@ -64,14 +65,38 @@ assert.equal(aliased.includes('Architecture|the architecture'), false);
 const quoted = applyWikiLinks('[[Note "one"|label]]', escapeAttr);
 assert.match(quoted, /data-wiki-target="Note &quot;one&quot;"/);
 
+// resolveWikiLink (src/lib/wiki-links.ts) is what the editor click handler and the
+// preview use. It must honour aliases, be case-insensitive, and never return a
+// duplicate-creating null when the name is merely ambiguous.
+assert.equal(resolveWikiLinkPath(files, 'Architecture|the architecture'), 'Memory/Architecture.md');
+assert.equal(resolveWikiLinkPath(files, 'architecture'), 'Memory/Architecture.md');
+assert.equal(resolveWikiLinkPath(files, 'Projects/Traces.md'), 'Projects/Traces.md');
+assert.equal(resolveWikiLinkPath(files, 'Missing Note'), null);
+assert.equal(resolveWikiLinkPath(files, '   '), null);
+const ambiguous = ['A/Index.md', 'B/Index.md'];
+assert.equal(
+  resolveWikiLinkPath(ambiguous, 'Index'),
+  'A/Index.md',
+  'Ambiguous names open the first candidate instead of creating a third note'
+);
+
+assert.equal(sanitizeNoteTitle('Missing Note'), 'Missing Note');
+assert.equal(sanitizeNoteTitle('Bad:/name?|alias text'), 'Badname');
+assert.equal(sanitizeNoteTitle('***'), '', 'a title made only of illegal characters is rejected');
+
 const previewSource = readFileSync(
   path.join(root, 'src/components/editor/MarkdownPreview.tsx'),
   'utf8'
 );
 assert.match(
   previewSource,
-  /applyWikiLinks/,
-  'Preview must use applyWikiLinks so aliases do not become the click target'
+  /parseWikiLink/,
+  'Preview must use parseWikiLink so aliases do not become the click target'
+);
+assert.match(
+  previewSource,
+  /is-unresolved/,
+  'Preview must mark links to missing notes so users can tell them apart'
 );
 
 const editorSource = readFileSync(
@@ -80,13 +105,19 @@ const editorSource = readFileSync(
 );
 assert.match(
   editorSource,
-  /resolveNotePath/,
-  'Editor wiki-link clicks must use resolveNotePath'
+  /resolveWikiLink/,
+  'Editor wiki-link clicks must resolve through the shared helper'
 );
 assert.match(
   editorSource,
-  /parseWikiLink/,
-  'Editor wiki-link clicks must parse aliases before resolving'
+  /sanitizeNoteTitle/,
+  'Editor must sanitize the link target before creating a missing note'
 );
+
+const widgetSource = readFileSync(
+  path.join(root, 'src/components/editor/extensions/wikiLink.ts'),
+  'utf8'
+);
+assert.match(widgetSource, /is-unresolved/, 'Editor widget must mark unresolved links');
 
 console.log('wiki-link verification passed');

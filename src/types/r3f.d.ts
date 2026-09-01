@@ -1,16 +1,10 @@
-// Re-export R3F global JSX types
+// Re-export R3F global JSX types (d3-force-3d shim lives in d3-force-3d.d.ts)
 import type { ThreeElements } from '@react-three/fiber';
-
-declare module 'd3-force-3d' {
-  export function forceSimulation(nodes?: any[], dimensions?: number): any;
-  export function forceManyBody(): any;
-  export function forceLink(links?: any[]): any;
-  export function forceCenter(x?: number, y?: number, z?: number): any;
-  export function forceCollide(radius?: number): any;
-}
 
 declare global {
   namespace JSX {
+    // Augmenting IntrinsicElements with an empty extension is the documented R3F pattern.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface IntrinsicElements extends ThreeElements {}
   }
 }
