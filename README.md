@@ -20,7 +20,9 @@ Particle View puts one point per note on five fixed surfaces: Möbius Strip, Tor
 
 CodeMirror 6 with wiki-links, autocomplete, auto-save, and light or dark themes.
 
-Preview renders headings, bold, italic, inline code, fenced blocks, bullets, and clickable wiki-links. Use the Preview/Edit button in the toolbar.
+Preview renders headings, bold, italic, inline code, fenced blocks, bullets, and clickable wiki-links, including aliases (`[[Note|label]]`). Use the Preview/Edit button in the toolbar.
+
+Click a wiki-link to open that note. If several notes share the name, Files search filters to those notes so you can pick one. It does not guess or create a duplicate.
 
 Change the `# Title` heading and the file renames after 1.5 seconds. The file tree, tab, and breadcrumb follow.
 
@@ -32,7 +34,7 @@ The MessageCircle button in the editor header opens Chat when that panel is clos
 
 Gear icon, bottom left. Escape closes it.
 
-- **AI & Models.** Sign in with Codex, Grok CLI, or Claude. API keys for Anthropic, OpenAI, Google, and xAI. Ollama endpoint. Checkboxes for which models show in the chat picker. Default provider and model. Custom system prompt.
+- **AI & Models.** Sign in with Codex, Grok CLI, or Claude. API keys for Anthropic, OpenAI, Google, and xAI. Ollama endpoint. Checkboxes for which models show in the chat picker. Default provider and model. Custom system prompt. Voice provider (OpenAI or Grok), voice name, and auto-play.
 - **Editor.** Font size, light or dark, spell check.
 - **Graph.** Node size, labels, line thickness, auto-rotate, rotate speed, line color, low-power rendering.
 - **General.** Vault path, startup behavior, clear chat on close.
@@ -48,6 +50,8 @@ TracesAI talks to the provider you pick.
 - **Anthropic, OpenAI, Google, xAI.** API key.
 
 The assistant knows which model it is. API-key providers get file tools (read, write, edit, search, delete). Signed-in CLIs run in the vault and can edit notes there.
+
+The mic in Chat starts a voice session. OpenAI Realtime needs an OpenAI key. Grok needs an xAI key. Switch GPT/Grok next to the mic. Settings > AI & Models picks the voice and whether replies auto-play.
 
 If a bring-your-own CLI is missing or logged out, Traces stops and tells you. It does not fall back to another provider or an API key. I would rather fail closed than silently switch you.
 
@@ -80,8 +84,8 @@ Panels use frosted glass on shadcn/ui, with glass and gradient button variants.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or later)
-- [pnpm](https://pnpm.io/)
+- [Node.js](https://nodejs.org/) 22 (CI uses 22; 18+ may still run)
+- [pnpm](https://pnpm.io/) 10
 - [Ollama](https://ollama.ai/) (optional, for local models)
 - Codex CLI, Grok CLI, or Claude Code (optional, to sign in with your own agent account)
 
@@ -103,6 +107,16 @@ pnpm dev
 pnpm build
 pnpm start
 ```
+
+### Lint, typecheck, tests
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+```
+
+`pnpm test` runs the unit scripts under `scripts/verify-*.ts` (editor store, wiki-links, note stats, API errors, BYO agents, particle layout, WebMCP). GitHub Actions runs the same lint, typecheck, tests, and build on every push and pull request.
 
 ### Sign in with Codex, Grok CLI, or Claude
 
@@ -158,65 +172,34 @@ traces-app/
 │       ├── file-system.ts         # File system operations
 │       ├── vault-parser.ts        # Vault parsing and graph data
 │       ├── vault-watcher.ts       # File watching with chokidar
-│       └── byo-agents.ts          # Codex / Grok CLI / Claude sign-in and chat
+│       ├── chat-handler.ts        # Chat IPC
+│       ├── byo-agents.ts          # Codex / Grok CLI / Claude sign-in and chat
+│       └── realtime-tools.ts      # Voice tool calls against the vault
 ├── src/
 │   ├── app/
 │   │   ├── api/chat/              # Multi-provider AI chat route
+│   │   ├── api/realtime/          # OpenAI and Grok voice sessions
 │   │   ├── layout.tsx             # Root layout
 │   │   ├── page.tsx               # Entry page
 │   │   └── globals.css            # Tailwind v4 + shadcn tokens
 │   ├── components/
 │   │   ├── ui/                    # shadcn/ui primitives
-│   │   │   ├── button.tsx
-│   │   │   ├── collapsible.tsx
-│   │   │   ├── context-menu.tsx
-│   │   │   ├── dropdown-menu.tsx
-│   │   │   ├── popover.tsx
-│   │   │   ├── switch.tsx
-│   │   │   └── tooltip.tsx
-│   │   ├── graph/                 # 3D knowledge graph
-│   │   │   ├── KnowledgeGraph.tsx
-│   │   │   ├── GraphScene.tsx
-│   │   │   ├── ParticleScene.tsx
-│   │   │   ├── ShapePicker.tsx
-│   │   │   ├── GraphSettings.tsx
-│   │   │   ├── NeuralNode.tsx
-│   │   │   ├── Synapse.tsx
-│   │   │   ├── BackgroundField.tsx
-│   │   │   ├── useParticleLayout.ts
-│   │   │   └── useForceGraph.ts
-│   │   ├── editor/                # Markdown editor
-│   │   │   ├── EditorPanel.tsx
-│   │   │   ├── MarkdownEditor.tsx
-│   │   │   ├── MarkdownPreview.tsx
-│   │   │   └── extensions/
+│   │   ├── graph/                 # Galaxy, Terrain, Cluster, Particle
+│   │   ├── editor/                # Markdown editor and preview
 │   │   ├── sidebar/               # File tree browser
-│   │   │   ├── FileTree.tsx
-│   │   │   └── FileTreeItem.tsx
-│   │   ├── chat/                  # AI chat panel
-│   │   │   └── ChatPanel.tsx
+│   │   ├── chat/                  # AI chat and voice waveform
 │   │   ├── settings/              # Settings panel
-│   │   │   └── SettingsPanel.tsx
 │   │   └── layout/                # Panel orchestration
-│   │       └── AppShell.tsx
+│   ├── hooks/                     # Voice and WebMCP
 │   ├── stores/                    # Zustand state
-│   │   ├── vault-store.ts
-│   │   ├── editor-store.ts
-│   │   ├── graph-store.ts
-│   │   ├── settings-store.ts      # App settings (AI, editor, general)
-│   │   └── ui-store.ts
-│   ├── lib/
-│   │   ├── electron-api.ts        # Electron API wrapper
-│   │   └── utils.ts               # cn() utility
-│   └── types/                     # TypeScript type definitions
-├── shared/
-│   ├── byo-agents.ts              # BYO provider catalog and fail-closed helpers
-│   ├── particle-layout.ts         # Stable particle indexing and graph-aware layout
-│   ├── particle-rendering.ts      # Renderer-independent size and morph helpers
-│   └── particle-shapes.ts         # Deterministic five-shape generators
-├── scripts/
-│   └── dev.mjs                    # Development script
-├── components.json                # shadcn/ui config
+│   ├── lib/                       # Wiki-links, note stats, Electron API
+│   └── types/
+├── shared/                        # Code used by both Electron and tests
+├── scripts/                       # Dev script and unit tests (verify-*.ts)
+├── docs/                          # GitHub Pages marketing site
+├── .github/workflows/             # CI, Pages deploy, release
+├── CHANGELOG.md
+├── LICENSE
 ├── package.json
 └── tsconfig.json
 ```
