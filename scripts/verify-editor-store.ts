@@ -1,13 +1,13 @@
 /**
- * Plan step 4: fresh node invocation via createEditorStoreWithDeps (editor-store wrapper).
+ * Exercises a fresh editor store with injected file operations.
  */
 import { planTabClose } from '../shared/tab-close-policy';
-import { createEditorStoreWithDeps, pathToId } from '../src/stores/editor-store-factory';
+import { createEditorStore, pathToId } from '../src/stores/create-editor-store';
 
 const files: Record<string, string> = {};
 
 async function exerciseAllEditorPaths() {
-  const useEditorStore = createEditorStoreWithDeps({
+  const useEditorStore = createEditorStore({
     readFile: async (path) => files[path] ?? '',
     writeFile: async (path, content) => {
       files[path] = content;
@@ -46,7 +46,7 @@ async function exerciseAllEditorPaths() {
     useEditorStore.getState().tabs.find((t) => t.id === newId)?.content ===
     'version two from disk';
 
-  const failStore = createEditorStoreWithDeps({
+  const failStore = createEditorStore({
     readFile: async (p) => files[p] ?? '',
     writeFile: async () => {
       throw new Error('disk full');
@@ -71,7 +71,7 @@ async function exerciseAllEditorPaths() {
   const discarded = await failStore.getState().closeTab(failId, { discard: true });
   const tabsAfterDiscard = failStore.getState().tabs.length;
 
-  console.log('wrapper: editor-store-factory (exported by editor-store.ts)');
+  console.log('store: create-editor-store');
   console.log('opened:', opened);
   console.log('dirtyAfterEdit:', dirtyAfterEdit);
   console.log('cleanAfterSave:', cleanAfterSave);
