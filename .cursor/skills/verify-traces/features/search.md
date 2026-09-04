@@ -16,6 +16,7 @@ Search filters the Files tree by a case-insensitive substring of the vault-relat
 - Click the `Search...` field at the top of Files.
 - Press Control+F (Command+F on macOS).
 - A WebMCP `search-notes` tool, when the browser exposes `document.modelContext`, fills the same box. It returns matching paths only, never note bodies.
+- Clicking a wiki-link that matches several notes also fills this box. That path is proven in [notes-editor.md](./notes-editor.md), not here.
 
 ## Driving it with verify-traces
 

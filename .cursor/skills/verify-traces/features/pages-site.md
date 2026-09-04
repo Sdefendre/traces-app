@@ -27,7 +27,7 @@ Preconditions:
 
 - **Live fetch.** Run `.cursor/skills/verify-traces/helpers/pages-check.sh "$TRACES_VERIFY_EVIDENCE/pages"`. Exit code 0. The script writes `pages.html` and asserts the title `Traces. Local-first knowledge workspace`, section ids `overview`, `features`, `run`, `data-copy`, `id="clone"`, `git clone https://github.com/Sdefendre/traces-app.git`, and `pnpm dev`.
 - **Hero.** Open the live URL in a browser if you have one. The H1 is `Traces`. Primary CTA text is `View on GitHub` and points at `https://github.com/Sdefendre/traces-app`. Ghost CTA is `Clone and run` and points at `#run`.
-- **Sections.** `#features` cards include GRAPH, EDITOR, TRACESAI, and LOCAL-FIRST. `#run` heading is `Clone it. Run it.`
+- **Sections.** `#features` cards include GRAPH, EDITOR, TRACESAI, and LOCAL-FIRST. GRAPH copy names Galaxy, Terrain, Cluster, and Particle. `#run` heading is `Clone it. Run it.` The clone blurb asks for Node 22.
 - **Copy button.** Choose `Copy` (`[data-copy]`). The label becomes `Copied`, then `Copy` again. If clipboard permission is denied, the label becomes `Copy failed`. That is an environment limit, not a product bug, as long as the button stays present.
 - **Local docs.** If you need this branch rather than deployed Pages, read `docs/index.html` in the checkout or serve `docs/` with `python3 -m http.server` from that directory. Assert the same strings. Do not treat a local serve as proof that GitHub Pages deployed.
 - **Proof.** Keep `pages.html` from `pages-check.sh` and, if a browser was used, a screenshot of `#run` under `$TRACES_VERIFY_EVIDENCE/pages/`. Record whether the proof used the live URL or `docs/`.
