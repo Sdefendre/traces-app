@@ -43,7 +43,7 @@ Keep implementation details out of the map. Name only user paths, stable handles
 
 ## Features
 
-- [Notes and editor](./notes-editor.md) covers create, open, edit, preview, auto-save, status bar, editor theme, heading rename, wiki-link aliases, ambiguous wiki-link clicks, tab close, and delete.
+- [Notes and editor](./notes-editor.md) covers create, open, edit, preview, auto-save, status bar, editor theme, heading rename, wiki-link aliases, ambiguous and unresolved wiki-link clicks, tab close, and delete.
 - [Graph](./graph.md) covers Galaxy, Terrain, Cluster, Particle views, particle shapes, zoom, fullscreen, collapse, and the empty-vault overlay.
 - [Search](./search.md) covers Files search, Control+F, filtering, the no-match state, and clear.
 - [Pages marketing site](./pages-site.md) covers the public GitHub Pages site and its clone/run copy.

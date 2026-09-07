@@ -42,6 +42,7 @@ Module support, not a substitute: `pnpm verify:webmcp` covers `matchNotePaths` a
 - Search matches the path string, not the markdown body. Body text in Alpha will not match.
 - Snapshot `text` is the whole window. Graph node labels are DOM overlays, so `Verify Beta` stays in `text` under any filter. Only `filesText` proves the tree.
 - `wait-text --text "Verify Alpha"` is satisfied by the graph label before any note opens. Assert `.cm-content` or the first `.cm-line` instead.
+- The query lives in the UI store, so it survives collapsing and expanding Files. Clear it before a recipe that expects an empty box.
 - The footer `{n} notes` is the unfiltered vault length. Do not assert it against the visible row count.
 - Control+F is a custom handler. It does not open a CodeMirror search panel. If the editor has focus, the AppShell listener still fires because it is on `window`.
 - WebMCP `search-notes` is absent in ordinary Electron and Chrome. Missing `document.modelContext` is expected. Do not fail the feature for that.

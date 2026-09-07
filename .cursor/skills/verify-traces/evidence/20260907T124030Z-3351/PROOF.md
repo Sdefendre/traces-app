@@ -26,3 +26,13 @@ Control+F while Files is collapsed does nothing. `FileTree` owns the `traces:foc
 ## Setup on disk, not proof
 
 Seeded `Verify Index.md` twice for the ambiguous-link recipe. Removed remaining notes on disk to reach the empty vault after two UI deletes. Restored Alpha and Beta before teardown.
+
+## Follow-up after the source wave returned
+
+Relaunched under the same run id (`doctor-relaunch.txt` passed) to prove three reader findings before adding them to the map:
+
+- The search query lives in the UI store and survives collapsing and expanding Files (`alpha` still in the box).
+- A preview click on an unresolved `[[Verify Missing]]` creates `Verify Missing.md`, opens its tab, and turns preview off. `notes-editor/unresolved-created.*`.
+- `pages-check.sh` now also asserts `Clone it. Run it.`, `Node 22`, `Galaxy, Terrain, Cluster, and Particle`, and `Select + Cmd/Ctrl+C`. Still exit 0 against the live page.
+
+Second product copy mismatch, not edited: `docs/webmcp.js` `get-install-instructions` answers `Node 18+` while the page says Node 22.

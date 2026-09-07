@@ -51,7 +51,8 @@ Module support, not a substitute: `pnpm verify:particles` from the repo root. Ke
 - Node click-to-open hits a `<canvas>`. There is no accessible name per star. If a canvas click fails to open a note, report `graph-open-node` unreachable. Do not open the note from the Files tree and call the graph click proven.
 - Settings hides the graph without unmounting it. Close Settings before asserting views.
 - Particle shape buttons exist only in Particle View.
-- Low Power Mode is a Settings > Graph checkbox. It is not required for the view toggles.
+- Low Power Mode is a Settings > Graph switch with `aria-label="Low Power Mode"`. It is not required for the view toggles.
+- Every view switch resets the camera, so a zoom level does not carry from Galaxy into Terrain. Zoom proof belongs inside one view.
 - Control+2 also collapses Graph. If you already collapsed it from the button, the shortcut expands it again.
 - The first switch into a heavy view can swallow the next click while the scene compiles. One cold Cluster to Particle click left Cluster pressed; six warm retries at 0.3 s and 1.5 s all passed. Read `aria-pressed` after every view click and click once more if it did not change.
 - In an empty vault `click --text "New Note"` resolves to the Files empty-state button, not the overlay. Use `--selector '[role=status] button'` for the graph one. Do not click either `Open Folder`.
