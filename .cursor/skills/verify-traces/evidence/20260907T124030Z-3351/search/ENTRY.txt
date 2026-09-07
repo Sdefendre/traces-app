@@ -1,0 +1,3 @@
+feature: search
+entry: Files Search... input (click + fill), Control+F shortcut, Clear search button, filtered tree row click
+files: alpha.snapshot.json/alpha.png = value alpha, filesText "TRACES NOTES Verify Alpha 2 notes"; empty.snapshot.json = value volcano, filesText "No notes match “volcano” Clear search 2 notes"; clear.snapshot.json = value "", both rows back; open-result.png = Alpha opened from the filtered tree, first .cm-line "# Verify Alpha"; collapsed-ctrl-f-no-expand.png = Control+F with Files collapsed did not expand Files (product gap, FileTree listener unmounted)

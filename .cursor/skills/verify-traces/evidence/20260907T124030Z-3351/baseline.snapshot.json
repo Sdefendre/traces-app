@@ -1,0 +1,121 @@
+{
+  "title": "Traces",
+  "url": "http://localhost:3333/",
+  "theme": "dark",
+  "hasElectronApi": true,
+  "buttons": [
+    {
+      "title": "Expand chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "CHAT"
+    },
+    {
+      "title": "Collapse sidebar",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open Folder",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New Note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Galaxy View",
+      "ariaLabel": "Galaxy View",
+      "pressed": "true",
+      "text": ""
+    },
+    {
+      "title": "Terrain View",
+      "ariaLabel": "Terrain View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Cluster View",
+      "ariaLabel": "Cluster View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Particle View",
+      "ariaLabel": "Particle View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Zoom out",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Zoom in",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse graph panel",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Fullscreen",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open AI Chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse notes",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "New Note"
+    },
+    {
+      "title": "Settings",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    }
+  ],
+  "inputs": [
+    {
+      "placeholder": "Search...",
+      "value": "",
+      "type": "text"
+    }
+  ],
+  "canvases": 1,
+  "hasCodeMirror": false,
+  "editorTheme": null,
+  "text": "CHAT TRACES NOTES Verify Alpha Verify Beta 2 notes Verify Alpha Verify Beta Notes No note selected Pick a note from the sidebar or create a new one New Note"
+}

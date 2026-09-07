@@ -1,0 +1,4 @@
+feature: graph
+entry: Graph view group buttons, Particle shape buttons, Zoom in/out, Fullscreen/Exit fullscreen, Collapse graph panel/Expand graph, Control+2, Control+\, Escape, empty-vault overlay
+files: baseline.snapshot.json = canvases 1, not loading; particle.snapshot.json/particle.png = Particle View pressed, all five shapes pressed in turn; fullscreen and collapse asserted from DOM (Exit fullscreen present, Expand graph tab, canvases 0); empty-vault.snapshot.json/empty-vault.png = [role=status] No notes yet overlay + Files No notes yet, 0 notes
+note: one cold Cluster->Particle click left Cluster pressed; 6 warm retries passed

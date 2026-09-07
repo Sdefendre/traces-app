@@ -1,0 +1,3 @@
+feature: pages-site
+entry: helpers/pages-check.sh against live https://sdefendre.github.io/traces-app/
+result: pages-check ok, 13110 bytes, live HTML identical to docs/index.html at cfad153. Extra asserted: H1 Traces, View on GitHub -> github.com/Sdefendre/traces-app, Clone and run -> #run, cards GRAPH/EDITOR/TRACESAI/LOCAL-FIRST, Galaxy/Terrain/Cluster/Particle, "Clone it. Run it.", Node 22 copy present. No browser used; Copy button not clicked.

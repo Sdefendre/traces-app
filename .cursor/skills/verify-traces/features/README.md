@@ -23,7 +23,7 @@ This directory is the maintained source for verifying user-facing Traces behavio
 ## Proof and skip reporting
 
 - Capture the user action and the resulting state, not only the final screen.
-- Desktop proof includes a `drive.mjs snapshot` JSON and a screenshot of the Electron window.
+- Desktop proof includes a `drive.mjs snapshot` JSON and a screenshot of the Electron window. Files assertions read the snapshot's `filesText`; body `text` also carries graph labels.
 - Mutation proof includes the isolated vault file on disk.
 - Record the feature ID and entry point used with every artifact.
 - Report an unreachable path with the attempted command and the unmet precondition.
@@ -43,7 +43,7 @@ Keep implementation details out of the map. Name only user paths, stable handles
 
 ## Features
 
-- [Notes and editor](./notes-editor.md) covers create, open, edit, preview, auto-save, heading rename, wiki-link aliases, and ambiguous wiki-link clicks.
-- [Graph](./graph.md) covers Galaxy, Terrain, Cluster, Particle views, particle shapes, zoom, and fullscreen.
-- [Search](./search.md) covers Files search, Control+F, filtering, empty results, and clear.
+- [Notes and editor](./notes-editor.md) covers create, open, edit, preview, auto-save, status bar, editor theme, heading rename, wiki-link aliases, ambiguous wiki-link clicks, tab close, and delete.
+- [Graph](./graph.md) covers Galaxy, Terrain, Cluster, Particle views, particle shapes, zoom, fullscreen, collapse, and the empty-vault overlay.
+- [Search](./search.md) covers Files search, Control+F, filtering, the no-match state, and clear.
 - [Pages marketing site](./pages-site.md) covers the public GitHub Pages site and its clone/run copy.
