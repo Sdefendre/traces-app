@@ -11,6 +11,8 @@
  *   node helpers/drive.mjs click --text "Verify Alpha"
  *   node helpers/drive.mjs click --placeholder "Search..."
  *   node helpers/drive.mjs click --selector ".cm-content"
+ *   node helpers/drive.mjs click --text "Verify Beta" --button right
+ *   node helpers/drive.mjs click --text "Delete" --accept-dialog
  *   node helpers/drive.mjs fill --placeholder "Note name..." --value "Verify Gamma"
  *   node helpers/drive.mjs fill --placeholder "Search..." --value "alpha"
  *   node helpers/drive.mjs press --key Enter
@@ -43,7 +45,7 @@ function parseArgs(argv) {
     if (token.startsWith('--')) {
       const key = token.slice(2);
       const next = argv[i + 1];
-      if (!next || next.startsWith('--')) flags[key] = true;
+      if (next === undefined || next.startsWith('--')) flags[key] = true;
       else {
         flags[key] = next;
         i += 1;
@@ -106,6 +108,9 @@ class CdpSession {
     });
     this.ws.addEventListener('message', (event) => {
       const message = JSON.parse(String(event.data));
+      if (message.method === 'Page.javascriptDialogOpening' && this.acceptDialogs) {
+        this.send('Page.handleJavaScriptDialog', { accept: true });
+      }
       if (message.id && this.pending.has(message.id)) {
         const { resolve, reject } = this.pending.get(message.id);
         this.pending.delete(message.id);
@@ -189,6 +194,10 @@ const SNAPSHOT_JS = `(() => {
   const cm = Boolean(document.querySelector('.cm-content'));
   const editorTheme = document.querySelector('[data-editor-theme]')?.getAttribute('data-editor-theme') || null;
   const body = (document.body.innerText || '').replace(/\\s+/g, ' ').trim();
+  // Body text always names every note because graph labels are DOM overlays; scope to the Files panel.
+  let files = document.querySelector('input[placeholder="Search..."]');
+  while (files && !/\\d+ notes\\b/.test(files.innerText || '')) files = files.parentElement;
+  const filesText = files ? (files.innerText || '').replace(/\\s+/g, ' ').trim() : null;
   return {
     title: document.title,
     url: location.href,
@@ -199,6 +208,7 @@ const SNAPSHOT_JS = `(() => {
     canvases,
     hasCodeMirror: cm,
     editorTheme,
+    filesText,
     text: body.slice(0, 4000),
   };
 })()`;
@@ -232,9 +242,14 @@ const FINDER_JS = (flags) => `(() => {
     }) || null;
   }
   if (!el && text) {
-    el = [...document.querySelectorAll('button, [role="button"], span, div')].find((node) => {
-      return (node.innerText || '').trim() === text;
-    }) || null;
+    // Parents of a lone match share its innerText and graph labels are pointer-events:none; take the first clickable leaf.
+    const matches = [...document.querySelectorAll('button, [role="button"], [role="menuitem"], span, div')]
+      .filter((node) => (node.innerText || '').trim() === text)
+      .filter((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && getComputedStyle(node).pointerEvents !== 'none';
+      });
+    el = matches.find((node) => !matches.some((other) => other !== node && node.contains(other))) || null;
   }
   if (!el) return { found: false };
   el.scrollIntoView({ block: 'center', inline: 'center' });
@@ -256,18 +271,20 @@ async function clickFlags(session, flags) {
   if (!found?.found) {
     throw new Error(`no element matched ${JSON.stringify(flags)}`);
   }
+  const button = flags.button === 'right' ? 'right' : 'left';
+  session.acceptDialogs = Boolean(flags['accept-dialog']);
   await session.send('Input.dispatchMouseEvent', {
     type: 'mousePressed',
     x: found.x,
     y: found.y,
-    button: 'left',
+    button,
     clickCount: 1,
   });
   await session.send('Input.dispatchMouseEvent', {
     type: 'mouseReleased',
     x: found.x,
     y: found.y,
-    button: 'left',
+    button,
     clickCount: 1,
   });
   return found;

@@ -1,0 +1,164 @@
+{
+  "title": "Traces",
+  "url": "http://localhost:3333/",
+  "theme": "dark",
+  "hasElectronApi": true,
+  "buttons": [
+    {
+      "title": "Expand chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "CHAT"
+    },
+    {
+      "title": "Collapse sidebar",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open Folder",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New Note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Galaxy View",
+      "ariaLabel": "Galaxy View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Terrain View",
+      "ariaLabel": "Terrain View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Cluster View",
+      "ariaLabel": "Cluster View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Particle View",
+      "ariaLabel": "Particle View",
+      "pressed": "true",
+      "text": ""
+    },
+    {
+      "title": "Use Möbius Strip particle shape",
+      "ariaLabel": "Use Möbius Strip particle shape",
+      "pressed": "false",
+      "text": "∞"
+    },
+    {
+      "title": "Use Toroidal Vortex particle shape",
+      "ariaLabel": "Use Toroidal Vortex particle shape",
+      "pressed": "false",
+      "text": "◎"
+    },
+    {
+      "title": "Use Spherical Harmonics particle shape",
+      "ariaLabel": "Use Spherical Harmonics particle shape",
+      "pressed": "false",
+      "text": "✳"
+    },
+    {
+      "title": "Use Lissajous Curve particle shape",
+      "ariaLabel": "Use Lissajous Curve particle shape",
+      "pressed": "false",
+      "text": "∿"
+    },
+    {
+      "title": "Use Fractal Branches particle shape",
+      "ariaLabel": "Use Fractal Branches particle shape",
+      "pressed": "true",
+      "text": "ψ"
+    },
+    {
+      "title": "Zoom out",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Zoom in",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse graph panel",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Fullscreen",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Close tab",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Close tab",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open AI Chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Switch to preview",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Switch to light editor",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse notes",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Settings",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    }
+  ],
+  "inputs": [
+    {
+      "placeholder": "Search...",
+      "value": "",
+      "type": "text"
+    }
+  ],
+  "canvases": 1,
+  "hasCodeMirror": true,
+  "editorTheme": "dark",
+  "filesText": "TRACES NOTES ▾ Verify Sub Verify Index Verify Alpha Verify Beta Verify Gamma Verify Index 5 notes",
+  "text": "CHAT TRACES NOTES ▾ Verify Sub Verify Index Verify Alpha Verify Beta Verify Gamma Verify Index 5 notes ∞ ◎ ✳ ∿ ψ Verify Gamma Verify Beta 1 2 3 4 # Verify Beta Second seeded note. 5 words · 35 chars · 1 min read · 4 lines"
+}

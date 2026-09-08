@@ -26,6 +26,10 @@ node -e '
     "git clone https://github.com/Sdefendre/traces-app.git",
     "pnpm dev",
     "https://sdefendre.github.io/traces-app/",
+    "Clone it. Run it.",
+    "Node 22",
+    "Galaxy, Terrain, Cluster, and Particle",
+    "Select + Cmd/Ctrl+C",
   ];
   const missing = required.filter((needle) => !html.includes(needle));
   if (missing.length) {

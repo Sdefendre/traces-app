@@ -1,0 +1,176 @@
+{
+  "title": "Traces",
+  "url": "http://localhost:3333/",
+  "theme": "dark",
+  "hasElectronApi": true,
+  "buttons": [
+    {
+      "title": "Expand chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "CHAT"
+    },
+    {
+      "title": "Collapse sidebar",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open Folder",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New Note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "New Note"
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "Open Folder"
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "New Note"
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "Open Folder"
+    },
+    {
+      "title": "Galaxy View",
+      "ariaLabel": "Galaxy View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Terrain View",
+      "ariaLabel": "Terrain View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Cluster View",
+      "ariaLabel": "Cluster View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Particle View",
+      "ariaLabel": "Particle View",
+      "pressed": "true",
+      "text": ""
+    },
+    {
+      "title": "Use Möbius Strip particle shape",
+      "ariaLabel": "Use Möbius Strip particle shape",
+      "pressed": "false",
+      "text": "∞"
+    },
+    {
+      "title": "Use Toroidal Vortex particle shape",
+      "ariaLabel": "Use Toroidal Vortex particle shape",
+      "pressed": "false",
+      "text": "◎"
+    },
+    {
+      "title": "Use Spherical Harmonics particle shape",
+      "ariaLabel": "Use Spherical Harmonics particle shape",
+      "pressed": "false",
+      "text": "✳"
+    },
+    {
+      "title": "Use Lissajous Curve particle shape",
+      "ariaLabel": "Use Lissajous Curve particle shape",
+      "pressed": "false",
+      "text": "∿"
+    },
+    {
+      "title": "Use Fractal Branches particle shape",
+      "ariaLabel": "Use Fractal Branches particle shape",
+      "pressed": "true",
+      "text": "ψ"
+    },
+    {
+      "title": "Zoom out",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Zoom in",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse graph panel",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Fullscreen",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open AI Chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse notes",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": null,
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "New Note"
+    },
+    {
+      "title": "Settings",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    }
+  ],
+  "inputs": [
+    {
+      "placeholder": "Search...",
+      "value": "",
+      "type": "text"
+    }
+  ],
+  "canvases": 1,
+  "hasCodeMirror": false,
+  "editorTheme": null,
+  "filesText": "TRACES NOTES No notes yet Create your first note or open a folder of markdown files. New Note Open Folder 0 notes",
+  "text": "CHAT TRACES NOTES No notes yet Create your first note or open a folder of markdown files. New Note Open Folder 0 notes No notes yet Create a note or open a folder to see your graph. New Note Open Folder ∞ ◎ ✳ ∿ ψ Notes No note selected Pick a note from the sidebar or create a new one New Note"
+}
