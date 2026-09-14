@@ -98,13 +98,19 @@ Stable handles from this repo, not coordinates:
 | Files search | `input` placeholder `Search...` |
 | New note, Files header | `button` title `New Note` |
 | Open folder | `button` title `Open Folder`. Native dialog. Do not click it. |
-| Collapse Files | `button` title `Collapse sidebar` |
+| Collapse / expand Files | `button` title `Collapse sidebar`, then `Expand sidebar` on the left strip |
+| Empty Files | `No notes yet`, buttons `New Note` and `Open Folder`, footer `0 notes` |
+| No search match | `No notes match “{query}”`, button `Clear search` |
+| File row menu | right-click a row. `role=menuitem` `Copy Path`, `Delete`. Delete asks `window.confirm`. |
 | New note empty editor | button text `New Note`, or title `New note` |
 | Note name field | `input` placeholder `Note name...` |
 | Empty editor copy | `No note selected` |
-| Editor theme root | `[data-editor-theme=light\|dark]` |
-| CodeMirror | `.cm-content` |
+| Tab close | title `Close tab`. Hover-only opacity, still clickable. |
+| Editor theme root | `[data-editor-theme=light\|dark]`, toolbar title `Switch to light editor` / `Switch to dark editor` |
+| Editor status bar | `{n} words · {n} chars · {n} min read · {n} lines` under the editor |
+| CodeMirror | `.cm-content`, lines `.cm-line` |
 | Preview toggle | title `Switch to preview` or `Switch to editor` |
+| Empty graph | `[role=status]` overlay `No notes yet`, buttons `New Note` and `Open Folder` |
 | Graph views | `role=group` `aria-label="Graph view"`, buttons `Galaxy View`, `Terrain View`, `Cluster View`, `Particle View` |
 | Particle shapes | `[data-particle-shape=mobius\|toroidal\|harmonics\|lissajous\|fractal]`, `aria-label` like `Use Möbius Strip particle shape` |
 | Graph zoom / chrome | titles `Zoom out`, `Zoom in`, `Collapse graph panel`, `Fullscreen`, `Exit fullscreen` |
@@ -127,11 +133,15 @@ Keyboard, Control on Linux, Meta on macOS. `drive.mjs shortcut` sends Control:
 | Control+4 | Toggle Chat |
 | Control+n | New note. Same as `window` event `traces:new-note` |
 | Control+f | Focus search. Same as `traces:focus-search` |
-| Control+\ | Fullscreen graph |
+| Control+\ | Fullscreen graph. Escape exits it. |
 
-Do not click `Open Folder`. The native dialog is not in the renderer and can point the app at a real folder.
+`click --text` takes the first clickable leaf match in document order, so a name that is both a Files row, a graph label, and an editor tab resolves to the Files row. Graph labels are `pointer-events: none` DOM overlays and are skipped. Body `text` therefore always names every note. Assert Files state on the snapshot's `filesText`, which is scoped to the panel holding `Search...` and the `{n} notes` footer.
 
-Create notes only with a `Verify ` prefix. After a mutation, prove the file on disk with `node helpers/drive.mjs read-vault --rel "Verify Gamma.md"`. Auto-save is 800 ms. Title rename from `# Heading` is 1500 ms.
+Do not click `Open Folder`. The native dialog is not in the renderer and can point the app at a real folder. In an empty vault there are three `Open Folder` and three `New Note` buttons (Files, graph overlay, empty editor).
+
+Create notes only with a `Verify ` prefix. After a mutation, prove the file on disk with `node helpers/drive.mjs read-vault --rel "Verify Gamma.md"`. Auto-save is 800 ms. Title rename from `# Heading` is 1500 ms and needs the first line to still read `# Title`. `type --focus-editor` inserts at the cursor, usually the start of the file, which glues text onto the heading. To append, `type --selector ".cm-line:last-child" --text "..."`; the click lands past the text and puts the cursor at that line's end.
+
+Delete a note from the row menu: `click --text "Verify Beta" --button right`, then `click --text "Delete" --accept-dialog`. The flag answers the `window.confirm` over CDP. Without it the renderer blocks on the dialog.
 
 Graph node clicks land on a WebGL canvas. There is no DOM node per note. Prove view toggles and particle shape buttons from ARIA. Treat canvas picking as best-effort.
 
@@ -149,7 +159,7 @@ Every proof needs:
 2. The user action and the resulting state. A final screenshot alone is not enough.
 3. A `drive.mjs snapshot` JSON and a `drive.mjs screenshot` PNG of the window after the action.
 4. For a write: the vault-relative file contents from `read-vault`, after the auto-save wait. The file must live under the isolated vault.
-5. For search: the filtered tree in the snapshot `text`, plus the input `value`.
+5. For search: the filtered tree in the snapshot `filesText`, plus the input `value`. Body `text` includes graph labels and is not a tree proof.
 6. For graph view changes: `aria-pressed="true"` on the chosen view button.
 
 Standards:
@@ -200,10 +210,15 @@ node helpers/drive.mjs doctor-json
 node helpers/drive.mjs click --title "New Note"
 node helpers/drive.mjs click --name "Galaxy View"
 node helpers/drive.mjs click --text "Verify Alpha"
+node helpers/drive.mjs click --text "Verify Beta" --button right
+node helpers/drive.mjs click --text "Delete" --accept-dialog
+node helpers/drive.mjs click --selector '[role=status] button'
 node helpers/drive.mjs fill --placeholder "Search..." --value "alpha"
+node helpers/drive.mjs fill --placeholder "Search..." --value ""
 node helpers/drive.mjs press --key Enter
 node helpers/drive.mjs shortcut --key f
 node helpers/drive.mjs type --focus-editor --text $'\n\nmore text'
+node helpers/drive.mjs type --selector ".cm-line:last-child" --text "appended at the end"
 node helpers/drive.mjs wait-text --text "Verify Alpha"
 node helpers/drive.mjs snapshot --path "$TRACES_VERIFY_EVIDENCE/snap.json"
 node helpers/drive.mjs screenshot --path "$TRACES_VERIFY_EVIDENCE/snap.png"
