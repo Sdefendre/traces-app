@@ -20,6 +20,7 @@ Notes are markdown files in the open vault. The Notes panel edits them in CodeMi
 - `notes-theme` toggles the editor between dark and light from the Notes toolbar.
 - `notes-close-tab` closes a tab from its `Close tab` button and returns to `No note selected` when it was the last one.
 - `notes-delete` removes a note from the Files row menu after a confirm, closing its tab and deleting the file.
+- `notes-collapse` collapses the Notes panel to a left-edge `NOTES` tab and expands it again.
 
 ## How to get to it (user POV)
 
@@ -29,6 +30,7 @@ Notes are markdown files in the open vault. The Notes panel edits them in CodeMi
 - Choose a file row in the Files tree. Right-click it for `Copy Path` and `Delete`.
 - With a note open, type in the editor, choose `Switch to preview`, or choose `Switch to light editor`.
 - Hover a tab for its `Close tab` button.
+- Choose `Collapse notes` in the Notes header, or press Control+3. Expand from the `Notes` tab on the left. The header's `Open AI Chat` button opens the Chat panel (Control+4 toggles it).
 
 ## Driving it with verify-traces
 
@@ -43,7 +45,8 @@ Preconditions:
 - **Name the note.** Type the title. Run `node helpers/drive.mjs fill --placeholder "Note name..." --value "Verify Gamma"` and `node helpers/drive.mjs press --key Enter`. The Files tree shows `Verify Gamma`, the note count increases by one, and a tab named `Verify Gamma` is active.
 - **Confirm editor.** Run `node helpers/drive.mjs wait-text --text "Verify Gamma"`. The editor contains `# Verify Gamma` and `.cm-content` exists.
 - **Create from empty editor.** Close tabs until `No note selected` returns, then `node helpers/drive.mjs click --text "New Note"`. Same `Note name...` path. Title on this button is `New note` (lowercase n) if you click the header plus instead of the CTA.
-- **Shortcut create.** Run `node helpers/drive.mjs shortcut --key n`. The same `Note name...` field appears.
+- **Shortcut create.** With Files expanded, run `node helpers/drive.mjs shortcut --key n`. The same `Note name...` field appears. `press --key Escape` removes it without creating a file.
+- **Collapse Notes.** Run `node helpers/drive.mjs click --title "Collapse notes"`. A left-edge tab titled `Expand notes` appears, rendered `NOTES`, and `No note selected` and `.cm-content` are both gone. Run `node helpers/drive.mjs shortcut --key 3` to expand it again.
 - **Open from tree.** Run `node helpers/drive.mjs click --text "Verify Alpha"`. The active tab reads `Verify Alpha` and the editor shows `# Verify Alpha`.
 - **Edit and save.** Append a line at the end of the note. Run `node helpers/drive.mjs type --selector ".cm-line:last-child" --text "Gamma body from verify-traces"`. Wait at least 800 ms. Run `node helpers/drive.mjs read-vault --rel "Verify Gamma.md"`. Stdout contains `Gamma body from verify-traces` after the heading.
 - **Status bar.** Snapshot text after the edit matches `\d+ words · \d+ chars · \d+ min read · \d+ lines` and the counts are higher than right after create (`2 words · 16 chars · 1 min read · 3 lines` for a fresh `# Verify Gamma`).
@@ -60,6 +63,7 @@ Preconditions:
 ## Gotchas
 
 - Files header title is `New Note`. Empty-editor header title is `New note`. The empty-state CTA uses visible text `New Note`.
+- Control+N does nothing while Files is collapsed. The Files panel owns the `traces:new-note` listener and is unmounted when collapsed. That is the same product gap as Control+F in [search.md](./search.md). Expand Files first, and report the collapsed case rather than proving `notes-create-shortcut` only with Files open.
 - A new note is created next to the active file, or at the vault root if nothing is open. Baseline seeds sit at the vault root, so `Verify Gamma.md` is the usual path.
 - CodeMirror does not update if you set `innerText` from `eval`. Use `type` or real key events. `type --focus-editor` inserts at the current cursor, usually the start of the file, so the text lands in front of `# Title` and turns the heading line into plain text. That still proves autosave, but it disables heading rename for that note. `type --selector ".cm-line:last-child"` clicks past the end of the last line and appends.
 - Auto-save is 800 ms. Heading rename is 1500 ms and only fires while the first line is still a `# ` heading. Assert disk, not only the tab label.

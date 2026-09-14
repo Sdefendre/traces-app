@@ -32,7 +32,7 @@ source /tmp/traces-verify-<run-id>/run.env
 3. Seeds `Verify Alpha.md` and `Verify Beta.md` in that vault. Alpha wiki-links to Beta.
 4. Compiles the Electron main process with `pnpm exec tsc -p tsconfig.electron.json`.
 5. Starts `pnpm exec next dev -p 3333 --turbo` in its own session.
-6. Starts `pnpm exec electron .` with `HOME` set to the fake home, the real `XAUTHORITY` and `DISPLAY` (a fake HOME hides `~/.Xauthority` and Electron exits), `--user-data-dir` under the run dir, `--remote-debugging-port` (default 9333), `--no-sandbox`, and `--disable-gpu`.
+6. Starts `pnpm exec electron .` with `HOME` set to the fake home, the real `XAUTHORITY` and `DISPLAY` (a fake HOME hides `~/.Xauthority` and Electron exits), `--user-data-dir` under the run dir, `--remote-debugging-port` (default 9333), `--no-sandbox`, and `--disable-gpu`. Any X server on `$DISPLAY` works, Xvfb or a VNC server such as `Xtigervnc :1`. If none is running, start `Xvfb :1 -screen 0 1600x1000x24` yourself before launch; `launch.sh` does not start one.
 7. Waits until Next answers, CDP lists a page on `http://localhost:3333`, `document.title` is `Traces`, `window.electronAPI` exists, and the loading copy is gone.
 8. Writes `state.json` and `run.env`. Evidence directory: `.cursor/skills/verify-traces/evidence/<run-id>/`.
 
@@ -105,6 +105,7 @@ Stable handles from this repo, not coordinates:
 | New note empty editor | button text `New Note`, or title `New note` |
 | Note name field | `input` placeholder `Note name...` |
 | Empty editor copy | `No note selected` |
+| Collapse / expand Notes | title `Collapse notes`, then `Expand notes` on the left strip, rendered `NOTES`. Header `Open AI Chat` opens Chat. |
 | Tab close | title `Close tab`. Hover-only opacity, still clickable. |
 | Editor theme root | `[data-editor-theme=light\|dark]`, toolbar title `Switch to light editor` / `Switch to dark editor` |
 | Editor status bar | `{n} words · {n} chars · {n} min read · {n} lines` under the editor |
@@ -134,6 +135,8 @@ Keyboard, Control on Linux, Meta on macOS. `drive.mjs shortcut` sends Control:
 | Control+n | New note. Same as `window` event `traces:new-note` |
 | Control+f | Focus search. Same as `traces:focus-search` |
 | Control+\ | Fullscreen graph. Escape exits it. |
+
+Control+n and Control+f are handled by the Files panel, which is unmounted while Files is collapsed. With Files collapsed both are no-ops. That is a product gap tracked in `features/search.md`, not a harness fault. Expand Files (Control+1) before either shortcut.
 
 `click --text` takes the first clickable leaf match in document order, so a name that is both a Files row, a graph label, and an editor tab resolves to the Files row. Graph labels are `pointer-events: none` DOM overlays and are skipped. Body `text` therefore always names every note. Assert Files state on the snapshot's `filesText`, which is scoped to the panel holding `Search...` and the `{n} notes` footer.
 

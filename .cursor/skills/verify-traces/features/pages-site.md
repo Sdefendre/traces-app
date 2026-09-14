@@ -5,7 +5,8 @@ The public site is static files in `docs/`, deployed to https://sdefendre.github
 ## Sub-features
 
 - `pages-live` serves the live Pages URL.
-- `pages-hero` shows the Traces hero and GitHub CTA.
+- `pages-hero` shows the eyebrow `A DESKTOP WORKSPACE, NOT A CLOUD VAULT`, the Traces hero, and the GitHub CTA.
+- `pages-principles` shows the three-item strip `Plain markdown`, `Visible connections`, `Bring your own AI` under the hero.
 - `pages-sections` exposes `#overview`, `#features`, and `#run`.
 - `pages-clone` shows the clone and `pnpm dev` commands.
 - `pages-copy` copies those commands from the `Copy` button.
@@ -25,8 +26,9 @@ Preconditions:
 - Network can reach `sdefendre.github.io`. This check does not launch Electron and does not need `run.env`.
 - Do not send vault files anywhere.
 
-- **Live fetch.** Run `.cursor/skills/verify-traces/helpers/pages-check.sh "$TRACES_VERIFY_EVIDENCE/pages"`. Exit code 0. The script writes `pages.html` and asserts the title `Traces. Local-first knowledge workspace`, section ids `overview`, `features`, `run`, `data-copy`, `id="clone"`, `git clone https://github.com/Sdefendre/traces-app.git`, `pnpm dev`, `Clone it. Run it.`, `Node 22`, `Galaxy, Terrain, Cluster, and Particle`, and the copy fallback label `Select + Cmd/Ctrl+C`.
-- **Hero.** Open the live URL in a browser if you have one. The H1 is `Traces`. Primary CTA text is `View on GitHub` and points at `https://github.com/Sdefendre/traces-app`. Ghost CTA is `Clone and run` and points at `#run`.
+- **Live fetch.** Run `.cursor/skills/verify-traces/helpers/pages-check.sh "$TRACES_VERIFY_EVIDENCE/pages"`. Exit code 0. The script writes `pages.html` and asserts the title `Traces. Local-first knowledge workspace`, section ids `overview`, `features`, `run`, `data-copy`, `id="clone"`, `git clone https://github.com/Sdefendre/traces-app.git`, `pnpm dev`, `Clone it. Run it.`, `Node 22`, `Galaxy, Terrain, Cluster, and Particle`, the copy fallback label `Select + Cmd/Ctrl+C`, the hero eyebrow `A DESKTOP WORKSPACE, NOT A CLOUD VAULT`, and the principles strip `aria-label="Traces principles"`.
+- **Hero.** Open the live URL in a browser if you have one. The eyebrow above the H1 reads `A DESKTOP WORKSPACE, NOT A CLOUD VAULT`. The H1 is `Traces`. Primary CTA text is `View on GitHub` and points at `https://github.com/Sdefendre/traces-app`. Ghost CTA is `Clone and run` and points at `#run`. Tabbing onto either CTA or `Copy` shows a focus outline.
+- **Principles.** Under the hero, `section.principles` lists `01 Plain markdown`, `02 Visible connections`, `03 Bring your own AI`. On narrow viewports the three stack vertically.
 - **Sections.** `#features` cards include GRAPH, EDITOR, TRACESAI, and LOCAL-FIRST. GRAPH copy names Galaxy, Terrain, Cluster, and Particle. `#run` heading is `Clone it. Run it.` The clone blurb asks for Node 22.
 - **Copy button.** Choose `Copy` (`[data-copy]`). The label becomes `Copied`, then `Copy` again after 1.4 s. If both the clipboard API and `execCommand("copy")` fail, the clone block is selected and the label becomes `Select + Cmd/Ctrl+C` for 2.4 s. That is an environment limit, not a product bug, as long as the button stays present.
 - **Local docs.** If you need this branch rather than deployed Pages, read `docs/index.html` in the checkout or serve `docs/` with `python3 -m http.server` from that directory. Assert the same strings. Do not treat a local serve as proof that GitHub Pages deployed.

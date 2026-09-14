@@ -27,7 +27,8 @@ Preconditions:
 - Files is expanded. If it is not, `node helpers/drive.mjs click --title "Expand sidebar"`.
 
 - **Click focus.** Run `node helpers/drive.mjs click --placeholder "Search..."`. The next snapshot lists an input whose placeholder is `Search...`.
-- **Shortcut focus.** Collapse Files, then run `node helpers/drive.mjs shortcut --key f`. Files expands and the search box is focused.
+- **Shortcut focus.** With Files expanded, click `.cm-content` or the graph so the box loses focus, then run `node helpers/drive.mjs shortcut --key f`. `document.activeElement.placeholder` is `Search...`.
+- **Shortcut while collapsed.** Run `node helpers/drive.mjs click --title "Collapse sidebar"`, then `node helpers/drive.mjs shortcut --key f`. The intended result is that Files expands and the box is focused. Known product gap (see Gotchas): Files stays collapsed and `document.activeElement` is `BODY`. Screenshot that state, report `search-collapsed` as a product gap, then restore with `click --title "Expand sidebar"` or `shortcut --key 1`. Do not mark it passed through Control+1.
 - **Title match.** Run `node helpers/drive.mjs fill --placeholder "Search..." --value "alpha"`. Snapshot `filesText` includes `Verify Alpha` and does not include `Verify Beta`. Note count at the bottom still reports the full vault size. Filtering is visual only.
 - **Path match.** Clear the box, then fill `beta`. `filesText` keeps `Verify Beta` and drops `Verify Alpha`.
 - **Empty.** Fill `volcano`. `filesText` reads `No notes match “volcano”` followed by `Clear search`, with no `Verify Alpha` or `Verify Beta` rows. The `{n} notes` footer still shows the real count.
@@ -45,5 +46,6 @@ Module support, not a substitute: `pnpm verify:webmcp` covers `matchNotePaths` a
 - The query lives in the UI store, so it survives collapsing and expanding Files. Clear it before a recipe that expects an empty box.
 - The footer `{n} notes` is the unfiltered vault length. Do not assert it against the visible row count.
 - Control+F is a custom handler. It does not open a CodeMirror search panel. If the editor has focus, the AppShell listener still fires because it is on `window`.
+- Product gap, open since the 2026-09-07 pass and still present at `a48ec9b`: the Files panel owns the `traces:focus-search` and `traces:new-note` listeners and is unmounted while collapsed, so Control+F and Control+N do nothing when Files is collapsed. Control+1 still expands it. Report it; do not edit this map to say collapsed Files ignores the shortcut on purpose.
 - WebMCP `search-notes` is absent in ordinary Electron and Chrome. Missing `document.modelContext` is expected. Do not fail the feature for that.
 - Do not read note bodies out of the vault to "confirm" search. Confirm the visible tree.
