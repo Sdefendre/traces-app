@@ -1,0 +1,24 @@
+run: /tmp/traces-verify-20260914T125158Z-3147
+repo: /workspace
+home: /tmp/traces-verify-20260914T125158Z-3147/home
+vault: /tmp/traces-verify-20260914T125158Z-3147/home/Desktop/Traces Notes
+nextPid: 3196
+electronPid: 3416
+nextPort: 3333
+cdpPort: 9333
+{
+  "ui": {
+    "title": "Traces",
+    "href": "http://localhost:3333/",
+    "loading": false,
+    "hasElectronApi": true,
+    "textSample": "CHAT TRACES NOTES ▾ Verify Sub Verify Index Verify Alpha Verify Beta Verify Delta Renamed Verify Epsilon Verify Gamma Verify Index Verify Links Verify Missing 9 notes ∞ ◎ ✳ ∿ ψ Verify Epsilon 1 2 3 # Verify Epsilon 2 words · 18 chars · 1 mi"
+  },
+  "vaultPath": "/tmp/traces-verify-20260914T125158Z-3147/home/Desktop/Traces Notes",
+  "expectedVault": "/tmp/traces-verify-20260914T125158Z-3147/home/Desktop/Traces Notes",
+  "vaultMatches": true,
+  "isolatedHome": true,
+  "nextPort": 3333,
+  "cdpPort": 9333
+}
+doctor: ok

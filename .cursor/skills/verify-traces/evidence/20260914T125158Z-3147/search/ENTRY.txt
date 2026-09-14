@@ -1,0 +1,7 @@
+feature: search
+entry points: click `Search...`; fill via drive.mjs; Control+F with Files expanded; Control+F with Files collapsed; `Clear search` button; open a filtered row
+alpha.snapshot.json / alpha.png: fill "alpha" -> filesText `TRACES NOTES Verify Alpha 2 notes`, input value `alpha` (captured on the relaunch with the fixed harness and the seeded two-note vault)
+empty.snapshot.json: fill "volcano" -> Files shows `No notes match “volcano”` + `Clear search`, footer still `2 notes`
+clear.snapshot.json: fill "" with the fixed harness -> full tree back, input empty
+open-result.png: click --text "Verify Alpha" under the alpha filter -> SPAN row, `.cm-content` with `# Verify Alpha`
+collapsed-ctrl-f.png: Collapse sidebar, shortcut f -> Files stays collapsed, activeElement BODY (product gap, still reproduces)

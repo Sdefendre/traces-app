@@ -1,0 +1,8 @@
+feature: graph
+entry points: `Graph view` group buttons; `Particle shape` buttons; `Zoom in`/`Zoom out`; `Fullscreen`, Escape, Control+\, `Exit fullscreen`; `Collapse graph panel`, `Expand graph`, Control+2; empty vault overlay; Settings > Graph
+baseline.snapshot.json: canvases 1, no loading copy, Galaxy pressed
+particle.*: Terrain -> Cluster -> Particle -> Galaxy -> Particle each set aria-pressed on exactly one view button; all five shapes (toroidal, mobius, harmonics, lissajous, fractal) took aria-pressed=true in turn; PNG after Fractal Branches
+fullscreen.png: `Fullscreen` -> `Exit fullscreen` present, Search input / Notes / Settings gear gone; Escape exited; Control+\ re-entered; `Exit fullscreen` returned
+collapsed.png: `Collapse graph panel` -> canvases 0, tab title `Expand graph` rendered `GRAPH`; `Expand graph` and Control+2 both restore canvases 1
+empty-vault.*: vault emptied on disk as setup -> [role=status] `No notes yet Create a note or open a folder to see your graph. New Note Open Folder`, Files `No notes yet ... 0 notes`, canvases 1; `click --selector '[role=status] button'` opened `Note name...`; seeds restored, overlay gone
+settings-graph.png: Settings > Graph shows role=switch `Show Labels`, `Auto Rotate`, `Low Power Mode`; zero checkboxes; Escape closed Settings

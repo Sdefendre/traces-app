@@ -1,0 +1,13 @@
+feature: notes-editor
+entry points: Files header `New Note`; Control+N; empty-editor CTA `New Note`; header `New note`; tree row click; preview wiki-links; row menu Delete; `Close tab`; `Collapse notes`
+after-create.*: created `Verify Gamma` from Files header, then `type --focus-editor` (main recipe) glued the body onto the heading; after-create.md is the read-vault output after the 800 ms autosave
+preview.snapshot.json: `Switch to preview` on Gamma, `.cm-content` gone, `Switch to editor` present
+theme-light.png: `Switch to light editor` -> data-editor-theme=light, then back to dark
+wiki-link-beta.png: Alpha preview, click a.md-wiki-link[data-wiki-target="Verify Beta"] -> Beta open, h1 `Verify Beta`
+ambiguous.*: `Verify Index.md` seeded at root and in `Verify Sub/`; click from `Verify Links` preview -> search value `Verify Index`, two rows, tab count unchanged (4)
+unresolved-created.*: click a.md-wiki-link.is-unresolved[data-wiki-target="Verify Missing"] -> `Verify Missing.md` on disk with `# Verify Missing`, editor back, 7 notes
+renamed.*: fresh `Verify Delta`, `type --selector ".cm-line" --text " Renamed"` -> `Verify Delta Renamed.md` on disk after 1500 ms, `Verify Delta.md` missing
+context-menu.png: right-click `Verify Delta Renamed` -> menuitems `Copy Path`, `Delete`
+after-delete.snapshot.json: `Delete --accept-dialog` -> row gone, 9 -> 8 notes, read-vault reports missing
+collapsed-ctrl-n-no-expand.png: Collapse sidebar, shortcut n -> no `Note name...` field, Files stays collapsed (same product gap as Control+F)
+Also driven without separate artifacts: Escape cancels the name field; six `Close tab` clicks return `No note selected`; empty-editor CTA and header `New note` both open `Note name...` and `Verify Epsilon.md` landed on disk; `Collapse notes` -> `NOTES` tab, Control+3 expands; `Open AI Chat` opens Chat, Control+4 closes it
