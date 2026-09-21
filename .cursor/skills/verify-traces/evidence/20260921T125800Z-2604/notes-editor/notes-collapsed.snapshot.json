@@ -1,0 +1,104 @@
+{
+  "title": "Traces",
+  "url": "http://localhost:3333/",
+  "theme": "dark",
+  "hasElectronApi": true,
+  "buttons": [
+    {
+      "title": "Expand notes",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "NOTES"
+    },
+    {
+      "title": "Expand chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "CHAT"
+    },
+    {
+      "title": "Collapse sidebar",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open Folder",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New Note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Galaxy View",
+      "ariaLabel": "Galaxy View",
+      "pressed": "true",
+      "text": ""
+    },
+    {
+      "title": "Terrain View",
+      "ariaLabel": "Terrain View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Cluster View",
+      "ariaLabel": "Cluster View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Particle View",
+      "ariaLabel": "Particle View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Zoom out",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Zoom in",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse graph panel",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Fullscreen",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Settings",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    }
+  ],
+  "inputs": [
+    {
+      "placeholder": "Search...",
+      "value": "",
+      "type": "text"
+    }
+  ],
+  "canvases": 1,
+  "hasCodeMirror": false,
+  "editorTheme": null,
+  "filesText": "TRACES NOTES ▾ Verify Sub Verify Eta Verify Index Verify Alpha Verify Beta Verify Delta Renamed Verify Gamma Verify Index Verify Missing Verify Zeta 9 notes",
+  "text": "NOTES CHAT TRACES NOTES ▾ Verify Sub Verify Eta Verify Index Verify Alpha Verify Beta Verify Delta Renamed Verify Gamma Verify Index Verify Missing Verify Zeta 9 notes Verify Alpha Verify Beta Verify Gamma Verify Index Verify Index Verify Missing Verify Delta Renamed Verify Zeta Verify Eta"
+}
