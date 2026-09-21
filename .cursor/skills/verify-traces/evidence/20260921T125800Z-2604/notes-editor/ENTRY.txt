@@ -1,0 +1,21 @@
+feature: notes-editor
+entry points: Files header `New Note`; Control+N; empty-editor header `New note`; tree row click; preview wiki-links; row menu Delete; `Close tab`; `Collapse notes`; `Open AI Chat`
+after-create.*: created `Verify Gamma` from Files header; status bar `2 words · 16 chars · 1 min read · 3 lines`; after-create.md is read-vault after `type --selector ".cm-line:last-child"` and the 800 ms autosave
+after-edit.snapshot.json: status bar `6 words · 45 chars · 1 min read · 3 lines` after the append
+preview.*: Alpha in preview, `.cm-content` gone, both `a.md-wiki-link` anchors carry data-wiki-target `Verify Beta`, alias text `the other note`
+theme-light.png: `Switch to light editor` -> data-editor-theme=light, then `Switch to dark editor` -> dark
+wiki-link-beta.*: click a.md-wiki-link[data-wiki-target="Verify Beta"] from Alpha preview -> Beta tab, preview h1 `Verify Beta`
+alias-opens-beta.*: click `.md-preview a.md-wiki-link:nth-of-type(2)` (innerText `the other note`) -> Beta tab opens; the attribute selector alone hits the plain link first
+ambiguous.*: `Verify Index.md` seeded at root and in `Verify Sub/`; click from Gamma preview -> search value `Verify Index`, filesText `▾ Verify Sub Verify Index Verify Index`, tabs unchanged (3)
+unresolved-created.*: click a.md-wiki-link.is-unresolved[data-wiki-target="Verify Missing"] -> `Verify Missing.md` on disk with `# Verify Missing`, active tab, editor back, 6 notes
+append-after-fix.*: with main's drive.mjs the `.cm-line:last-child` click landed mid-text (`verify-tra...ces`, visible in after-create.md's later lines); after the right-edge fix the same command appended `Append check after harness fix` as a new last line
+renamed.*: fresh `Verify Delta`, `type --selector ".cm-line" --text " Renamed"` -> `Verify Delta Renamed.md` on disk after 1500 ms, `Verify Delta.md` missing
+renamed-from-later-heading.*: fresh `Verify Epsilon`, `type --focus-editor --text "glued "` made line 1 `glued # Verify Epsilon` and no rename fired; appending `# Verify Zeta` as the last line renamed the file to `Verify Zeta.md`. Rename keys off the first `# ` line anywhere, not line 1.
+empty-state.*: every tab closed -> `No note selected`, no `.cm-content`, header `New note` and CTA `New Note` present
+created-from-empty-editor.*: with zero tabs open, after `Verify Sub/Verify Index` had been the last opened note, header `New note` -> `Verify Eta` landed at `Verify Sub/Verify Eta.md`, not the vault root. activeFile survives Close tab.
+shortcut-name-field.png: Files expanded, shortcut n -> `Note name...` focused; Escape removed it, note count unchanged
+collapsed-ctrl-n-no-expand.png: Collapse sidebar, shortcut n -> no `Note name...`, Files stays collapsed, activeElement BODY (product gap, unchanged)
+notes-collapsed.*: `Collapse notes` -> `Expand notes` tab rendered `NOTES`, `.cm-content` and `No note selected` gone; Control+3 restored the editor
+context-menu.png: right-click `Verify Delta Renamed` -> menuitems `Copy Path`, `Delete`
+after-delete.*: `Delete --accept-dialog` -> row gone, 9 -> 8 notes, its tab closed, read-vault reports missing
+chat-open.png: header `Open AI Chat` -> compose `Message your Traces...` and `TracesAI` empty state; Control+4 closed it

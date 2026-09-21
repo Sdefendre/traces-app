@@ -46,6 +46,6 @@ Module support, not a substitute: `pnpm verify:webmcp` covers `matchNotePaths` a
 - The query lives in the UI store, so it survives collapsing and expanding Files. Clear it before a recipe that expects an empty box.
 - The footer `{n} notes` is the unfiltered vault length. Do not assert it against the visible row count.
 - Control+F is a custom handler. It does not open a CodeMirror search panel. If the editor has focus, the AppShell listener still fires because it is on `window`.
-- Product gap, open since the 2026-09-07 pass and still present at `a48ec9b`: the Files panel owns the `traces:focus-search` and `traces:new-note` listeners and is unmounted while collapsed, so Control+F and Control+N do nothing when Files is collapsed. Control+1 still expands it. Report it; do not edit this map to say collapsed Files ignores the shortcut on purpose.
+- Product gap, open since the 2026-09-07 pass and still present at `774353c` (2026-09-21): the Files panel owns the `traces:focus-search` and `traces:new-note` listeners and is unmounted while collapsed, so Control+F and Control+N do nothing when Files is collapsed. Control+1 still expands it. Report it; do not edit this map to say collapsed Files ignores the shortcut on purpose.
 - WebMCP `search-notes` is absent in ordinary Electron and Chrome. Missing `document.modelContext` is expected. Do not fail the feature for that.
 - Do not read note bodies out of the vault to "confirm" search. Confirm the visible tree.
