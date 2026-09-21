@@ -254,10 +254,18 @@ const FINDER_JS = (flags) => `(() => {
   if (!el) return { found: false };
   el.scrollIntoView({ block: 'center', inline: 'center' });
   const rect = el.getBoundingClientRect();
+  const inEditor = Boolean(el.closest('.cm-content'));
+  // A CodeMirror line block spans the full editor width and may wrap. Its
+  // last visual row ends at the rect's bottom-right, so clicking there puts
+  // the caret at the logical end of the line whatever the text width.
+  const rowHeight = Math.min(rect.height, 20);
   return {
     found: true,
     x: rect.x + rect.width / 2,
     y: rect.y + rect.height / 2,
+    lineEndX: rect.right - 4,
+    lineEndY: rect.bottom - rowHeight / 2,
+    inEditor,
     width: rect.width,
     height: rect.height,
     tag: el.tagName,
@@ -266,10 +274,15 @@ const FINDER_JS = (flags) => `(() => {
   };
 })()`;
 
-async function clickFlags(session, flags) {
+async function clickFlags(session, flags, { atLineEnd = false } = {}) {
   const found = await session.evaluate(FINDER_JS(flags));
   if (!found?.found) {
     throw new Error(`no element matched ${JSON.stringify(flags)}`);
+  }
+  if (atLineEnd && found.inEditor) {
+    found.x = found.lineEndX;
+    found.y = found.lineEndY;
+    found.clickedLineEnd = true;
   }
   const button = flags.button === 'right' ? 'right' : 'left';
   session.acceptDialogs = Boolean(flags['accept-dialog']);
@@ -411,10 +424,10 @@ async function main() {
   if (command === 'type') {
     if (flags.text === undefined) fail('--text is required');
     await withSession(async (session) => {
-      if (flags.selector || flags.title || flags.placeholder || flags.name || flags.text === undefined) {
-        if (flags.selector || flags.title || flags.placeholder || flags.name) {
-          await clickFlags(session, flags);
-        }
+      if (flags.selector || flags.title || flags.placeholder || flags.name) {
+        // Inside CodeMirror the caret goes to the end of the clicked line so
+        // `type --selector ".cm-line:last-child"` appends instead of splitting text.
+        await clickFlags(session, flags, { atLineEnd: true });
       }
       if (flags['focus-editor']) {
         const focused = await session.evaluate(`(() => {
