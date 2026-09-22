@@ -1,0 +1,10 @@
+feature: search
+entry points: click `Search...`; Control+F with Files expanded; Control+F with Files collapsed; `Clear search`
+click focus: `click --placeholder "Search..."` -> activeElement placeholder `Search...`
+shortcut focus: click `.cm-content` (activeElement cm-content), `shortcut --key f` -> activeElement placeholder `Search...`
+collapsed-ctrl-f.png: `Collapse sidebar`, `shortcut --key f` -> `Expand sidebar` still present, activeElement BODY (product gap, unchanged at 774353c)
+alpha.*: fill `alpha` -> filesText `TRACES NOTES Verify Alpha 8 notes` (footer is the unfiltered count)
+path match: fill `SUB/` -> filesText `▾ Verify Sub Verify Eta Verify Index 8 notes` (case-insensitive path substring, folder segment matches)
+empty.*: fill `volcano` -> filesText `No notes match “volcano” Clear search 8 notes`, `Clear search` button present
+clear.snapshot.json: `click --text "Clear search"` -> input value empty, all nine rows back
+open-result.png: fill `alpha`, `click --text "Verify Alpha"` -> row SPAN, `.cm-content` present, first line `# Verify Alpha`

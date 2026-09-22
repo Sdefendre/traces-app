@@ -1,0 +1,224 @@
+[
+  {
+    "shot": "before-desktop.png",
+    "url": "https://sdefendre.github.io/traces-app/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "title": "Traces. Local-first knowledge workspace",
+    "eyebrow": null,
+    "eyebrowText": null,
+    "principles": null,
+    "principlesCount": 0,
+    "principlesText": [],
+    "hero": {
+      "top": 55,
+      "bottom": 320,
+      "left": 20,
+      "width": 1240,
+      "height": 265
+    },
+    "app": {
+      "top": 320,
+      "bottom": 878,
+      "left": 20,
+      "width": 1240,
+      "height": 558
+    },
+    "scrollHeight": 1441
+  },
+  {
+    "shot": "before-desktop-focus-cta.png",
+    "url": "https://sdefendre.github.io/traces-app/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "focused": {
+      "tag": "A",
+      "text": "View on GitHub",
+      "href": "https://github.com/Sdefendre/traces-app",
+      "matchesFocusVisible": true,
+      "outlineStyle": "auto",
+      "outlineWidth": "1px",
+      "outlineColor": "rgb(16, 16, 16)",
+      "outlineOffset": "1px"
+    }
+  },
+  {
+    "shot": "before-desktop-focus-copy.png",
+    "url": "https://sdefendre.github.io/traces-app/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "tabsFromCta": 2,
+    "focused": {
+      "tag": "BUTTON",
+      "text": "Copy",
+      "href": null,
+      "matchesFocusVisible": true,
+      "outlineStyle": "auto",
+      "outlineWidth": "1px",
+      "outlineColor": "rgb(16, 16, 16)",
+      "outlineOffset": "0px"
+    }
+  },
+  {
+    "shot": "before-mobile.png",
+    "url": "https://sdefendre.github.io/traces-app/",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "title": "Traces. Local-first knowledge workspace",
+    "eyebrow": null,
+    "eyebrowText": null,
+    "principles": null,
+    "principlesCount": 0,
+    "principlesText": [],
+    "hero": {
+      "top": 55,
+      "bottom": 270,
+      "left": 14,
+      "width": 362,
+      "height": 215
+    },
+    "app": {
+      "top": 270,
+      "bottom": 650,
+      "left": 14,
+      "width": 362,
+      "height": 380
+    },
+    "scrollHeight": 1880
+  },
+  {
+    "shot": "after-desktop.png",
+    "url": "http://127.0.0.1:8082/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "title": "Traces. Local-first knowledge workspace",
+    "eyebrow": {
+      "top": 92,
+      "bottom": 109,
+      "left": 473,
+      "width": 334,
+      "height": 17
+    },
+    "eyebrowText": "A DESKTOP WORKSPACE, NOT A CLOUD VAULT",
+    "principles": {
+      "top": 360,
+      "bottom": 457,
+      "left": 20,
+      "width": 1240,
+      "height": 97
+    },
+    "principlesCount": 3,
+    "principlesText": [
+      "Plain markdown",
+      "Visible connections",
+      "Bring your own AI"
+    ],
+    "hero": {
+      "top": 55,
+      "bottom": 360,
+      "left": 20,
+      "width": 1240,
+      "height": 305
+    },
+    "app": {
+      "top": 477,
+      "bottom": 1035,
+      "left": 20,
+      "width": 1240,
+      "height": 558
+    },
+    "scrollHeight": 1598
+  },
+  {
+    "shot": "after-desktop-focus-cta.png",
+    "url": "http://127.0.0.1:8082/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "focused": {
+      "tag": "A",
+      "text": "View on GitHub",
+      "href": "https://github.com/Sdefendre/traces-app",
+      "matchesFocusVisible": true,
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(74, 144, 247)",
+      "outlineOffset": "3px"
+    }
+  },
+  {
+    "shot": "after-desktop-focus-copy.png",
+    "url": "http://127.0.0.1:8082/",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "tabsFromCta": 2,
+    "focused": {
+      "tag": "BUTTON",
+      "text": "Copy",
+      "href": null,
+      "matchesFocusVisible": true,
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(74, 144, 247)",
+      "outlineOffset": "3px"
+    }
+  },
+  {
+    "shot": "after-mobile.png",
+    "url": "http://127.0.0.1:8082/",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "title": "Traces. Local-first knowledge workspace",
+    "eyebrow": {
+      "top": 82,
+      "bottom": 99,
+      "left": 14,
+      "width": 334,
+      "height": 17
+    },
+    "eyebrowText": "A DESKTOP WORKSPACE, NOT A CLOUD VAULT",
+    "principles": {
+      "top": 310,
+      "bottom": 580,
+      "left": 14,
+      "width": 362,
+      "height": 270
+    },
+    "principlesCount": 3,
+    "principlesText": [
+      "Plain markdown",
+      "Visible connections",
+      "Bring your own AI"
+    ],
+    "hero": {
+      "top": 55,
+      "bottom": 310,
+      "left": 14,
+      "width": 362,
+      "height": 255
+    },
+    "app": {
+      "top": 600,
+      "bottom": 980,
+      "left": 14,
+      "width": 362,
+      "height": 380
+    },
+    "scrollHeight": 2210
+  }
+]
