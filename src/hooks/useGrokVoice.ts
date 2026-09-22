@@ -1,8 +1,18 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { electronAPI } from '@/lib/electron-api';
-import type { VoiceState, UseRealtimeVoiceReturn, TranscriptEvent, VoiceToolCallEvent } from './useRealtimeVoice';
-
-import type { ExecuteToolFn } from './useRealtimeVoice';
+import type {
+  ExecuteToolFn,
+  TranscriptEvent,
+  UseRealtimeVoiceReturn,
+  VoiceState,
+  VoiceToolCallEvent,
+} from './useRealtimeVoice';
+import {
+  createVoiceToolBatch,
+  noteResponseDone,
+  noteToolFinished,
+  noteToolStarted,
+} from './voice-tool-batch';
 
 interface UseGrokVoiceOptions {
   apiKey: string;
@@ -126,6 +136,7 @@ export function useGrokVoice({
   const rafRef = useRef<number>(0);
   const stateRef = useRef<VoiceState>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolBatchRef = useRef(createVoiceToolBatch());
   const playbackTimeRef = useRef(0);
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
@@ -158,6 +169,7 @@ export function useGrokVoice({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    toolBatchRef.current = createVoiceToolBatch();
 
     cancelAnimationFrame(rafRef.current);
 
@@ -269,7 +281,11 @@ export function useGrokVoice({
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
       source.connect(processor);
-      processor.connect(audioCtx.destination); // Required for processing to run
+      // Script processors only run when connected, but the speakers must stay silent.
+      const silent = audioCtx.createGain();
+      silent.gain.value = 0;
+      processor.connect(silent);
+      silent.connect(audioCtx.destination);
 
       processor.onaudioprocess = (e) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -410,7 +426,15 @@ export function useGrokVoice({
               }
 
               // Tool calls
+              case 'response.done':
+                noteResponseDone(toolBatchRef.current, () => {
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({ type: 'response.create' }));
+                  }
+                });
+                break;
               case 'response.function_call_arguments.done': {
+                noteToolStarted(toolBatchRef.current);
                 const toolName = event.name;
                 const callId = event.call_id;
                 let args: Record<string, string> = {};
@@ -441,8 +465,12 @@ export function useGrokVoice({
                       output: result,
                     },
                   }));
-                  wsRef.current.send(JSON.stringify({ type: 'response.create' }));
                 }
+                noteToolFinished(toolBatchRef.current, () => {
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({ type: 'response.create' }));
+                  }
+                });
                 break;
               }
             }

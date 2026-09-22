@@ -9,7 +9,14 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-21
+
 ### Fixed
+- Saving, renaming, closing the window, and switching folders no longer drop unsaved writing or overwrite a different note.
+- Quitting saves first. If a save is stuck, the app continues after a few seconds. If a save fails, it asks before quitting.
+- The graph stays in place when you save. Zoom buttons and the scroll wheel stay in agreement.
+- Voice calls no longer play your microphone back, hang up on a short disconnect, or start several replies at once.
+- Wiki-links that share a name no longer open the wrong note. A wiki-link inside inline code stays as code.
 - Preview wiki-links with aliases (`[[Note|label]]`) now show the label and open the note, matching the editor and graph.
 - Wiki-links that match several notes now fill Files search with that name so you can pick. They no longer open a guessed note or create a duplicate.
 - Settings now save. New notes no longer always land in Memory.

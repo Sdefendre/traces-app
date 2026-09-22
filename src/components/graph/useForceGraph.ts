@@ -44,15 +44,21 @@ export function useForceGraph(nodes: GraphNode[], edges: GraphEdge[]) {
 
       if (cancelled) return;
 
-      const simNodes: SimNode[] = nodes.map((n) => ({
-        id: n.id,
-        x: (Math.random() - 0.5) * 300,
-        y: (Math.random() - 0.5) * 300,
-        z: (Math.random() - 0.5) * 300,
-        vx: 0,
-        vy: 0,
-        vz: 0,
-      }));
+      const previous = positionsRef.current;
+      let reused = 0;
+      const simNodes: SimNode[] = nodes.map((n) => {
+        const existing = previous.get(n.id);
+        if (existing) reused += 1;
+        return {
+          id: n.id,
+          x: existing?.x ?? (Math.random() - 0.5) * 300,
+          y: existing?.y ?? (Math.random() - 0.5) * 300,
+          z: existing?.z ?? (Math.random() - 0.5) * 300,
+          vx: 0,
+          vy: 0,
+          vz: 0,
+        };
+      });
 
       const simLinks: SimLink[] = edges.map((e) => ({
         source: e.source,
@@ -81,6 +87,11 @@ export function useForceGraph(nodes: GraphNode[], edges: GraphEdge[]) {
         )
         .alphaDecay(0.02)
         .velocityDecay(0.3);
+
+      // A save refreshes the graph. Keep settled notes from jumping to new random spots.
+      if (reused > 0) {
+        sim.alpha(reused === nodes.length ? 0.08 : 0.35);
+      }
 
       sim.on('tick', () => {
         tickRef.current++;

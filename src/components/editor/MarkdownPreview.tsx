@@ -109,12 +109,9 @@ function unescapeEntities(value: string): string {
   return value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 }
 
-function applyInlineWith(text: string, resolve: WikiResolver): string {
-  // Inline code
-  let result = text.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
-  // Bold
+function formatRichText(text: string, resolve: WikiResolver): string {
+  let result = text;
   result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // Italic
   result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   // Wiki-links — [[Note|label]] targets Note; unresolved targets get a distinct class.
   // The attribute is escaped so a quote in the note name cannot break the tag.
@@ -128,6 +125,15 @@ function applyInlineWith(text: string, resolve: WikiResolver): string {
     return `<a class="${cls}" data-wiki-target="${safeTarget}" href="#"${title}>${label}</a>`;
   });
   return result;
+}
+
+function applyInlineWith(text: string, resolve: WikiResolver): string {
+  const withCode = text.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
+  // Leave wiki text inside inline code as plain code. Don't turn it into a link.
+  return withCode
+    .split(/(<code class="md-inline-code">[\s\S]*?<\/code>)/)
+    .map((part) => (part.startsWith('<code') ? part : formatRichText(part, resolve)))
+    .join('');
 }
 
 export function MarkdownPreview({ content, editorLightMode }: MarkdownPreviewProps) {

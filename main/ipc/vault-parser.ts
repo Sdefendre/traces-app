@@ -53,8 +53,8 @@ export async function parseVault(
   const edges: GraphEdge[] = [];
   const edgeSet = new Set<string>();
 
-  // File ID → relative path mapping for link resolution
-  const idToPath = new Map<string, string>();
+  // Note name → every file with that name. One entry means the link is clear.
+  const pathsByName = new Map<string, string[]>();
   const pathToId = new Map<string, string>();
   const fileSizeById = new Map<string, number>();
 
@@ -69,7 +69,10 @@ export async function parseVault(
       path: normalized,
       fileSize: 0,
     });
-    idToPath.set(basenameWithoutExt(normalized).toLowerCase(), normalized);
+    const nameKey = basenameWithoutExt(normalized).toLowerCase();
+    const named = pathsByName.get(nameKey) ?? [];
+    named.push(normalized);
+    pathsByName.set(nameKey, named);
     pathToId.set(normalized, id);
   }
 
@@ -107,13 +110,20 @@ export async function parseVault(
 
     while ((match = regex.exec(content)) !== null) {
       const linkTarget = match[1].trim();
-      // Try exact match, then case-insensitive
-      if (nodeIds.has(linkTarget)) {
+      const asPath = normalizeRelativePath(linkTarget);
+      const withExt = asPath.toLowerCase().endsWith('.md') ? asPath : `${asPath}.md`;
+      const exact = pathToId.has(asPath) ? asPath : pathToId.has(withExt) ? withExt : null;
+      if (exact) {
+        addEdge(sourceId, pathToId.get(exact)!, 'wiki-link', 1.0);
+      } else if (nodeIds.has(linkTarget)) {
         addEdge(sourceId, linkTarget, 'wiki-link', 1.0);
-      } else if (idToPath.has(linkTarget.toLowerCase())) {
-        const targetFile = idToPath.get(linkTarget.toLowerCase())!;
-        const targetId = pathToId.get(targetFile)!;
-        addEdge(sourceId, targetId, 'wiki-link', 1.0);
+      } else {
+        const matches = pathsByName.get(basenameWithoutExt(asPath).toLowerCase()) ?? [];
+        // Two notes can share a name. Don't guess which one the link means.
+        if (matches.length === 1) {
+          const targetId = pathToId.get(matches[0]);
+          if (targetId) addEdge(sourceId, targetId, 'wiki-link', 1.0);
+        }
       }
     }
   }
