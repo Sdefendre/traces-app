@@ -2,9 +2,9 @@ import {
   listFiles,
   readFile,
   writeFile,
-  createFile,
   deleteFile,
 } from './file-system';
+import { replaceAllLiteral } from '../../shared/replace-text';
 import { isByoAgentId } from '../../shared/byo-agents';
 import { formatUpstreamError } from '../../shared/api-errors';
 import { handleByoChat } from './byo-agents';
@@ -283,15 +283,16 @@ async function executeTool(
       return await readFile(args.path);
     }
     case 'write_file': {
-      await createFile(args.path, args.content);
+      await writeFile(args.path, args.content);
       return `File written: ${args.path}`;
     }
     case 'edit_file': {
+      if (!args.old_text) return 'Error: old_text is required';
       const content = await readFile(args.path);
-      if (!content.includes(args.old_text)) {
+      const updated = replaceAllLiteral(content, args.old_text, args.new_text ?? '');
+      if (updated === null) {
         return `Error: Could not find the specified text in ${args.path}`;
       }
-      const updated = content.replace(args.old_text, args.new_text);
       await writeFile(args.path, updated);
       return `File edited: ${args.path}`;
     }

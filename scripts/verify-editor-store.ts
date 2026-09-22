@@ -110,8 +110,42 @@ async function exerciseAllEditorPaths() {
   if (!ok) process.exit(1);
 }
 
+async function exerciseSaveRace() {
+  const disk: Record<string, string> = { 'a.md': 'one' };
+  const gate: { release: () => void } = {
+    release: () => {
+      throw new Error('save did not start');
+    },
+  };
+  const store = createEditorStoreWithDeps({
+    readFile: async (filePath) => disk[filePath] ?? '',
+    writeFile: (filePath, content) =>
+      new Promise((resolve) => {
+        gate.release = () => {
+          disk[filePath] = content;
+          resolve();
+        };
+      }),
+  });
+
+  await store.getState().openFile('a.md');
+  const id = pathToId('a.md');
+  store.getState().setTabContent(id, 'one plus');
+  const saving = store.getState().saveTab(id);
+  store.getState().setTabContent(id, 'one plus more');
+  gate.release();
+  await saving;
+  const tab = store.getState().tabs[0];
+  const keptNewerText = tab?.isDirty === true && tab.content === 'one plus more';
+  const wroteSnapshot = disk['a.md'] === 'one plus';
+  console.log('keptNewerText:', keptNewerText);
+  console.log('wroteSnapshot:', wroteSnapshot);
+  if (!keptNewerText || !wroteSnapshot) process.exit(1);
+}
+
 async function main() {
   await exerciseAllEditorPaths();
+  await exerciseSaveRace();
   console.log('editor-store verification passed');
 }
 

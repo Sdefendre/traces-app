@@ -77,7 +77,8 @@ export function EditorPanel() {
             await electronAPI.createFile(path, `# ${title}\n\n`);
             await refreshFiles();
           } catch (err) {
-            console.error('Failed to create note from wiki-link:', err);
+            const message = err instanceof Error ? err.message : 'Could not create the note.';
+            window.alert(message);
             return;
           }
         }
@@ -112,11 +113,11 @@ export function EditorPanel() {
       await refreshFiles();
       setActiveFile(filePath);
       await openFile(filePath);
-    } catch (err) {
-      console.error('Failed to create note:', err);
-    } finally {
       setCreating(false);
       setNewName('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not create the note.';
+      window.alert(message);
     }
   }, [newName, refreshFiles, setActiveFile, openFile, activeFile]);
 

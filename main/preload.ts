@@ -47,14 +47,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Flushes dirty editor tabs before app quit.
-  onBeforeQuit: (callback: () => void | Promise<void>) => {
+  onBeforeQuit: (callback: () => void | boolean | Promise<void | boolean>) => {
     const handler = async () => {
+      let saved = true;
       try {
-        await callback();
+        const result = await callback();
+        if (result === false) saved = false;
       } catch (err) {
         console.error('before-quit handler failed:', err);
+        saved = false;
       } finally {
-        await ipcRenderer.invoke('app:ready-to-quit');
+        await ipcRenderer.invoke('app:ready-to-quit', saved);
       }
     };
     ipcRenderer.on('app:before-quit', handler);

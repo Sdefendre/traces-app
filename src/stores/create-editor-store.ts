@@ -20,18 +20,41 @@ interface EditorState {
   setTabContent: (id: string, content: string) => void;
   markClean: (id: string) => void;
   saveTab: (id: string) => Promise<void>;
-  saveAllDirty: () => Promise<void>;
+  /** Returns false when any dirty note could not be written. */
+  saveAllDirty: () => Promise<boolean>;
   getActiveTab: () => EditorTab | null;
   renameTab: (oldPath: string, newPath: string) => void;
   reloadTab: (path: string) => Promise<void>;
 }
 
 export function pathToId(p: string) {
-  return normalizeRelativePath(p).replace(/\//g, '__');
+  // Encoding keeps "a/b.md" and "a__b.md" from sharing one tab.
+  return encodeURIComponent(normalizeRelativePath(p));
 }
 
 function nameFromPath(p: string) {
   return basenameWithoutExt(p);
+}
+
+type EditorSet = (
+  partial: Partial<EditorState> | ((state: EditorState) => Partial<EditorState>)
+) => void;
+
+/** Mark a tab clean only when the text we wrote is still the text on screen. */
+function markCleanIfUnchanged(
+  set: EditorSet,
+  get: () => EditorState,
+  id: string,
+  savedPath: string,
+  snapshot: string
+) {
+  const current = get().tabs.find((t) => t.id === id);
+  if (!current || current.path !== savedPath || current.content !== snapshot) return;
+  set((state) => ({
+    tabs: state.tabs.map((t) =>
+      t.id === id ? { ...t, isDirty: false, saveError: null } : t
+    ),
+  }));
 }
 
 function removeTab(state: { tabs: EditorTab[]; activeTabId: string | null }, id: string) {
@@ -59,6 +82,11 @@ export function createEditorStore(deps: EditorStoreDeps) {
 
       try {
         const content = await deps.readFile(normalizedPath);
+        // A second open can finish while this read is still in flight.
+        if (get().tabs.some((t) => t.id === id)) {
+          set({ activeTabId: id });
+          return;
+        }
         const tab: EditorTab = {
           id,
           path: normalizedPath,
@@ -91,8 +119,10 @@ export function createEditorStore(deps: EditorStoreDeps) {
       }
 
       if (action === 'save-and-close') {
+        const snapshot = tab.content;
+        const savedPath = tab.path;
         try {
-          await deps.writeFile(tab.path, tab.content);
+          await deps.writeFile(savedPath, snapshot);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           console.error('Failed to save tab on close:', tab.path, err);
@@ -102,6 +132,11 @@ export function createEditorStore(deps: EditorStoreDeps) {
             ),
             activeTabId: state.activeTabId ?? id,
           }));
+          return false;
+        }
+        const current = get().tabs.find((t) => t.id === id);
+        // Typing landed while the save was in flight. Keep the tab open with the newer text.
+        if (current && (current.content !== snapshot || current.path !== savedPath)) {
           return false;
         }
       }
@@ -133,9 +168,11 @@ export function createEditorStore(deps: EditorStoreDeps) {
     saveTab: async (id) => {
       const tab = get().tabs.find((t) => t.id === id);
       if (!tab || !tab.isDirty) return;
+      const snapshot = tab.content;
+      const savedPath = tab.path;
       try {
-        await deps.writeFile(tab.path, tab.content);
-        get().markClean(id);
+        await deps.writeFile(savedPath, snapshot);
+        markCleanIfUnchanged(set, get, id, savedPath, snapshot);
       } catch (err) {
         console.error('Failed to save tab:', tab.path, err);
         throw err;
@@ -144,14 +181,19 @@ export function createEditorStore(deps: EditorStoreDeps) {
 
     saveAllDirty: async () => {
       const dirtyTabs = get().tabs.filter((t) => t.isDirty);
+      let ok = true;
       for (const tab of dirtyTabs) {
+        const snapshot = tab.content;
+        const savedPath = tab.path;
         try {
-          await deps.writeFile(tab.path, tab.content);
-          get().markClean(tab.id);
+          await deps.writeFile(savedPath, snapshot);
+          markCleanIfUnchanged(set, get, tab.id, savedPath, snapshot);
         } catch (err) {
+          ok = false;
           console.error('Failed to save tab:', tab.path, err);
         }
       }
+      return ok;
     },
 
     getActiveTab: () => {
@@ -179,8 +221,12 @@ export function createEditorStore(deps: EditorStoreDeps) {
       const id = pathToId(normalizedPath);
       const existing = get().tabs.find((t) => t.id === id);
       if (!existing || existing.isDirty) return;
+      const baseline = existing.content;
       try {
         const content = await deps.readFile(normalizedPath);
+        const current = get().tabs.find((t) => t.id === id);
+        // The user typed while the disk read was in flight. Keep their text.
+        if (!current || current.isDirty || current.content !== baseline) return;
         set((state) => ({
           tabs: state.tabs.map((t) =>
             t.id === id ? { ...t, content, isDirty: false, saveError: null } : t

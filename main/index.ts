@@ -16,6 +16,11 @@ fs.mkdirSync(vaultPath, { recursive: true });
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
+let allowClose = false;
+let flushPurpose: 'quit' | 'close' | null = null;
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+const FLUSH_TIMEOUT_MS = 4000;
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -44,9 +49,77 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '..', 'out', 'index.html'));
   }
 
+  mainWindow.on('close', (event) => {
+    if (allowClose || isQuitting) return;
+    event.preventDefault();
+    requestFlush('close');
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+}
+
+function clearFlushTimer() {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+}
+
+/** Ask the window to write unsaved notes, then quit or close. */
+function requestFlush(purpose: 'quit' | 'close') {
+  if (flushPurpose) return;
+  const win = mainWindow;
+  if (!win || win.isDestroyed()) {
+    finishFlush(true);
+    return;
+  }
+  flushPurpose = purpose;
+  win.webContents.send('app:before-quit');
+  clearFlushTimer();
+  // If the window never answers, still quit or close so the app cannot get stuck.
+  flushTimer = setTimeout(() => {
+    finishFlush(true);
+  }, FLUSH_TIMEOUT_MS);
+}
+
+function finishFlush(saved: boolean) {
+  clearFlushTimer();
+  const purpose = flushPurpose;
+  flushPurpose = null;
+  if (!purpose) return;
+
+  if (!saved) {
+    const win = mainWindow;
+    if (win && !win.isDestroyed()) {
+      const response = dialog.showMessageBoxSync(win, {
+        type: 'warning',
+        buttons: purpose === 'quit' ? ['Quit anyway', 'Stay'] : ['Close anyway', 'Stay'],
+        defaultId: 1,
+        cancelId: 1,
+        message: 'Some notes could not be saved.',
+        detail:
+          purpose === 'quit'
+            ? 'Quit anyway and lose those unsaved changes?'
+            : 'Close the window anyway and lose those unsaved changes?',
+      });
+      if (response !== 0) return;
+    }
+  }
+
+  if (purpose === 'quit') {
+    isQuitting = true;
+    allowClose = true;
+    void stopVaultWatcher();
+    resetVaultFileCache();
+    app.quit();
+    return;
+  }
+
+  allowClose = true;
+  mainWindow?.close();
+  allowClose = false;
 }
 
 app.whenReady().then(() => {
@@ -75,7 +148,7 @@ app.whenReady().then(() => {
     setVaultRoot(selectedPath);
 
     // Cold restart: new vault requires full cache reset
-    stopVaultWatcher();
+    await stopVaultWatcher();
     resetVaultFileCache();
     void startVaultWatcher(selectedPath, () => mainWindow);
 
@@ -90,18 +163,15 @@ app.on('before-quit', (event) => {
   if (!win || win.isDestroyed()) return;
 
   event.preventDefault();
-  win.webContents.send('app:before-quit');
+  requestFlush('quit');
 });
 
-ipcMain.handle('app:ready-to-quit', () => {
-  isQuitting = true;
-  stopVaultWatcher();
-  resetVaultFileCache();
-  app.quit();
+ipcMain.handle('app:ready-to-quit', (_event, saved?: boolean) => {
+  finishFlush(saved !== false);
 });
 
 app.on('window-all-closed', () => {
-  stopVaultWatcher();
+  void stopVaultWatcher();
   resetVaultFileCache();
   if (process.platform !== 'darwin') {
     app.quit();
@@ -111,5 +181,6 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow();
+    void startVaultWatcher(vaultPath, () => mainWindow);
   }
 });
