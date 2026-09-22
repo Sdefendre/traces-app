@@ -1,0 +1,127 @@
+{
+  "title": "Traces",
+  "url": "http://localhost:3333/",
+  "theme": "dark",
+  "hasElectronApi": true,
+  "buttons": [
+    {
+      "title": "Expand chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": "CHAT"
+    },
+    {
+      "title": "Collapse sidebar",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open Folder",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "New Note",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Galaxy View",
+      "ariaLabel": "Galaxy View",
+      "pressed": "true",
+      "text": ""
+    },
+    {
+      "title": "Terrain View",
+      "ariaLabel": "Terrain View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Cluster View",
+      "ariaLabel": "Cluster View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Particle View",
+      "ariaLabel": "Particle View",
+      "pressed": "false",
+      "text": ""
+    },
+    {
+      "title": "Zoom out",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Zoom in",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse graph panel",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Fullscreen",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Close tab",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Open AI Chat",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Switch to preview",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Switch to light editor",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Collapse notes",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    },
+    {
+      "title": "Settings",
+      "ariaLabel": null,
+      "pressed": null,
+      "text": ""
+    }
+  ],
+  "inputs": [
+    {
+      "placeholder": "Search...",
+      "value": "",
+      "type": "text"
+    }
+  ],
+  "canvases": 1,
+  "hasCodeMirror": true,
+  "editorTheme": "dark",
+  "text": "CHAT TRACES NOTES Verify Alpha Verify Beta Verify Gamma 3 notes Verify Alpha Verify Beta Verify Gamma Verify Gamma 1 2 3 4 5 Gamma body from verify-traces# Verify Gamma 6 words · 47 chars · 1 min read · 5 lines"
+}

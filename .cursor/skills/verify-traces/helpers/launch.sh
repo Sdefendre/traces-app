@@ -12,7 +12,7 @@ require_cmd pnpm
 require_cmd curl
 
 [ -d "$REPO_ROOT/node_modules" ] || die "run pnpm install in $REPO_ROOT first"
-[ -x "$REPO_ROOT/node_modules/.bin/electron" ] || die "Electron binary missing. From $REPO_ROOT run: node node_modules/electron/install.js"
+"$REPO_ROOT/node_modules/.bin/electron" --version >/dev/null 2>&1 || die "Electron binary missing. From $REPO_ROOT run: node node_modules/electron/install.js"
 
 NEXT_PORT="${TRACES_VERIFY_NEXT_PORT:-$DEFAULT_NEXT_PORT}"
 CDP_PORT="${TRACES_VERIFY_CDP_PORT:-$DEFAULT_CDP_PORT}"

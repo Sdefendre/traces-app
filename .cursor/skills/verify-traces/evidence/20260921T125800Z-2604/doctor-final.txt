@@ -1,0 +1,24 @@
+run: /tmp/traces-verify-20260921T125800Z-2604
+repo: /workspace
+home: /tmp/traces-verify-20260921T125800Z-2604/home
+vault: /tmp/traces-verify-20260921T125800Z-2604/home/Desktop/Traces Notes
+nextPid: 2689
+electronPid: 2846
+nextPort: 3333
+cdpPort: 9333
+{
+  "ui": {
+    "title": "Traces",
+    "href": "http://localhost:3333/",
+    "loading": false,
+    "hasElectronApi": true,
+    "textSample": "CHAT TRACES NOTES ▾ Verify Sub Verify Eta Verify Index Verify Alpha Verify Beta Verify Gamma Verify Index Verify Missing Verify Zeta 8 notes ∞ ◎ ✳ ∿ ψ Notes No note selected Pick a note from the sidebar or create a new one New Note"
+  },
+  "vaultPath": "/tmp/traces-verify-20260921T125800Z-2604/home/Desktop/Traces Notes",
+  "expectedVault": "/tmp/traces-verify-20260921T125800Z-2604/home/Desktop/Traces Notes",
+  "vaultMatches": true,
+  "isolatedHome": true,
+  "nextPort": 3333,
+  "cdpPort": 9333
+}
+doctor: ok

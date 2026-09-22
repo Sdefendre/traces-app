@@ -1,0 +1,11 @@
+feature: graph
+entry points: `Graph view` group buttons; `Particle shape` group; `Zoom in` / `Zoom out`; `Fullscreen` / Control+\ / Escape / `Exit fullscreen`; `Collapse graph panel` / `Expand graph` / Control+2; Settings gear; empty vault overlay
+baseline.snapshot.json: canvases 1, no `Loading your knowledge graph`
+views: Galaxy, Terrain, Cluster, Particle each clicked once; only the clicked button had aria-pressed=true after each click, no swallowed click this run
+shapes: `Particle shape` group present in Particle View; Toroidal, Möbius, Harmonics, Lissajous, Fractal each clicked -> only that data-particle-shape pressed
+particle.*: Particle View pressed, Fractal Branches shape pressed, canvases 1
+zoom: `Zoom in` then `Zoom out`, canvas count stayed 1
+fullscreen.png: `Fullscreen` -> `Exit fullscreen` present; `Search...`, `.cm-content`, Settings gear, CHAT strip all gone. Escape restored the layout. Control+\ entered again, `Exit fullscreen` button left it.
+collapsed.*: `Collapse graph panel` -> canvases 0, `Expand graph` tab, `GRAPH` in text; `Expand graph` -> canvases 1; Control+2 twice -> 0 then 1
+settings-graph.png: `Settings` -> graph container visibility hidden while canvas stays mounted, nav `AI & Models` / `Editor` / `Graph` / `General`, `Graph` tab shows `aria-label="Low Power Mode"`; Escape closed Settings and visibility returned to visible
+empty-vault.*: every note moved out of the isolated vault -> canvases 1, filesText `No notes yet ... 0 notes`, `[role=status]` reads `No notes yet Create a note or open a folder to see your graph. New Note Open Folder`; `click --selector '[role=status] button'` -> `Note name...` field; Escape; notes moved back -> overlay gone (restored.snapshot.json at the run root)

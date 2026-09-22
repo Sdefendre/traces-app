@@ -1,0 +1,6 @@
+feature: pages-site
+entry point: live https://sdefendre.github.io/traces-app/ over curl; no Electron, no vault
+pages-check.txt: `pages-check.sh` exit 0, 13659 bytes, every required needle present
+pages.html: the fetched live page; byte-identical to `docs/index.html` at 774353c
+extra live needles all present: `Plain markdown`, `Visible connections`, `Bring your own AI`, `View on GitHub`, href https://github.com/Sdefendre/traces-app, `Clone and run`, href `#run`, `>GRAPH</div>`, `>EDITOR</div>`, `>TRACESAI</div>`, `>LOCAL-FIRST</div>`, `section class="principles"`, `Copied`
+webmcp.js: live asset; line 41 still answers `Node 18+` while the page says `Node 22, pnpm, and optionally Ollama for local models.` (product copy mismatch, unchanged)

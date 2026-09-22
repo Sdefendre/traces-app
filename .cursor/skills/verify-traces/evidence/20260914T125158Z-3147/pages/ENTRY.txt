@@ -1,0 +1,5 @@
+feature: pages-site
+entry point: live URL https://sdefendre.github.io/traces-app/ via helpers/pages-check.sh (no browser, no Electron)
+pages-check.txt: exit 0 with the extended assertion list (Clone it. Run it., Node 22, Galaxy/Terrain/Cluster/Particle, Select + Cmd/Ctrl+C, hero eyebrow, aria-label="Traces principles")
+pages.html: live fetch, byte-identical to docs/index.html at a48ec9b (#23 is deployed)
+product gap still present: docs/webmcp.js:41 `Node 18+` vs docs/index.html:210 `Node 22`

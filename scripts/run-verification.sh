@@ -68,7 +68,7 @@ pnpm verify:webmcp 2>&1 | tee "$SCRATCH/webmcp.log"
   echo "=== before-quit ==="
   grep -n "before-quit\|ready-to-quit" main/index.ts main/preload.ts
   echo "=== handleCloseTab await ==="
-  grep -n "await handleCloseTab\|createEditorStoreWithDeps" src/components/editor/EditorPanel.tsx src/stores/editor-store.ts
+  grep -n "await handleCloseTab\|createEditorStore" src/components/editor/EditorPanel.tsx src/stores/editor-store.ts
   echo "=== tab-close-policy ==="
   grep -n "planTabClose" shared/tab-close-policy.ts
   echo "=== vault warm cache ==="
