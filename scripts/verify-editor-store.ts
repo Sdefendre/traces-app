@@ -117,10 +117,10 @@ async function exerciseSaveRace() {
       throw new Error('save did not start');
     },
   };
-  const store = createEditorStoreWithDeps({
+  const store = createEditorStore({
     readFile: async (filePath) => disk[filePath] ?? '',
     writeFile: (filePath, content) =>
-      new Promise((resolve) => {
+      new Promise<void>((resolve) => {
         gate.release = () => {
           disk[filePath] = content;
           resolve();
