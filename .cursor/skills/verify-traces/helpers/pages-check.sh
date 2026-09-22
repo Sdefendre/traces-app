@@ -28,6 +28,7 @@ node -e '
     "https://sdefendre.github.io/traces-app/",
     "Clone it. Run it.",
     "Node 22",
+    "pnpm 10",
     "Galaxy, Terrain, Cluster, and Particle",
     "Select + Cmd/Ctrl+C",
     "A DESKTOP WORKSPACE, NOT A CLOUD VAULT",

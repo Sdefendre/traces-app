@@ -9,6 +9,9 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
+### Changed
+- GitHub release builds use pnpm 10 and Node 22, the same versions as CI. The release job was failing at setup because pnpm 9 rejects this repo's workspace file.
+
 ## [0.2.1] - 2026-09-21
 
 ### Fixed
