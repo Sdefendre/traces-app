@@ -1,0 +1,5 @@
+lambda node at {"x":908,"y":605}
+select-1 node clicked, camera flew to it: {"n":2,"w":253,"h":847,"cx":933,"cy":83}
+select-2 wheeled back out: {"n":13,"w":511,"h":447,"cx":699,"cy":443}
+select-3 after empty click: {"n":13,"w":511,"h":447,"cx":699,"cy":443}
+select-4 after new note: {"n":14,"w":516,"h":447,"cx":700,"cy":444}
