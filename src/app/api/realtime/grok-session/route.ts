@@ -31,7 +31,12 @@ export async function POST(req: Request) {
   }
 
   const data = await res.json();
-  return NextResponse.json({
-    clientSecret: data.value ?? data.client_secret ?? '',
-  });
+  const clientSecret = data.value ?? data.client_secret ?? '';
+  if (!clientSecret) {
+    return NextResponse.json(
+      { error: 'Grok voice did not return a session secret.' },
+      { status: 502 }
+    );
+  }
+  return NextResponse.json({ clientSecret });
 }

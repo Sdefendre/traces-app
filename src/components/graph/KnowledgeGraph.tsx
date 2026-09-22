@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -41,24 +41,35 @@ function ResetFramingOnViewChange({
 
   return null;
 }
-function CameraController({ controlsRef }: { controlsRef: GraphControlsRef }) {
+function CameraController({
+  controlsRef,
+  zoomAnimatingRef,
+}: {
+  controlsRef: GraphControlsRef;
+  zoomAnimatingRef: RefObject<boolean>;
+}) {
   const zoomDistance = useGraphStore((state) => state.zoomDistance);
   const { camera } = useThree();
   const prevZoomRef = useRef(zoomDistance);
   
   useFrame(() => {
-    // Handle programmatic zoom from buttons
-    if (controlsRef.current && zoomDistance !== prevZoomRef.current) {
-      const dir = camera.position.clone().sub(controlsRef.current.target).normalize();
-      const currentDist = camera.position.distanceTo(controlsRef.current.target);
-      const newDist = currentDist + (zoomDistance - currentDist) * 0.1;
-      
-      if (Math.abs(zoomDistance - currentDist) > 0.5) {
-        camera.position.copy(controlsRef.current.target.clone().add(dir.multiplyScalar(newDist)));
-        controlsRef.current.update();
-      } else {
-        prevZoomRef.current = zoomDistance;
-      }
+    if (!controlsRef.current || zoomDistance === prevZoomRef.current) return;
+    const currentDist = camera.position.distanceTo(controlsRef.current.target);
+    // The scroll wheel already moved the camera. Accept that distance as the new baseline.
+    if (!zoomAnimatingRef.current && Math.abs(zoomDistance - currentDist) < 1) {
+      prevZoomRef.current = zoomDistance;
+      return;
+    }
+    zoomAnimatingRef.current = true;
+    const dir = camera.position.clone().sub(controlsRef.current.target).normalize();
+    const newDist = currentDist + (zoomDistance - currentDist) * 0.1;
+
+    if (Math.abs(zoomDistance - currentDist) > 0.5) {
+      camera.position.copy(controlsRef.current.target.clone().add(dir.multiplyScalar(newDist)));
+      controlsRef.current.update();
+    } else {
+      prevZoomRef.current = zoomDistance;
+      zoomAnimatingRef.current = false;
     }
   });
 
@@ -70,6 +81,7 @@ export function KnowledgeGraph() {
   const viewMode = useGraphStore((state) => state.viewMode);
   const hasNotes = useVaultStore((state) => state.graphData.nodes.length > 0);
   const controlsRef = useRef<GraphControls>(null);
+  const zoomAnimatingRef = useRef(false);
 
   // Always deep space navy-black regardless of theme
   const bgColor = useMemo(() => new THREE.Color('#050510'), []);
@@ -81,6 +93,10 @@ export function KnowledgeGraph() {
         gl={{ antialias: !settings.lowPowerMode, alpha: false }}
         dpr={settings.lowPowerMode ? [1, 1] : undefined}
         scene={{ background: bgColor }}
+        onPointerMissed={() => {
+          useGraphStore.getState().setSelectedNode(null);
+          useGraphStore.getState().setCameraTarget(null);
+        }}
       >
         <ambientLight intensity={0.3} />
         <pointLight position={[80, 80, 80]} color="#aabbff" intensity={0.3} />
@@ -99,9 +115,16 @@ export function KnowledgeGraph() {
           enablePan={true}
           autoRotate={settings.autoRotate}
           autoRotateSpeed={settings.rotateSpeed}
+          onChange={() => {
+            if (zoomAnimatingRef.current) return;
+            const controls = controlsRef.current;
+            if (!controls) return;
+            const distance = controls.object.position.distanceTo(controls.target);
+            useGraphStore.setState({ zoomDistance: distance });
+          }}
         />
 
-        <CameraController controlsRef={controlsRef} />
+        <CameraController controlsRef={controlsRef} zoomAnimatingRef={zoomAnimatingRef} />
         <ResetFramingOnViewChange viewMode={viewMode} controlsRef={controlsRef} />
         
         {viewMode === 'galaxy' && <GraphScene controlsRef={controlsRef} />}

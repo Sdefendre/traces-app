@@ -13,6 +13,7 @@ import { TerrainMesh } from './TerrainMesh';
 import type { GraphNode } from '@/types';
 import * as THREE from 'three';
 import type { GraphControlsRef } from './graph-controls';
+import { followCameraTarget } from './camera-follow';
 
 export function TerrainScene({ controlsRef }: { controlsRef?: GraphControlsRef }) {
   const { graphData } = useVaultStore();
@@ -41,10 +42,11 @@ export function TerrainScene({ controlsRef }: { controlsRef?: GraphControlsRef }
       const pos = getPositions().get(selectedNode);
       if (pos) {
         const target = new THREE.Vector3(pos.x, pos.y, pos.z);
-        if (!cameraTargetPosRef.current || !cameraTargetPosRef.current.equals(target)) {
-          cameraTargetPosRef.current = target;
-          cameraLerpFrames.current = 0;
-        }
+        cameraTargetPosRef.current = followCameraTarget(
+          cameraTargetPosRef.current,
+          target,
+          cameraLerpFrames
+        );
       }
     }
 

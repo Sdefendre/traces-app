@@ -79,6 +79,9 @@ export function AppShell() {
       // Only handle Cmd (Mac) / Ctrl (Win) combos
       if (!(e.metaKey || e.ctrlKey)) return;
 
+      // Fullscreen hides the other panels. Don't collapse them from here.
+      if (useUIStore.getState().graphFullscreen && e.key !== '\\') return;
+
       switch (e.key) {
         case '1': // Cmd+1: Toggle sidebar
           e.preventDefault();
@@ -492,7 +495,7 @@ export function AppShell() {
         title="Settings"
         className="fixed bottom-3 z-[60] flex items-center justify-center size-8 rounded-lg titlebar-no-drag text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-colors"
         style={{
-          left: sidebarCollapsed ? 12 : (sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen) ? 87 : 12,
+          left: sidebarCollapsed || graphCollapsed || editorCollapsed || !chatOpen ? 87 : 12,
           backgroundColor: settingsOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
         }}
       >

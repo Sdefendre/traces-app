@@ -10,15 +10,16 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  resetKey: number;
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, resetKey: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Pick<State, 'hasError' | 'error'> {
     return { hasError: true, error };
   }
 
@@ -52,7 +53,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
             {this.state.error?.message || 'An unexpected error occurred.'}
           </div>
           <button
-            onClick={() => this.setState({ hasError: false, error: null })}
+            onClick={() =>
+              this.setState((state) => ({
+                hasError: false,
+                error: null,
+                resetKey: state.resetKey + 1,
+              }))
+            }
             style={{
               marginTop: 8,
               padding: '6px 16px',
@@ -70,6 +77,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return <div key={this.state.resetKey} className="contents">{this.props.children}</div>;
   }
 }
