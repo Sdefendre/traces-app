@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { replaceAllLiteral } from '../../../../../shared/replace-text';
+import { realpathInsideRoot } from '../../../../../shared/vault-guard';
 
-function safePath(vaultRoot: string, filePath: string): string {
-  const resolved = path.resolve(vaultRoot, filePath);
-  if (!resolved.startsWith(path.resolve(vaultRoot))) {
-    throw new Error('Path traversal not allowed');
-  }
-  return resolved;
+function safePath(vaultRoot: string, filePath: string): Promise<string> {
+  return realpathInsideRoot(vaultRoot, filePath);
 }
 
 async function listFilesRecursive(dir: string, base?: string): Promise<string[]> {
@@ -40,28 +38,29 @@ async function executeTool(
       return JSON.stringify(files);
     }
     case 'read_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       const content = await fs.readFile(fullPath, 'utf-8');
       return content;
     }
     case 'write_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       await fs.mkdir(path.dirname(fullPath), { recursive: true });
       await fs.writeFile(fullPath, args.content, 'utf-8');
       return `File written: ${args.path}`;
     }
     case 'edit_file': {
-      const fullPath = safePath(vaultRoot, args.path);
-      let content = await fs.readFile(fullPath, 'utf-8');
-      if (!content.includes(args.old_text)) {
+      if (!args.old_text) return 'Error: old_text is required';
+      const fullPath = await safePath(vaultRoot, args.path);
+      const content = await fs.readFile(fullPath, 'utf-8');
+      const updated = replaceAllLiteral(content, args.old_text, args.new_text ?? '');
+      if (updated === null) {
         return `Error: Could not find the specified text in ${args.path}`;
       }
-      content = content.replace(args.old_text, args.new_text);
-      await fs.writeFile(fullPath, content, 'utf-8');
+      await fs.writeFile(fullPath, updated, 'utf-8');
       return `File edited: ${args.path}`;
     }
     case 'delete_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       await fs.unlink(fullPath);
       return `File deleted: ${args.path}`;
     }
@@ -69,7 +68,7 @@ async function executeTool(
       const files = await listFilesRecursive(vaultRoot);
       const results: string[] = [];
       for (const file of files) {
-        const fullPath = path.join(vaultRoot, file);
+        const fullPath = await safePath(vaultRoot, file);
         const content = await fs.readFile(fullPath, 'utf-8');
         if (content.toLowerCase().includes(args.query.toLowerCase())) {
           results.push(file);
@@ -84,10 +83,9 @@ async function executeTool(
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { toolName, args, vaultPath } = body as {
+  const { toolName, args } = body as {
     toolName: string;
     args: Record<string, string>;
-    vaultPath?: string;
   };
 
   if (!toolName) {
@@ -95,9 +93,8 @@ export async function POST(req: Request) {
   }
 
   const vaultRoot =
-    vaultPath ||
     process.env.VAULT_PATH ||
-    path.join(process.env.HOME || '', 'Desktop/Traces Notes');
+    path.join(process.env.HOME || '', 'Desktop', 'Traces Notes');
 
   try {
     const result = await executeTool(toolName, args || {}, vaultRoot);

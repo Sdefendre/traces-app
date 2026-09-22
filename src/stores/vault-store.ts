@@ -34,7 +34,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         electronAPI.getGraphData(), // watcher also pushes vault:graphUpdate after bootstrap
         electronAPI.getVaultPath(),
       ]);
-      const vaultName = vaultPath ? (vaultPath.split('/').pop() || 'Traces Vault') : 'Traces Vault';
+      const vaultName = vaultPath ? folderName(vaultPath) : 'Traces Vault';
       set({
         files: files.map(normalizeRelativePath),
         graphData,
@@ -66,14 +66,22 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
 
   openFolder: async () => {
+    const saved = await useEditorStore.getState().saveAllDirty();
+    if (!saved) {
+      window.alert('Could not save your open notes, so the folder was not changed.');
+      return;
+    }
     const selectedPath = await electronAPI.openFolder();
     if (selectedPath) {
-      // Clear editor tabs so notes from the previous folder don't remain
+      // Notes were saved above, while the previous folder was still active.
       useEditorStore.getState().clearTabs();
-      // Extract the folder name from the full path
-      const folderName = selectedPath.split('/').pop() || selectedPath;
-      set({ vaultName: folderName, activeFile: null });
+      set({ vaultName: folderName(selectedPath), activeFile: null });
       await get().loadVault();
     }
   },
 }));
+
+function folderName(fullPath: string): string {
+  const parts = fullPath.split(/[/\\]/).filter((part) => part.length > 0);
+  return parts[parts.length - 1] || 'Traces Vault';
+}

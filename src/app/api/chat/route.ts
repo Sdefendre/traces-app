@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { isByoAgentId } from '../../../../shared/byo-agents';
 import { formatUpstreamError } from '../../../../shared/api-errors';
+import { replaceAllLiteral } from '../../../../shared/replace-text';
+import { realpathInsideRoot } from '../../../../shared/vault-guard';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -210,12 +212,8 @@ function toolsForAnthropic() {
 // File system helpers
 // ---------------------------------------------------------------------------
 
-function safePath(vaultRoot: string, filePath: string): string {
-  const resolved = path.resolve(vaultRoot, filePath);
-  if (!resolved.startsWith(path.resolve(vaultRoot))) {
-    throw new Error('Path traversal not allowed');
-  }
-  return resolved;
+function safePath(vaultRoot: string, filePath: string): Promise<string> {
+  return realpathInsideRoot(vaultRoot, filePath);
 }
 
 async function listFilesRecursive(dir: string, base?: string): Promise<string[]> {
@@ -249,28 +247,29 @@ async function executeTool(
       return JSON.stringify(files);
     }
     case 'read_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       const content = await fs.readFile(fullPath, 'utf-8');
       return content;
     }
     case 'write_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       await fs.mkdir(path.dirname(fullPath), { recursive: true });
       await fs.writeFile(fullPath, args.content, 'utf-8');
       return `File written: ${args.path}`;
     }
     case 'edit_file': {
-      const fullPath = safePath(vaultRoot, args.path);
-      let content = await fs.readFile(fullPath, 'utf-8');
-      if (!content.includes(args.old_text)) {
+      if (!args.old_text) return 'Error: old_text is required';
+      const fullPath = await safePath(vaultRoot, args.path);
+      const content = await fs.readFile(fullPath, 'utf-8');
+      const updated = replaceAllLiteral(content, args.old_text, args.new_text ?? '');
+      if (updated === null) {
         return `Error: Could not find the specified text in ${args.path}`;
       }
-      content = content.replace(args.old_text, args.new_text);
-      await fs.writeFile(fullPath, content, 'utf-8');
+      await fs.writeFile(fullPath, updated, 'utf-8');
       return `File edited: ${args.path}`;
     }
     case 'delete_file': {
-      const fullPath = safePath(vaultRoot, args.path);
+      const fullPath = await safePath(vaultRoot, args.path);
       await fs.unlink(fullPath);
       return `File deleted: ${args.path}`;
     }
@@ -278,7 +277,7 @@ async function executeTool(
       const files = await listFilesRecursive(vaultRoot);
       const results: string[] = [];
       for (const file of files) {
-        const fullPath = path.join(vaultRoot, file);
+        const fullPath = await safePath(vaultRoot, file);
         const content = await fs.readFile(fullPath, 'utf-8');
         if (content.toLowerCase().includes(args.query.toLowerCase())) {
           results.push(file);
@@ -864,7 +863,7 @@ async function handleGoogle(
 
 export async function POST(req: Request) {
   try {
-    const { messages, provider, model, apiKey, vaultPath, systemPrompt: customSystemPrompt } =
+    const { messages, provider, model, apiKey, systemPrompt: customSystemPrompt } =
       (await req.json()) as ChatRequest;
 
     if (!messages || !provider || !model) {
@@ -874,10 +873,11 @@ export async function POST(req: Request) {
       );
     }
 
+    // The folder is chosen by the desktop app, not by the request. A caller
+    // must not be able to point these tools at an arbitrary directory.
     const vaultRoot =
-      vaultPath ||
       process.env.VAULT_PATH ||
-      path.join(process.env.HOME || '', 'Desktop/Traces Notes');
+      path.join(process.env.HOME || '', 'Desktop', 'Traces Notes');
 
     // Use custom system prompt if provided, otherwise default
     const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;

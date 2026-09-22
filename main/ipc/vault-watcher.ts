@@ -15,6 +15,8 @@ import {
 
 let watcher: FSWatcher | null = null;
 let rebuildTimer: ReturnType<typeof setTimeout> | null = null;
+let rebuildChain: Promise<void> = Promise.resolve();
+let generation = 0;
 const pendingChanges = new Map<string, 'add' | 'change' | 'unlink'>();
 
 const REBUILD_DEBOUNCE_MS = 400;
@@ -22,6 +24,10 @@ const READ_RETRY_DELAY_MS = 100;
 const READ_RETRY_COUNT = 2;
 
 export { resetVaultFileCache };
+
+function isCurrent(gen: number): boolean {
+  return gen === generation;
+}
 
 async function readFileWithRetry(rel: string): Promise<string | null> {
   for (let attempt = 0; attempt < READ_RETRY_COUNT; attempt++) {
@@ -55,7 +61,7 @@ async function bootstrapKnownFiles() {
   await hydrateCacheForFiles(files);
 }
 
-async function applyPendingChanges(): Promise<boolean> {
+async function applyPendingChanges(gen: number): Promise<boolean> {
   const contentCache = getContentCache();
   let knownFiles = getKnownFiles();
 
@@ -80,9 +86,13 @@ async function applyPendingChanges(): Promise<boolean> {
     } else if (evt === 'add') {
       contentCache.delete(rel);
       knownFiles = knownFiles.filter((f) => f !== rel);
+    } else {
+      // A failed re-read must not keep showing the previous text.
+      contentCache.delete(rel);
     }
   }
 
+  if (!isCurrent(gen)) return false;
   knownFiles.sort();
   setKnownFiles(knownFiles);
   return true;
@@ -105,14 +115,16 @@ async function pushGraphFromCache(
 
 async function rebuildGraph(
   resolvedRoot: string,
-  getWindow: () => BrowserWindow | null
+  getWindow: () => BrowserWindow | null,
+  gen: number
 ) {
+  if (!isCurrent(gen)) return;
   const win = getWindow();
   if (!win || win.isDestroyed()) return;
 
   try {
-    const hadChanges = await applyPendingChanges();
-    if (!hadChanges) return;
+    const hadChanges = await applyPendingChanges(gen);
+    if (!isCurrent(gen) || !hadChanges) return;
     await pushGraphFromCache(resolvedRoot, getWindow);
   } catch (err) {
     console.error('Error rebuilding graph:', err);
@@ -123,29 +135,19 @@ export async function startVaultWatcher(
   vaultRoot: string,
   getWindow: () => BrowserWindow | null
 ) {
+  await stopVaultWatcher();
+  const gen = generation;
   const resolvedRoot = path.resolve(vaultRoot);
   pendingChanges.clear();
 
-  // First open or after resetVaultFileCache: one listFiles scan (required).
-  // Warm restarts on the same vault skip listFiles entirely.
-  const coldStart = !isWarm(resolvedRoot);
-  if (coldStart) {
-    await bootstrapKnownFiles();
-    markWarm(resolvedRoot);
-    await pushGraphFromCache(resolvedRoot, getWindow);
-  } else {
-    await pushGraphFromCache(resolvedRoot, getWindow);
-  }
-
-  if (watcher) {
-    await watcher.close();
-    watcher = null;
-  }
-
+  // Watch before the first scan so files created during that scan are not missed.
   watcher = watch(resolvedRoot, {
     ignored: [
       /(^|[\/\\])\./,
-      ...IGNORE_DIRS.map((d) => new RegExp(d)),
+      (filePath: string) => {
+        const parts = filePath.split(/[/\\]/);
+        return parts.some((part) => IGNORE_DIRS.includes(part));
+      },
     ],
     persistent: true,
     ignoreInitial: true,
@@ -156,14 +158,21 @@ export async function startVaultWatcher(
   });
 
   const scheduleGraphRebuild = () => {
+    if (!isCurrent(gen)) return;
     if (rebuildTimer) clearTimeout(rebuildTimer);
     rebuildTimer = setTimeout(() => {
       rebuildTimer = null;
-      void rebuildGraph(resolvedRoot, getWindow);
+      // Run one rebuild at a time so an older pass cannot overwrite a newer one.
+      rebuildChain = rebuildChain
+        .then(() => rebuildGraph(resolvedRoot, getWindow, gen))
+        .catch((err) => {
+          console.error('Error rebuilding graph:', err);
+        });
     }, REBUILD_DEBOUNCE_MS);
   };
 
   const handleChange = (eventType: 'add' | 'change' | 'unlink', filePath: string) => {
+    if (!isCurrent(gen)) return;
     const win = getWindow();
     if (!win || win.isDestroyed() || !filePath.endsWith('.md')) return;
 
@@ -176,16 +185,30 @@ export async function startVaultWatcher(
   watcher.on('add', (p) => handleChange('add', p));
   watcher.on('change', (p) => handleChange('change', p));
   watcher.on('unlink', (p) => handleChange('unlink', p));
+
+  const coldStart = !isWarm(resolvedRoot);
+  if (coldStart) {
+    await bootstrapKnownFiles();
+    if (!isCurrent(gen)) return;
+    markWarm(resolvedRoot);
+  }
+
+  if (!isCurrent(gen)) return;
+  await applyPendingChanges(gen);
+  if (!isCurrent(gen)) return;
+  await pushGraphFromCache(resolvedRoot, getWindow);
 }
 
-export function stopVaultWatcher() {
+export async function stopVaultWatcher() {
+  generation += 1;
   if (rebuildTimer) {
     clearTimeout(rebuildTimer);
     rebuildTimer = null;
   }
   pendingChanges.clear();
-  if (watcher) {
-    watcher.close();
-    watcher = null;
+  const current = watcher;
+  watcher = null;
+  if (current) {
+    await current.close();
   }
 }

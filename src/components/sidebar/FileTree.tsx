@@ -84,11 +84,11 @@ export function FileTree() {
       await electronAPI.createFile(filePath, `# ${title}\n\n`);
       await refreshFiles();
       handleSelect(filePath);
-    } catch (err) {
-      console.error('Failed to create note:', err);
-    } finally {
       setCreating(false);
       setNewFileName('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not create the note.';
+      window.alert(message);
     }
   }, [newFileName, refreshFiles, handleSelect, activeFile]);
 
