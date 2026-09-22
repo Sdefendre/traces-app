@@ -34,6 +34,7 @@ interface ToolCall {
 }
 
 interface Message {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   toolCalls?: ToolCall[];
@@ -208,6 +209,8 @@ export function ChatPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
+  const assistantStreamIdRef = useRef<string | null>(null);
 
   // Model state — initialize from settings defaults
   const [provider, setProvider] = useState<Provider>(appSettings.defaultProvider);
@@ -229,27 +232,22 @@ export function ChatPanel() {
       ]);
       streamingTranscriptRef.current = '';
     } else if (event.role === 'assistant') {
+      if (!event.final) streamingTranscriptRef.current += event.content;
+      const content = event.final ? event.content : streamingTranscriptRef.current;
+      const streamId = assistantStreamIdRef.current ?? `voice-${Date.now()}`;
+      assistantStreamIdRef.current = streamId;
+      setMessages((prev) => {
+        const index = prev.findIndex((message) => message.id === streamId);
+        if (index >= 0) {
+          const next = prev.slice();
+          next[index] = { ...prev[index], content };
+          return next;
+        }
+        return [...prev, { id: streamId, role: 'assistant', content, source: 'voice' as const }];
+      });
       if (event.final) {
-        // Replace the last streaming voice message with the final transcript
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last?.role === 'assistant' && last.source === 'voice') {
-            return [...prev.slice(0, -1), { role: 'assistant', content: event.content, source: 'voice' as const }];
-          }
-          return [...prev, { role: 'assistant', content: event.content, source: 'voice' as const }];
-        });
         streamingTranscriptRef.current = '';
-      } else {
-        // Streaming delta — accumulate and update last message
-        streamingTranscriptRef.current += event.content;
-        const accumulated = streamingTranscriptRef.current;
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last?.role === 'assistant' && last.source === 'voice') {
-            return [...prev.slice(0, -1), { role: 'assistant', content: accumulated, source: 'voice' as const }];
-          }
-          return [...prev, { role: 'assistant', content: accumulated, source: 'voice' as const }];
-        });
+        assistantStreamIdRef.current = null;
       }
     }
   }, []);
@@ -264,10 +262,16 @@ export function ChatPanel() {
     setMessages((prev) => {
       const toolCall: ToolCall = { name: event.name, args: event.args, result: event.result };
       // If the last message is a voice assistant message, attach tool call to it
-      const last = prev[prev.length - 1];
-      if (last?.role === 'assistant' && last.source === 'voice') {
-        const updated = { ...last, toolCalls: [...(last.toolCalls || []), toolCall] };
-        return [...prev.slice(0, -1), updated];
+      const streamId = assistantStreamIdRef.current;
+      const streamIndex = streamId ? prev.findIndex((message) => message.id === streamId) : -1;
+      const last = streamIndex >= 0 ? prev[streamIndex] : prev[prev.length - 1];
+      const lastIsVoice = last?.role === 'assistant' && last.source === 'voice';
+      if (lastIsVoice) {
+        const index = streamIndex >= 0 ? streamIndex : prev.length - 1;
+        const updated = { ...prev[index], toolCalls: [...(prev[index].toolCalls || []), toolCall] };
+        const next = prev.slice();
+        next[index] = updated;
+        return next;
       }
       // Otherwise create a new assistant message with just the tool call
       return [...prev, { role: 'assistant', content: '', toolCalls: [toolCall], source: 'voice' as const }];
@@ -530,7 +534,8 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
 
   // Send message
   const handleSubmit = async () => {
-    if (!input.trim() || loading) return;
+    if (sendingRef.current || !input.trim() || loading) return;
+    sendingRef.current = true;
 
     const userMessage: Message = { role: 'user', content: input };
     const apiKey = getApiKey(provider);
@@ -573,6 +578,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
       const msg = err instanceof Error ? err.message : 'Failed to connect to AI service';
       setError(msg);
     } finally {
+      sendingRef.current = false;
       setLoading(false);
     }
   };

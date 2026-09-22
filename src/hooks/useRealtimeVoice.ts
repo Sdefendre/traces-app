@@ -1,6 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { electronAPI } from '@/lib/electron-api';
 import { formatUpstreamError } from '../../shared/api-errors';
+import {
+  createVoiceToolBatch,
+  noteResponseDone,
+  noteToolFinished,
+  noteToolStarted,
+} from './voice-tool-batch';
 
 export type VoiceState = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -68,6 +74,8 @@ export function useRealtimeVoice({
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const stateRef = useRef<VoiceState>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const disconnectGraceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolBatchRef = useRef(createVoiceToolBatch());
 
   const setState = useCallback((s: VoiceState) => {
     stateRef.current = s;
@@ -89,6 +97,11 @@ export function useRealtimeVoice({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (disconnectGraceRef.current) {
+      clearTimeout(disconnectGraceRef.current);
+      disconnectGraceRef.current = null;
+    }
+    toolBatchRef.current = createVoiceToolBatch();
 
     cancelAnimationFrame(rafRef.current);
 
@@ -160,13 +173,27 @@ export function useRealtimeVoice({
             clearTimeout(timeoutRef.current);
             timeoutRef.current = null;
           }
+          if (disconnectGraceRef.current) {
+            clearTimeout(disconnectGraceRef.current);
+            disconnectGraceRef.current = null;
+          }
           setState('connected');
-        } else if (
-          pc.connectionState === 'failed' ||
-          pc.connectionState === 'disconnected'
-        ) {
+        } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
           onErrorRef.current?.('Voice connection lost.');
           disconnect();
+        } else if (pc.connectionState === 'disconnected') {
+          // A brief disconnect often recovers. Wait before hanging up.
+          if (disconnectGraceRef.current) clearTimeout(disconnectGraceRef.current);
+          disconnectGraceRef.current = setTimeout(() => {
+            if (
+              pc.connectionState === 'disconnected' ||
+              pc.connectionState === 'failed' ||
+              pc.connectionState === 'closed'
+            ) {
+              onErrorRef.current?.('Voice connection lost.');
+              disconnect();
+            }
+          }, 5000);
         }
       };
 
@@ -266,7 +293,15 @@ export function useRealtimeVoice({
                   final: true,
                 });
                 break;
+              case 'response.done':
+                noteResponseDone(toolBatchRef.current, () => {
+                  if (dc.readyState === 'open') {
+                    dc.send(JSON.stringify({ type: 'response.create' }));
+                  }
+                });
+                break;
               case 'response.function_call_arguments.done': {
+                noteToolStarted(toolBatchRef.current);
                 const toolName = event.name;
                 const callId = event.call_id;
                 let args: Record<string, string> = {};
@@ -297,8 +332,12 @@ export function useRealtimeVoice({
                       output: result,
                     },
                   }));
-                  dc.send(JSON.stringify({ type: 'response.create' }));
                 }
+                noteToolFinished(toolBatchRef.current, () => {
+                  if (dc.readyState === 'open') {
+                    dc.send(JSON.stringify({ type: 'response.create' }));
+                  }
+                });
                 break;
               }
             }

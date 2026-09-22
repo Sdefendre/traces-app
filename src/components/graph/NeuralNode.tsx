@@ -36,7 +36,12 @@ export function NeuralNode({ node, getPositions, isConnected, onSelect, nodeSize
   const targetScale = hovered ? 1.3 : isHighlighted ? 1.1 : 1;
   const radius = nodeSize;
 
-  useEffect(() => () => { document.body.style.cursor = ''; }, []);
+  useEffect(() => () => {
+    document.body.style.cursor = '';
+    if (useGraphStore.getState().hoveredNode === node.id) {
+      useGraphStore.getState().setHoveredNode(null);
+    }
+  }, [node.id]);
 
   // Mesh position/scale driven in useFrame via refs — avoids per-frame React updates.
   useFrame(({ clock }) => {

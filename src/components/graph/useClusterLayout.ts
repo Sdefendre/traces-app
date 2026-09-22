@@ -2,6 +2,15 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { GraphNode } from '@/types';
 
+function unitFromId(id: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
 export function useClusterLayout(nodes: GraphNode[]) {
   const layout = useMemo(() => {
     const positions = new Map<string, THREE.Vector3>();
@@ -42,9 +51,8 @@ export function useClusterLayout(nodes: GraphNode[]) {
         const phi = Math.acos(1 - 2 * (i + 0.5) / numNodes);
         const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
-        // Add some radial variation so it's a solid ball, not just a hollow shell
-        // random between 0.5 and 1.0 of the max radius for a tighter ball
-        const r = sphereRadius * (0.5 + 0.5 * Math.pow(Math.random(), 1/3));
+        // Stable radius from the note id, so a save does not reshuffle the ball.
+        const r = sphereRadius * (0.5 + 0.5 * Math.pow(unitFromId(node.id), 1 / 3));
 
         const x = r * Math.sin(phi) * Math.cos(theta);
         const y = r * Math.sin(phi) * Math.sin(theta);

@@ -1,7 +1,7 @@
 // @ts-nocheck — R3F JSX intrinsics not typed with React 19
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -25,6 +25,13 @@ export function TerrainNode({ node, position, onSelect, nodeSize }: TerrainNodeP
   const catColor = useMemo(() => new THREE.Color(categoryColor), [categoryColor]);
 
   const isHighlighted = hoveredNode === node.id;
+
+  useEffect(() => () => {
+    document.body.style.cursor = '';
+    if (useGraphStore.getState().hoveredNode === node.id) {
+      useGraphStore.getState().setHoveredNode(null);
+    }
+  }, [node.id]);
   const targetScale = hovered ? 1.4 : isHighlighted ? 1.2 : 1;
   const radius = nodeSize * 0.5;
 
