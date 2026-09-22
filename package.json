@@ -1,6 +1,6 @@
 {
   "name": "traces",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Local-first knowledge workspace by Defendre Solutions. Markdown notes, a 3D wiki-link graph, and a multi-provider AI assistant. Files stay on your machine.",
   "license": "MIT",
