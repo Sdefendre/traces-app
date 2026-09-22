@@ -16,19 +16,23 @@ React Three Fiber and Three.js. Galaxy, Terrain, Cluster, and Particle views sha
 
 Particle View puts one point per note on five fixed surfaces: Möbius Strip, Toroidal Vortex, Spherical Harmonics, Lissajous Curve, and Fractal Branches. Switching shapes morphs the points that still exist. Color is category. Size is markdown length. Hover for details. Click a point to open that note. Low Power Mode keeps the layout and drops edge attraction, bloom, and the dense background.
 
+Saving a note leaves the camera where it is. Switching Galaxy, Terrain, Cluster, or Particle resets the camera so the notes stay in frame. The zoom buttons and the scroll wheel share one distance.
+
 ## Editor
 
 CodeMirror 6 with wiki-links, autocomplete, auto-save, and light or dark themes.
 
-Preview renders headings, bold, italic, inline code, fenced blocks, bullets, and clickable wiki-links, including aliases (`[[Note|label]]`). Use the Preview/Edit button in the toolbar.
+Preview renders headings, bold, italic, inline code, fenced blocks, bullets, and clickable wiki-links, including aliases (`[[Note|label]]`). Use the Preview/Edit button in the toolbar. A wiki-link written inside inline code stays as code. Preview does not turn it into a link.
 
 Click a wiki-link to open that note. If several notes share the name, Files search filters to those notes so you can pick one. It does not guess or create a duplicate.
 
 Change the `# Title` heading and the file renames after 1.5 seconds. The file tree, tab, and breadcrumb follow.
 
+Closing the window or quitting saves open notes first. If a save is stuck, the app continues after a few seconds. If a save fails, it asks before closing.
+
 The status bar under the editor shows word count, character count, reading time, and line count.
 
-The MessageCircle button in the editor header opens Chat when that panel is closed.
+The speech-bubble button in the Notes header (tooltip: Open AI Chat) opens Chat when that panel is closed.
 
 ## Settings
 
@@ -59,6 +63,8 @@ If a bring-your-own CLI is missing or logged out, Traces stops and tells you. It
 
 File tree with search, context menus, and new note or folder. Open any folder as a vault.
 
+A new note is created in the same folder as the note you last opened. If you have not opened one yet, it goes in the vault folder itself.
+
 Collapse a panel and it becomes a tab on the left. Drag the borders between Files, Graph, Notes, and Chat to resize. Hover or drag lights the divider.
 
 Panels use frosted glass on shadcn/ui, with glass and gradient button variants.
@@ -84,7 +90,7 @@ Panels use frosted glass on shadcn/ui, with glass and gradient button variants.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 22 (CI uses 22; 18+ may still run)
+- [Node.js](https://nodejs.org/) 22 (CI and GitHub release builds use 22; Node 18 or newer may still run locally)
 - [pnpm](https://pnpm.io/) 10
 - [Ollama](https://ollama.ai/) (optional, for local models)
 - Codex CLI, Grok CLI, or Claude Code (optional, to sign in with your own agent account)

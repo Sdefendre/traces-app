@@ -38,7 +38,7 @@
 
   const INSTALL = {
     how: 'Clone the GitHub repo and run it on your machine. There is no App Store build and no hosted SaaS.',
-    requirements: ['Node 18+', 'pnpm', 'optionally Ollama for local models'],
+    requirements: ['Node 22', 'pnpm 10', 'optionally Ollama for local models'],
     commands: [
       'git clone https://github.com/Sdefendre/traces-app.git',
       'cd traces-app',
