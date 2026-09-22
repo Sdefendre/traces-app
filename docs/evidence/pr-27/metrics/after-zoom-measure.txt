@@ -1,0 +1,3 @@
+zoom-1: {"n":13,"w":465,"h":459,"cx":808,"cy":511}
+zoom-2 after wheel in: {"n":13,"w":756,"h":765,"cx":809,"cy":511}
+zoom-3 after Zoom out button: {"n":13,"w":572,"h":578,"cx":809,"cy":511}
