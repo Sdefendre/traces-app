@@ -17,7 +17,7 @@
   "main": "main/dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build:next": "BUILD_STATIC=1 next build",
+    "build:next": "cross-env BUILD_STATIC=1 next build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "verify:logic": "node scripts/verify-logic.mjs",
     "verify:editor": "tsc -p tsconfig.verify.json && node scripts/.verify-out/scripts/verify-editor-store.js",
@@ -72,6 +72,7 @@
     "@types/react-dom": "^19.0.4",
     "@types/three": "^0.172.0",
     "concurrently": "^9.1.2",
+    "cross-env": "^10.1.0",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
     "eslint": "^9.39.5",
