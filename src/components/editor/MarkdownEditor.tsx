@@ -15,15 +15,17 @@ import { useVaultStore } from '@/stores/vault-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { electronAPI } from '@/lib/electron-api';
 import { basenameWithoutExt, dirnameRelative, normalizeRelativePath } from '@/lib/paths';
+import { clearPendingRename, markPendingRename } from '@/lib/pending-renames';
 
 interface MarkdownEditorProps {
   tabId: string;
   content: string;
 }
 
-/** Extract title from first `# Heading` line */
+/** First real heading, ignoring lines inside fenced code blocks. */
 function extractTitle(content: string): string | null {
-  const match = content.match(/^#\s+(.+)/m);
+  const prose = content.replace(/```[\s\S]*?(?:```|$)/g, '');
+  const match = prose.match(/^#\s+(.+)/m);
   return match ? match[1].trim() : null;
 }
 
@@ -32,6 +34,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
   const viewRef = useRef<EditorView | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const renameTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const applyingExternalRef = useRef(false);
   const { setTabContent, saveTab } = useEditorStore();
   const { files } = useVaultStore();
   const { settings: appSettings } = useSettingsStore();
@@ -80,6 +83,7 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
+            if (applyingExternalRef.current) return;
             const newContent = update.state.doc.toString();
             setTabContent(tabId, newContent);
 
@@ -107,12 +111,20 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
 
               const dir = dirnameRelative(normalizedPath);
               const newPath = dir ? `${dir}/${sanitized}.md` : `${sanitized}.md`;
+              const newKey = newPath.toLowerCase();
+              const taken = useVaultStore.getState().files.some((file) => {
+                const normalized = normalizeRelativePath(file);
+                return normalized.toLowerCase() === newKey && normalized !== normalizedPath;
+              });
+              if (taken) return;
 
+              markPendingRename(normalizedPath);
               electronAPI.renameFile(normalizedPath, newPath).then(() => {
                 useEditorStore.getState().renameTab(normalizedPath, newPath);
                 useVaultStore.getState().setActiveFile(newPath);
                 useVaultStore.getState().refreshFiles();
               }).catch((err: unknown) => {
+                clearPendingRename(normalizedPath);
                 console.error('Failed to rename note from title:', err);
                 // Title reverts on next reload; tab path unchanged until rename succeeds.
               });
@@ -132,6 +144,10 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       if (renameTimerRef.current) clearTimeout(renameTimerRef.current);
+      const tab = useEditorStore.getState().tabs.find((item) => item.id === tabId);
+      if (tab?.isDirty) {
+        void useEditorStore.getState().saveTab(tabId);
+      }
       view.destroy();
     };
     // Only recreate the CodeMirror view when the tab changes; content and store
@@ -145,9 +161,11 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
     if (!view) return;
     const current = view.state.doc.toString();
     if (content !== current) {
+      applyingExternalRef.current = true;
       view.dispatch({
         changes: { from: 0, to: current.length, insert: content },
       });
+      applyingExternalRef.current = false;
     }
   }, [content]);
 

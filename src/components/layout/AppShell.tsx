@@ -7,6 +7,7 @@ import { useGraphStore } from '@/stores/graph-store';
 import { electronAPI } from '@/lib/electron-api';
 import { useEditorStore } from '@/stores/editor-store';
 import { normalizeRelativePath } from '@/lib/paths';
+import { consumePendingRename } from '@/lib/pending-renames';
 import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
@@ -146,6 +147,8 @@ export function AppShell() {
         const { tabs, closeTab, reloadTab } = useEditorStore.getState();
         const tab = tabs.find((t) => t.path === normalized);
         if (event === 'unlink') {
+          // A heading rename deletes the old filename. That is not the user deleting the note.
+          if (consumePendingRename(normalized)) return;
           if (tab) {
             await closeTab(tab.id, { discard: true });
           }
@@ -165,7 +168,7 @@ export function AppShell() {
     });
 
     const unsubQuit = electronAPI.onBeforeQuit(async () => {
-      await useEditorStore.getState().saveAllDirty();
+      return useEditorStore.getState().saveAllDirty();
     });
 
     return () => {

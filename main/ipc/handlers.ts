@@ -17,6 +17,7 @@ import { handleChat } from './chat-handler';
 import { getByoAgentStatuses, startByoAgentLogin } from './byo-agents';
 import type { ByoAgentId } from '../../shared/byo-agents';
 import { formatUpstreamError } from '../../shared/api-errors';
+import { replaceAllLiteral } from '../../shared/replace-text';
 
 const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
 const GROK_VOICES = ['Ara', 'Rex', 'Sal', 'Eve', 'Leo'];
@@ -142,9 +143,9 @@ export function registerIpcHandlers(vaultRoot: string) {
         throw new Error(formatUpstreamError('Grok voice', res.status, text));
       }
       const data = (await res.json()) as { value?: string; client_secret?: string };
-      return {
-        clientSecret: data.value ?? data.client_secret ?? '',
-      };
+      const clientSecret = data.value ?? data.client_secret ?? '';
+      if (!clientSecret) throw new Error('Grok voice did not return a session secret.');
+      return { clientSecret };
     }
   );
 
@@ -168,11 +169,12 @@ export function registerIpcHandlers(vaultRoot: string) {
           return `File written: ${args.path}`;
         }
         case 'edit_file': {
+          if (!args.old_text) return 'Error: old_text is required';
           const content = await readFile(args.path);
-          if (!content.includes(args.old_text)) {
+          const updated = replaceAllLiteral(content, args.old_text, args.new_text ?? '');
+          if (updated === null) {
             return `Error: Could not find the specified text in ${args.path}`;
           }
-          const updated = content.replace(args.old_text, args.new_text);
           await writeFile(args.path, updated);
           return `File edited: ${args.path}`;
         }
