@@ -15,7 +15,7 @@ This skill is for the next agent. Drive the real window. Do not call internal st
 
 Do not use `pnpm dev` for verification. `scripts/dev.mjs` starts Next on port 3333 and Electron with the real login `HOME`. Electron then creates and uses `~/Desktop/Traces Notes`. That is the user's vault.
 
-There is no vault env var. `main/index.ts` hardcodes `path.join(app.getPath('home'), 'Desktop', 'Traces Notes')`. Isolation is a fake `HOME` plus `--user-data-dir` plus `--remote-debugging-port`.
+`main/index.ts` uses `TRACES_VAULT_DIR` when set, otherwise `path.join(app.getPath('home'), 'Desktop', 'Traces Notes')`. `launch.sh` does not set `TRACES_VAULT_DIR`. Isolation is a fake `HOME` plus `--user-data-dir` plus `--remote-debugging-port`. An inherited `TRACES_VAULT_DIR` overrides the fake home. Browser-only chat and realtime tool routes use `VAULT_PATH` the same way; the desktop window uses Electron IPC and does not call those routes.
 
 From the repo root:
 
@@ -44,7 +44,7 @@ Ready signals:
 
 Electron in dev always loads `http://localhost:3333`. You cannot run two desktop instances side by side. If 3333 is taken, stop. Cleanup the verify run that owns it, or leave the foreign process alone. Never `pkill` by name.
 
-`pnpm start` after `pnpm build` loads the static export from `out/`. That path is not the verification launch. Production also uses the real login home.
+`pnpm start` is unpackaged Electron, so it still loads `http://localhost:3333` (`!app.isPackaged` in `main/index.ts`). A packaged app loads `path.join(__dirname, '..', 'out', 'index.html')`. Neither is the verification launch. Both use the real login home unless `TRACES_VAULT_DIR` is set.
 
 If `node_modules/.bin/electron --version` fails, the Electron binary was skipped on install. From the repo root run `node node_modules/electron/install.js`. Do not treat that as a product change.
 
@@ -71,7 +71,7 @@ Doctor fails unless all of these are true:
 
 If doctor fails, do not drive. Cleanup the run you started, then launch again. Do not attach to a `pnpm dev` window that used the real home.
 
-Logic scripts in `scripts/verify-*.mjs` and `scripts/verify-*.ts` do not prove the window. Run them when the change is in that module. They are listed under Helpers. `scripts/run-verification.sh` kills port 3333 by `lsof` and `pkill -f scripts/dev.mjs`. Do not use that script as verification cleanup.
+Logic scripts in `scripts/verify-*.mjs` and `scripts/verify-*.ts` do not prove the window. Run them when the change is in that module. They are listed under Helpers. `scripts/run-verification.sh` (`pnpm verify:all`) kills port 3333 by `lsof` and `pkill -f scripts/dev.mjs`. Do not use that script as verification cleanup.
 
 ## Drive
 
@@ -142,7 +142,7 @@ Control+n and Control+f are handled by the Files panel, which is unmounted while
 
 Do not click `Open Folder`. The native dialog is not in the renderer and can point the app at a real folder. In an empty vault there are three `Open Folder` buttons (Files header icon, Files empty state, graph overlay) and three text `New Note` buttons (Files empty state, graph overlay, empty editor), plus the icon-only header buttons titled `New Note` (Files) and `New note` (Notes).
 
-Create notes only with a `Verify ` prefix. After a mutation, prove the file on disk with `node helpers/drive.mjs read-vault --rel "Verify Gamma.md"`. Auto-save is 800 ms. Title rename is 1500 ms and keys off the first line anywhere in the note that starts with `# `, so a glued heading stops the rename only until another `# ` line exists. `type --focus-editor` inserts at the cursor, usually the start of the file, which glues text onto the heading. To append, `type --selector ".cm-line:last-child" --text "..."`; when the located element is inside CodeMirror, `type` clicks the right edge of that line's last wrapped row, so the caret sits at the logical end of the line whatever its width.
+Create notes only with a `Verify ` prefix. After a mutation, prove the file on disk with `node helpers/drive.mjs read-vault --rel "Verify Gamma.md"`. Auto-save is 800 ms. Title rename is 1500 ms and keys off the first `# ` heading outside a fenced code block, so a glued heading stops the rename only until another `# ` line exists. `type --focus-editor` inserts at the cursor, usually the start of the file, which glues text onto the heading. To append, `type --selector ".cm-line:last-child" --text "..."`; when the located element is inside CodeMirror, `type` clicks the right edge of that line's last wrapped row, so the caret sits at the logical end of the line whatever its width.
 
 Delete a note from the row menu: `click --text "Verify Beta" --button right`, then `click --text "Delete" --accept-dialog`. The flag answers the `window.confirm` over CDP. Without it the renderer blocks on the dialog.
 
@@ -168,7 +168,7 @@ Every proof needs:
 Standards:
 
 - Exercise the real Files / Notes / Graph / Pages path. Do not `useEditorStore.setState` or write the vault from a Node script and call that a UI proof.
-- `pnpm verify:editor`, `pnpm verify:particles`, `pnpm verify:wiki-link`, `pnpm verify:webmcp`, `pnpm verify:logic`, `pnpm verify:byo`, and `pnpm verify:byo-runtime` are module proofs. Keep those logs in evidence when the change is in that module. They do not replace a window drive.
+- `pnpm verify:editor`, `pnpm verify:particles`, `pnpm verify:wiki-link`, `pnpm verify:webmcp`, `pnpm verify:logic`, `pnpm verify:byo`, `pnpm verify:byo-runtime`, `pnpm verify:note-stats`, and `pnpm verify:api-errors` are module proofs. Keep those logs in evidence when the change is in that module. They do not replace a window drive.
 - Mocks are already how `scripts/verify-webmcp.mjs` and `scripts/verify-byo-agents.ts` work. That is the production boundary for those scripts. Do not invent a fake `electronAPI` in the window.
 - Never upload notes. Never copy vault files to the Pages site, a gist, or chat.
 
@@ -246,6 +246,8 @@ pnpm verify:webmcp      # marketing tools + in-app path helpers
 pnpm verify:logic       # parseVault + file tree after build:electron
 pnpm verify:byo         # bring-your-own agent argument builders
 pnpm verify:byo-runtime # compiled BYO chat against a temp vault
+pnpm verify:note-stats  # editor footer counts prose, not markdown punctuation
+pnpm verify:api-errors  # upstream AI and voice errors stay readable sentences
 ```
 
 Feature map: `features/README.md`. Keep it honest with `/maintain-verification-skill` when the app changes.
