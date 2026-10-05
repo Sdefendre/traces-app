@@ -136,7 +136,7 @@ Keyboard, Control on Linux, Meta on macOS. `drive.mjs shortcut` sends Control:
 | Control+f | Focus search. Same as `traces:focus-search` |
 | Control+\ | Fullscreen graph. Escape exits it. |
 
-Control+n and Control+f are handled by the Files panel, which is unmounted while Files is collapsed. With Files collapsed both are no-ops. That is a product gap tracked in `features/search.md`, not a harness fault. Expand Files (Control+1) before either shortcut.
+Control+n and Control+f are handled by the Files panel, which is unmounted while Files is collapsed. With Files collapsed both are no-ops. That is a product gap tracked in `features/search.md`, not a harness fault. Expand Files (Control+1) before either shortcut. With the editor focused, Control+F still focuses Files search, but CodeMirror's find panel can also open (`searchKeymap` in `MarkdownEditor`). Same file; assert `document.activeElement.placeholder === "Search..."`, not the absence of `.cm-search`.
 
 `click --text` takes the first clickable leaf match in document order, so a name that is both a Files row, a graph label, and an editor tab resolves to the Files row. Graph labels are `pointer-events: none` DOM overlays and are skipped. Body `text` therefore always names every note. Assert Files state on the snapshot's `filesText`, which is scoped to the panel holding `Search...` and the `{n} notes` footer.
 
