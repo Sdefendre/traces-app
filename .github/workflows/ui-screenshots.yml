@@ -1,0 +1,80 @@
+name: UI screenshots
+
+# Enforces: every UI PR needs real GitHub-hosted Before and After screenshots.
+# Escape hatch: a human adds the "no-screenshots" label.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ui-screenshots-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  before-after:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            // UI = the desktop renderer (src/app, src/components) and the Pages site (docs/*.html|css|svg).
+            const UI = /^src\/(app|components)\/.+\.(tsx|jsx|css)$|^docs\/[^/]+\.(html|css|svg)$/;
+            const IGNORE = /(^|\/)(__tests__|tests?|e2e)\/|\.(test|spec)\.[jt]sx?$|^src\/app\/api\//;
+            const LABEL = 'no-screenshots';
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            if (pr.labels.some((l) => l.name === LABEL)) return core.notice(`Label "${LABEL}" present: screenshot check skipped.`);
+            const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: pr.number, per_page: 100 });
+            const ui = files.map((f) => f.filename).filter((f) => UI.test(f) && !IGNORE.test(f));
+            if (!ui.length) return core.info('No UI files changed.');
+
+            // GitHub-hosted image: PR uploads, or a raw/blob image path in this repo.
+            const hosted = (u) => {
+              let x;
+              try { x = new URL(u); } catch { return false; }
+              const h = x.hostname.toLowerCase();
+              const p = decodeURIComponent(x.pathname).toLowerCase();
+              const here = `/${owner}/${repo}/`.toLowerCase();
+              const img = /\.(png|jpe?g|gif|webp|svg)$/.test(p);
+              if (x.protocol !== 'https:') return false;
+              if (h === 'user-images.githubusercontent.com' || h === 'private-user-images.githubusercontent.com') return p.length > 1;
+              if (h === 'github.com') return /^\/user-attachments\/assets\/[\w-]+$/.test(p) || (img && p.startsWith(here) && /^\/[^/]+\/[^/]+\/(blob|raw)\//.test(p));
+              if (h === 'raw.githubusercontent.com') return img && p.startsWith(here);
+              return false;
+            };
+            // An image is Before/After by its alt text, its table column header, or the nearest label line above it.
+            const kind = (s) => (String(s).match(/\b(before|after)\b/i) || [])[1]?.toLowerCase();
+            const both = (s) => ['before', 'after'].filter((k) => new RegExp(`\\b${k}\\b`, 'i').test(s));
+            const IMG = /!\[([^\]]*)\]\(\s*<?([^)\s>]*)|<img\b([^>]*)>/gi;
+            const found = new Set();
+            let label;
+            let header;
+            for (const line of (pr.body || '').replace(/<!--[\s\S]*?-->/g, '').split(/\r?\n/)) {
+              const row = /^\s*\|/.test(line);
+              if (!row) header = undefined;
+              const imgs = [...line.matchAll(IMG)];
+              if (!imgs.length) {
+                if (row && !header && !/^[\s|:-]+$/.test(line)) header = line.split('|');
+                else if (!row && /^\W*(\w+\W+){0,2}(before|after)\b/i.test(line)) label = kind(line);
+                continue;
+              }
+              for (const m of imgs) {
+                const attr = (n) => (m[3]?.match(new RegExp(`\\b${n}\\s*=\\s*["']?([^"'>]*)`, 'i')) || [])[1];
+                const url = m[3] === undefined ? m[2] : attr('src');
+                const alt = m[3] === undefined ? m[1] : attr('alt') || '';
+                if (!hosted(url)) continue;
+                let ks = both(alt);
+                if (!ks.length && row && header) ks = both(header[line.slice(0, m.index).split('|').length - 1] || '');
+                if (!ks.length && label) ks = [label];
+                ks.forEach((k) => found.add(k));
+              }
+            }
+            const missing = ['Before', 'After'].filter((k) => !found.has(k.toLowerCase()));
+            if (!missing.length) return core.info(`UI files changed (${ui.length}); Before and After images found.`);
+            const list = ui.slice(0, 10).join(', ') + (ui.length > 10 ? `, +${ui.length - 10} more` : '');
+            core.setFailed(`UI files changed (${list}) but PR body lacks GitHub-hosted Before/After images (missing: ${missing.join(', ')}). Add a "Before" and "After" section with images uploaded to this PR, or a human may add label ${LABEL}.`);
