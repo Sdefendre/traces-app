@@ -11,6 +11,7 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ### Fixed
 - `pnpm-workspace.yaml` lists `onlyBuiltDependencies` as a YAML array, so pnpm 10 runs Electron's install script. The quoted string was one package name, and `pnpm install` left Electron without a binary.
+- `publicHoistPattern` hoists eslint plugins so `pnpm lint` can load `eslint-plugin-react-hooks`.
 - The packaged app loads `out/index.html` from the app root via `app.getAppPath()`. Compiled main lives at `main/dist/main/`, so `../out` pointed at a path that is never packed.
 - `electron-builder` 26 reads `package.json` `build` and skips `electron-builder.yml` when that field exists. `build.files` now ships `out/**/*` instead of `src/**/*` and `.next/**/*`.
 
