@@ -43,11 +43,14 @@ function createWindow() {
 
   const isDev = !app.isPackaged;
   if (isDev) {
-    mainWindow.loadURL('http://localhost:3333');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'out', 'index.html'));
   }
+  const renderer = isDev
+    ? mainWindow.loadURL('http://localhost:3333')
+    : mainWindow.loadFile(path.join(app.getAppPath(), 'out', 'index.html'));
+  void renderer.catch((err) => {
+    console.error('Failed to load renderer:', err);
+  });
 
   mainWindow.on('close', (event) => {
     if (allowClose || isQuitting) return;
