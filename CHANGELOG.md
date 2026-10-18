@@ -9,8 +9,18 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
+### Fixed
+- `pnpm-workspace.yaml` lists `onlyBuiltDependencies` as a YAML array, so pnpm 10 runs Electron's install script. The quoted string was one package name, and `pnpm install` left Electron without a binary.
+- The packaged app loads `out/index.html` from the app root via `app.getAppPath()`. Compiled main lives at `main/dist/main/`, so `../out` pointed at a path that is never packed.
+- `electron-builder` 26 reads `package.json` `build` and skips `electron-builder.yml` when that field exists. `build.files` now ships `out/**/*` instead of `src/**/*` and `.next/**/*`.
+
 ### Changed
 - GitHub release builds use pnpm 10 and Node 22, the same versions as CI. The release job was failing at setup because pnpm 9 rejects this repo's workspace file.
+- README desktop runtime is Electron 41, matching `package.json` after the Next 15.5.27 / Electron 41 / electron-builder 26 upgrade.
+
+### Removed
+- `electron-builder.yml`, which electron-builder 26 did not load.
+- Committed `dev.log` from a local `pnpm dev` run.
 
 ## [0.2.1] - 2026-09-21
 

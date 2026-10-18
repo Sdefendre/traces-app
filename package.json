@@ -91,9 +91,7 @@
     },
     "files": [
       "main/dist/**/*",
-      "src/**/*",
-      ".next/**/*",
-      "next.config.*",
+      "out/**/*",
       "package.json"
     ],
     "extraMetadata": {

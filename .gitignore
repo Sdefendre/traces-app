@@ -5,6 +5,8 @@ out/
 out 2/
 main/dist/
 dist/
+release/
+dev.log
 *.js.map
 .env.local
 .env
