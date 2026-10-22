@@ -9,6 +9,10 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
+### Docs
+
+- Docs: AGENTS.md now tells agents to cut taglines, helper text and secondary labels, keeping legal, consent, pricing, accessibility and error text.
+
 ### Fixed
 - `pnpm-workspace.yaml` lists `onlyBuiltDependencies` as a YAML array, so pnpm 10 runs Electron's install script. The quoted string was one package name, and `pnpm install` left Electron without a binary.
 - `publicHoistPattern` hoists eslint plugins so `pnpm lint` can load `eslint-plugin-react-hooks`.
