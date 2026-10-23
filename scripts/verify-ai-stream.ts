@@ -1,12 +1,13 @@
 /**
- * Prove AI SDK 5 streaming through the desktop handler and the Next chat route.
- * Uses MockLanguageModelV2 — no real provider is called.
+ * Prove AI SDK 5 streaming through streamChatWithModel and the Electron handler.
+ * Uses MockLanguageModelV2 — no real provider is called. The Next route uses
+ * the same helper; Next only allows POST to be exported from route.ts.
  */
 import assert from 'node:assert/strict';
 import { simulateReadableStream } from 'ai';
 import { MockLanguageModelV2 } from 'ai/test';
+import { streamChatWithModel } from '../shared/ai-chat';
 import { handleChat } from '../main/ipc/chat-handler';
-import { handleChatRoute } from '../src/app/api/chat/route';
 
 // Build a v5 mock model that emits several text deltas, then finishes.
 function createStreamingModel() {
@@ -38,20 +39,20 @@ const request = {
 };
 
 async function main() {
+  const streamed = await streamChatWithModel({
+    model: createStreamingModel(),
+    messages: request.messages,
+    system: 'You are Traces.',
+  });
+  assert.equal(streamed.message, 'Hello, Traces.');
+  assert.deepEqual(streamed.toolCalls, []);
+
   const handlerResult = await handleChat({
     ...request,
     languageModel: createStreamingModel(),
   });
   assert.equal(handlerResult.message, 'Hello, Traces.');
   assert.deepEqual(handlerResult.toolCalls, []);
-
-  const routeResponse = await handleChatRoute(request, {
-    languageModel: createStreamingModel(),
-  });
-  assert.equal(routeResponse.status, 200);
-  const routeBody = (await routeResponse.json()) as { message: string; toolCalls: unknown[] };
-  assert.equal(routeBody.message, 'Hello, Traces.');
-  assert.deepEqual(routeBody.toolCalls, []);
 
   console.log('ai-stream verification passed');
 }

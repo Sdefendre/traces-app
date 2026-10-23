@@ -870,7 +870,7 @@ export async function POST(req: Request) {
   return handleChatRoute((await req.json()) as ChatRequest);
 }
 
-export async function handleChatRoute(
+async function handleChatRoute(
   body: ChatRequest,
   options?: { languageModel?: LanguageModel },
 ) {

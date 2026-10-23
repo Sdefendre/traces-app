@@ -42,7 +42,6 @@
     "main/ipc/file-system.ts",
     "main/ipc/path-utils.ts",
     "main/ipc/byo-agents.ts",
-    "src/app/api/chat/route.ts",
     "scripts/verify-wiki-link.ts",
     "scripts/verify-note-stats.ts",
     "scripts/verify-api-errors.ts",
