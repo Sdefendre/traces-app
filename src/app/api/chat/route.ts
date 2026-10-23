@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import type { LanguageModel } from 'ai';
 import { isByoAgentId } from '../../../../shared/byo-agents';
 import { formatUpstreamError } from '../../../../shared/api-errors';
 import { replaceAllLiteral } from '../../../../shared/replace-text';
 import { realpathInsideRoot } from '../../../../shared/vault-guard';
+import { streamChatWithModel } from '../../../../shared/ai-chat';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -865,15 +867,30 @@ async function handleGoogle(
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
+  return handleChatRoute((await req.json()) as ChatRequest);
+}
+
+export async function handleChatRoute(
+  body: ChatRequest,
+  options?: { languageModel?: LanguageModel },
+) {
   try {
-    const { messages, provider, model, apiKey, systemPrompt: customSystemPrompt } =
-      (await req.json()) as ChatRequest;
+    const { messages, provider, model, apiKey, systemPrompt: customSystemPrompt } = body;
 
     if (!messages || !provider || !model) {
       return NextResponse.json(
         { error: 'Missing required fields: messages, provider, model' },
         { status: 400 },
       );
+    }
+
+    if (options?.languageModel) {
+      const result = await streamChatWithModel({
+        model: options.languageModel,
+        messages,
+        system: customSystemPrompt || SYSTEM_PROMPT,
+      });
+      return NextResponse.json(result);
     }
 
     // The folder is chosen by the desktop app, not by the request. A caller

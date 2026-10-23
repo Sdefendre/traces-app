@@ -8,6 +8,8 @@ import { replaceAllLiteral } from '../../shared/replace-text';
 import { isByoAgentId } from '../../shared/byo-agents';
 import { formatUpstreamError } from '../../shared/api-errors';
 import { handleByoChat } from './byo-agents';
+import { streamChatWithModel } from '../../shared/ai-chat';
+import type { LanguageModel } from 'ai';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchJSON(res: Response): Promise<any> {
@@ -37,6 +39,8 @@ interface ChatRequest {
   model: string;
   apiKey?: string;
   systemPrompt?: string;
+  // Injected by tests. Production chat still uses the provider HTTP loops.
+  languageModel?: LanguageModel;
 }
 
 interface ChatResult {
@@ -700,13 +704,28 @@ async function handleGoogle(
 // ---------------------------------------------------------------------------
 
 export async function handleChat(opts: ChatRequest): Promise<ChatResult> {
-  const { messages, provider, model, apiKey, systemPrompt: customSystemPrompt } = opts;
+  const {
+    messages,
+    provider,
+    model,
+    apiKey,
+    systemPrompt: customSystemPrompt,
+    languageModel,
+  } = opts;
 
   if (!messages || !provider || !model) {
     throw new Error('Missing required fields: messages, provider, model');
   }
 
   const sysPrompt = customSystemPrompt || SYSTEM_PROMPT;
+
+  if (languageModel) {
+    return streamChatWithModel({
+      model: languageModel,
+      messages,
+      system: sysPrompt,
+    });
+  }
 
   if (isByoAgentId(provider)) {
     return handleByoChat({

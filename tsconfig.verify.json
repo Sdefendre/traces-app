@@ -34,8 +34,18 @@
     "src/lib/wiki-links.ts",
     "src/lib/note-stats.ts",
     "shared/api-errors.ts",
+    "shared/ai-chat.ts",
+    "shared/replace-text.ts",
+    "shared/vault-guard.ts",
+    "shared/paths.ts",
+    "main/ipc/chat-handler.ts",
+    "main/ipc/file-system.ts",
+    "main/ipc/path-utils.ts",
+    "main/ipc/byo-agents.ts",
+    "src/app/api/chat/route.ts",
     "scripts/verify-wiki-link.ts",
     "scripts/verify-note-stats.ts",
-    "scripts/verify-api-errors.ts"
+    "scripts/verify-api-errors.ts",
+    "scripts/verify-ai-stream.ts"
   ]
 }
