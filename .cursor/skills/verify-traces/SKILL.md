@@ -44,7 +44,7 @@ Ready signals:
 
 Electron in dev always loads `http://localhost:3333`. You cannot run two desktop instances side by side. If 3333 is taken, stop. Cleanup the verify run that owns it, or leave the foreign process alone. Never `pkill` by name.
 
-`pnpm start` is unpackaged Electron, so it still loads `http://localhost:3333` (`!app.isPackaged` in `main/index.ts`). A packaged app loads `path.join(__dirname, '..', 'out', 'index.html')`. Neither is the verification launch. Both use the real login home unless `TRACES_VAULT_DIR` is set.
+`pnpm start` is unpackaged Electron, so it still loads `http://localhost:3333` (`!app.isPackaged` in `main/index.ts`). A packaged app loads `path.join(app.getAppPath(), 'out', 'index.html')`. Neither is the verification launch. Both use the real login home unless `TRACES_VAULT_DIR` is set.
 
 If `node_modules/.bin/electron --version` fails, the Electron binary was skipped on install. From the repo root run `node node_modules/electron/install.js`. Do not treat that as a product change.
 
