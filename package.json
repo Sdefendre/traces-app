@@ -73,7 +73,7 @@
     "@types/react-dom": "^19.0.4",
     "@types/three": "^0.172.0",
     "concurrently": "^9.1.2",
-    "electron": "^41.10.7",
+    "electron": "^42.11.9",
     "electron-builder": "^26.15.3",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.27",
