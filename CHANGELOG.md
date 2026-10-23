@@ -9,10 +9,6 @@ Traces is a product of **Defendre Solutions LLC**.
 
 ## [Unreleased]
 
-### Docs
-
-- Docs: AGENTS.md now tells agents to cut taglines, helper text and secondary labels, keeping legal, consent, pricing, accessibility and error text.
-
 ### Fixed
 - `pnpm-workspace.yaml` lists `onlyBuiltDependencies` as a YAML array, so pnpm 10 runs Electron's install script. The quoted string was one package name, and `pnpm install` left Electron without a binary.
 - `publicHoistPattern` hoists eslint plugins so `pnpm lint` can load `eslint-plugin-react-hooks`.
@@ -21,6 +17,8 @@ Traces is a product of **Defendre Solutions LLC**.
 - `electron-builder` 26 reads `package.json` `build` and skips `electron-builder.yml` when that field exists. `build.files` now ships `out/**/*` instead of `src/**/*` and `.next/**/*`.
 
 ### Changed
+- Docs: AGENTS.md now tells agents to cut taglines, helper text and secondary labels, keeping legal, consent, pricing, accessibility and error text.
+- Docs: AGENTS.md now tells agents to explain the failure mode, likelihood and cost, and get Steve's OK, before adding complexity for speculative race conditions or security edge cases. Real payment, auth and private-data risks are still fixed right away.
 - GitHub release builds use pnpm 10 and Node 22, the same versions as CI. The release job was failing at setup because pnpm 9 rejects this repo's workspace file.
 - README desktop runtime is Electron 41, matching `package.json` after the Next 15.5.27 / Electron 41 / electron-builder 26 upgrade.
 
