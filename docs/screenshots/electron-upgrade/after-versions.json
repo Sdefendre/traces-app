@@ -1,0 +1,7 @@
+{
+  "source": "Runtime.evaluate on running Electron main process (pid 4417)",
+  "node": "24.22.0",
+  "electron": "43.8.3",
+  "chrome": "150.0.7871.250",
+  "viewport": { "innerWidth": 1803, "innerHeight": 1075, "outerWidth": 1803, "outerHeight": 1104, "devicePixelRatio": 0.984375 }
+}

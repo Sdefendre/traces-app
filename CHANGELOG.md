@@ -17,10 +17,11 @@ Traces is a product of **Defendre Solutions LLC**.
 - `electron-builder` 26 reads `package.json` `build` and skips `electron-builder.yml` when that field exists. `build.files` now ships `out/**/*` instead of `src/**/*` and `.next/**/*`.
 
 ### Changed
+- Desktop runtime is Electron 43.8.3 (bundled Node.js 24.22.0 per the [v43.8.3 release notes](https://releases.electronjs.org/release/v43.8.3)). Electron 41 is end of life. 43.8.3 is the oldest currently supported Electron. CI, `.nvmrc`, and `engines.node` are pinned to Node 22.23.4 (the first Node 22 release with the CVE-2026-111497 Brotli fix). No stable Electron yet bundles Node 24.22.1.
 - Docs: AGENTS.md now tells agents to cut taglines, helper text and secondary labels, keeping legal, consent, pricing, accessibility and error text.
 - Docs: AGENTS.md now tells agents to explain the failure mode, likelihood and cost, and get Steve's OK, before adding complexity for speculative race conditions or security edge cases. Real payment, auth and private-data risks are still fixed right away.
 - GitHub release builds use pnpm 10 and Node 22, the same versions as CI. The release job was failing at setup because pnpm 9 rejects this repo's workspace file.
-- README desktop runtime is Electron 41, matching `package.json` after the Next 15.5.27 / Electron 41 / electron-builder 26 upgrade.
+- README desktop runtime is Electron 43, matching `package.json`.
 
 ### Removed
 - `electron-builder.yml`, which electron-builder 26 did not load.

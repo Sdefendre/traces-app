@@ -75,7 +75,7 @@ Panels use frosted glass on shadcn/ui, with glass and gradient button variants.
 | --- | --- |
 | Framework | Next.js 15 (App Router) |
 | UI library | React 19 |
-| Desktop runtime | Electron 41 |
+| Desktop runtime | Electron 43 |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4, tw-animate-css |
 | Components | shadcn/ui (New York style, CVA variants) |
