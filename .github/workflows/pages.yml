@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Pages deploys must queue, not cancel mid-flight, to avoid backend cancel races.
+  cancel-in-progress: false
 
 jobs:
   deploy:
