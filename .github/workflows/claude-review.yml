@@ -29,7 +29,8 @@ jobs:
           plugin_marketplaces: "https://github.com/anthropics/claude-plugins-official.git"
           plugins: "code-review@claude-plugins-official"
           prompt: |
+            Override the code-review plugin's "Claude has already commented on this PR" stop.
+            Review head commit ${{ github.event.pull_request.head.sha }} of ${{ github.repository }}/pull/${{ github.event.pull_request.number }}.
+            Skip only if Claude already reviewed this exact head SHA.
             /code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
-
-            Override the plugin's "Claude has already commented on this PR" skip. That guard is PR-wide and would miss bugs introduced after the first review. Skip only if Claude already reviewed this exact head SHA (${{ github.event.pull_request.head.sha }}). If Claude commented on an older commit, proceed with a fresh review. When posting a summary comment, include that SHA so later runs can match it.
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
