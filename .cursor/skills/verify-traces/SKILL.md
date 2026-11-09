@@ -168,7 +168,7 @@ Every proof needs:
 Standards:
 
 - Exercise the real Files / Notes / Graph / Pages path. Do not `useEditorStore.setState` or write the vault from a Node script and call that a UI proof.
-- `pnpm verify:editor`, `pnpm verify:particles`, `pnpm verify:wiki-link`, `pnpm verify:webmcp`, `pnpm verify:logic`, `pnpm verify:byo`, `pnpm verify:byo-runtime`, `pnpm verify:note-stats`, and `pnpm verify:api-errors` are module proofs. Keep those logs in evidence when the change is in that module. They do not replace a window drive.
+- `pnpm verify:editor`, `pnpm verify:particles`, `pnpm verify:wiki-link`, `pnpm verify:webmcp`, `pnpm verify:logic`, `pnpm verify:byo`, `pnpm verify:byo-runtime`, `pnpm verify:note-stats`, `pnpm verify:api-errors`, and `pnpm verify:ai-stream` are module proofs. Keep those logs in evidence when the change is in that module. They do not replace a window drive.
 - Mocks are already how `scripts/verify-webmcp.mjs` and `scripts/verify-byo-agents.ts` work. That is the production boundary for those scripts. Do not invent a fake `electronAPI` in the window.
 - Never upload notes. Never copy vault files to the Pages site, a gist, or chat.
 
@@ -248,6 +248,7 @@ pnpm verify:byo         # bring-your-own agent argument builders
 pnpm verify:byo-runtime # compiled BYO chat against a temp vault
 pnpm verify:note-stats  # editor footer counts prose, not markdown punctuation
 pnpm verify:api-errors  # upstream AI and voice errors stay readable sentences
+pnpm verify:ai-stream   # AI SDK 5 streaming through streamChatWithModel (mocked)
 ```
 
 Feature map: `features/README.md`. Keep it honest with `/maintain-verification-skill` when the app changes.
