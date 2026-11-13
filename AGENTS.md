@@ -7,3 +7,7 @@
 ## Scope and complexity
 
 - Before adding complexity for a speculative or very unlikely race condition or security edge case, explain the concrete failure mode, how likely it is, and the complexity cost, and get Steve's OK. Don't silently expand scope for theoretical robustness. Exception: real risks to payments, auth/login, and private user data get fixed without waiting.
+
+## Front-end
+
+- Use the modern-web-guidance skill for front-end, CSS, HTML, and browser-API work.
