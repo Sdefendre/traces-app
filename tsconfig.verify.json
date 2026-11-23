@@ -22,6 +22,7 @@
     "shared/particle-rendering.ts",
     "shared/particle-shapes.ts",
     "src/stores/create-editor-store.ts",
+    "src/stores/create-ui-store.ts",
     "src/stores/editor-store-factory.ts",
     "src/stores/graph-store.ts",
     "src/stores/settings-store.ts",
@@ -54,6 +55,7 @@
     "scripts/verify-api-errors.ts",
     "scripts/verify-ai-stream.ts",
     "scripts/verify-vault-watcher.ts",
-    "scripts/verify-chat-settings.ts"
+    "scripts/verify-chat-settings.ts",
+    "scripts/verify-sidebar-editor.ts"
   ]
 }
