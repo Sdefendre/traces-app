@@ -13,7 +13,7 @@ import {
   ALL_GROK_VOICE_OPTIONS,
 } from '@/stores/settings-store';
 import type { VoiceOption, GrokVoiceOption, VoiceProvider } from '@/stores/settings-store';
-import { BYO_DEFAULT_MODEL, isByoAgentId, type Provider } from '@/stores/settings-store';
+import { isByoAgentId, resolveDefaultModelForProvider, type Provider } from '@/stores/settings-store';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { X, Eye, EyeOff, Bot, Type, GitBranch, Cog } from 'lucide-react';
@@ -597,7 +597,7 @@ export function SettingsPanel() {
                           const next = e.target.value as Provider;
                           updateSettings({
                             defaultProvider: next,
-                            defaultModel: isByoAgentId(next) ? BYO_DEFAULT_MODEL : settings.defaultModel,
+                            defaultModel: resolveDefaultModelForProvider(settings, next),
                           });
                         }}
                         className={selectClass}

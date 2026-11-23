@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   executeRealtimeTool: (opts: { toolName: string; args: Record<string, string> }) =>
     ipcRenderer.invoke('realtime:executeTool', opts),
 
-  chat: (opts: { messages: unknown[]; provider: string; model: string; apiKey?: string; systemPrompt?: string }) =>
+  chat: (opts: { messages: unknown[]; provider: string; model: string; apiKey?: string; systemPrompt?: string; ollamaEndpoint?: string }) =>
     ipcRenderer.invoke('chat:send', opts),
 
   getByoAgentStatuses: () => ipcRenderer.invoke('agents:status'),

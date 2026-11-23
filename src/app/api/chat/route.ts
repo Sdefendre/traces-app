@@ -7,6 +7,7 @@ import { formatUpstreamError } from '../../../../shared/api-errors';
 import { replaceAllLiteral } from '../../../../shared/replace-text';
 import { realpathInsideRoot } from '../../../../shared/vault-guard';
 import { streamChatWithModel } from '../../../../shared/ai-chat';
+import { normalizeOllamaEndpoint } from '../../../../shared/ollama';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -593,6 +594,7 @@ async function handleOllama(
   vaultRoot: string,
   sysPrompt: string = SYSTEM_PROMPT,
 ): Promise<{ message: string; toolCalls: ToolCallRecord[] }> {
+  const endpoint = normalizeOllamaEndpoint(process.env.OLLAMA_ENDPOINT);
   const tools = toolsForOpenAI();
   const toolCalls: ToolCallRecord[] = [];
   const MAX_ITERATIONS = 10;
@@ -614,7 +616,7 @@ async function handleOllama(
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     let res: Response;
     try {
-      res = await fetch('http://localhost:11434/api/chat', {
+      res = await fetch(`${endpoint}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -631,7 +633,7 @@ async function handleOllama(
     if (!res.ok) {
       // If tools caused an error on the first attempt, retry without tools
       if (i === 0) {
-        const fallbackRes = await fetch('http://localhost:11434/api/chat', {
+        const fallbackRes = await fetch(`${endpoint}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ model, messages: ollamaMessages, stream: false }),

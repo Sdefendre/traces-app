@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { electronAPI } from '@/lib/electron-api';
+import { electronAPI } from '../lib/electron-api';
 import { BYO_DEFAULT_MODEL, isByoAgentId, type ByoAgentId } from '../../shared/byo-agents';
 
 export type ApiProvider = 'ollama' | 'openai' | 'anthropic' | 'xai' | 'google';
@@ -199,6 +199,17 @@ export function getEnabledModelsFor(settings: AppSettings, provider: Provider): 
       if (isByoAgentId(provider)) return null;
       return assertNever(provider);
   }
+}
+
+/** Pick a valid default model when switching the default provider in Settings. */
+export function resolveDefaultModelForProvider(
+  settings: AppSettings,
+  nextProvider: Provider
+): string {
+  if (isByoAgentId(nextProvider)) return BYO_DEFAULT_MODEL;
+  const enabled = getEnabledModelsFor(settings, nextProvider);
+  if (enabled === null) return '';
+  return enabled.includes(settings.defaultModel) ? settings.defaultModel : (enabled[0] ?? '');
 }
 
 function assertNever(value: never): never {
