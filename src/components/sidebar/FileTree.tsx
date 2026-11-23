@@ -14,47 +14,24 @@ import { ChevronLeft, FolderOpen, Plus, SearchX } from 'lucide-react';
 export function FileTree() {
   const { files, activeFile, setActiveFile, refreshFiles, openFolder, vaultName } = useVaultStore();
   const { openFile, closeTab } = useEditorStore();
-  const { toggleSidebar, sidebarSearch: search, setSidebarSearch: setSearch } = useUIStore();
-  const [creating, setCreating] = useState(false);
+  const {
+    toggleSidebar,
+    sidebarSearch: search,
+    setSidebarSearch: setSearch,
+    creatingNote: creating,
+    setCreatingNote: setCreating,
+    pendingSearchFocus,
+    clearFocusSearch,
+  } = useUIStore();
   const [newFileName, setNewFileName] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Listen for global keyboard shortcut events
+  // Focus the search box when triggered via shortcut, ambiguous wiki-link, or WebMCP (including after expanding from collapsed).
   useEffect(() => {
-    const handleNewNote = () => {
-      // Expand sidebar if collapsed so the create input is visible
-      const { sidebarCollapsed } = useUIStore.getState();
-      if (sidebarCollapsed) useUIStore.getState().toggleSidebar();
-      setCreating(true);
-    };
-
-    const handleFocusSearch = () => {
-      // Expand sidebar if collapsed so the search input is visible
-      const { sidebarCollapsed } = useUIStore.getState();
-      if (sidebarCollapsed) useUIStore.getState().toggleSidebar();
-      searchInputRef.current?.focus();
-    };
-
-    const handleSearchNotes = (event: Event) => {
-      const query =
-        event instanceof CustomEvent && typeof event.detail?.query === 'string'
-          ? event.detail.query
-          : '';
-      const { sidebarCollapsed } = useUIStore.getState();
-      if (sidebarCollapsed) useUIStore.getState().toggleSidebar();
-      setSearch(query);
-      searchInputRef.current?.focus();
-    };
-
-    window.addEventListener('traces:new-note', handleNewNote);
-    window.addEventListener('traces:focus-search', handleFocusSearch);
-    window.addEventListener('traces:search-notes', handleSearchNotes);
-    return () => {
-      window.removeEventListener('traces:new-note', handleNewNote);
-      window.removeEventListener('traces:focus-search', handleFocusSearch);
-      window.removeEventListener('traces:search-notes', handleSearchNotes);
-    };
-  }, [setSearch]);
+    if (!pendingSearchFocus) return;
+    searchInputRef.current?.focus();
+    clearFocusSearch();
+  }, [pendingSearchFocus, clearFocusSearch]);
 
   const filteredFiles = useMemo(() => {
     if (!search) return files;
@@ -90,7 +67,7 @@ export function FileTree() {
       const message = err instanceof Error ? err.message : 'Could not create the note.';
       window.alert(message);
     }
-  }, [newFileName, refreshFiles, handleSelect, activeFile]);
+  }, [newFileName, refreshFiles, handleSelect, activeFile, setCreating]);
 
   const handleDelete = useCallback(
     async (path: string) => {

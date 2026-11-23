@@ -8,6 +8,7 @@ import { electronAPI } from '@/lib/electron-api';
 import { useEditorStore } from '@/stores/editor-store';
 import { normalizeRelativePath } from '@/lib/paths';
 import { consumePendingRename } from '@/lib/pending-renames';
+import { SEARCH_NOTES_EVENT } from '@/lib/webmcp';
 import { useSettingsStore } from '@/stores/settings-store';
 import { FileTree } from '@/components/sidebar/FileTree';
 import { KnowledgeGraph } from '@/components/graph/KnowledgeGraph';
@@ -117,6 +118,32 @@ export function AppShell() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSidebar, toggleGraphCollapsed, toggleEditorCollapsed, toggleChat, toggleGraphFullscreen]);
+
+  // Handle sidebar events at the shell level so they still expand Files when FileTree is unmounted.
+  useEffect(() => {
+    const handleNewNote = () => {
+      useUIStore.getState().requestNewNote();
+    };
+    const handleFocusSearch = () => {
+      useUIStore.getState().requestFocusSearch();
+    };
+    const handleSearchNotes = (event: Event) => {
+      const query =
+        event instanceof CustomEvent && typeof event.detail?.query === 'string'
+          ? event.detail.query
+          : '';
+      useUIStore.getState().requestFocusSearch(query);
+    };
+
+    window.addEventListener('traces:new-note', handleNewNote);
+    window.addEventListener('traces:focus-search', handleFocusSearch);
+    window.addEventListener(SEARCH_NOTES_EVENT, handleSearchNotes);
+    return () => {
+      window.removeEventListener('traces:new-note', handleNewNote);
+      window.removeEventListener('traces:focus-search', handleFocusSearch);
+      window.removeEventListener(SEARCH_NOTES_EVENT, handleSearchNotes);
+    };
+  }, []);
 
   useEffect(() => {
     loadVault();

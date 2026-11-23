@@ -169,13 +169,13 @@ export function MarkdownEditor({ tabId, content }: MarkdownEditorProps) {
     }
   }, [content]);
 
-  // Apply font size and spell check from settings
+  // Apply font size and spell check from settings (and re-apply after tabId recreates the view)
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
     view.contentDOM.spellcheck = appSettings.spellCheck;
     view.dom.style.setProperty('--editor-font-size', `${appSettings.editorFontSize}px`);
-  }, [appSettings.editorFontSize, appSettings.spellCheck]);
+  }, [tabId, appSettings.editorFontSize, appSettings.spellCheck]);
 
   return (
     <div
