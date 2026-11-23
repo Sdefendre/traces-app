@@ -42,9 +42,13 @@
     "main/ipc/file-system.ts",
     "main/ipc/path-utils.ts",
     "main/ipc/byo-agents.ts",
+    "main/ipc/vault-watcher.ts",
+    "main/ipc/vault-parser.ts",
+    "main/ipc/vault-file-cache.ts",
     "scripts/verify-wiki-link.ts",
     "scripts/verify-note-stats.ts",
     "scripts/verify-api-errors.ts",
-    "scripts/verify-ai-stream.ts"
+    "scripts/verify-ai-stream.ts",
+    "scripts/verify-vault-watcher.ts"
   ]
 }
