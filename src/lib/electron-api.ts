@@ -17,6 +17,7 @@ export interface ChatRequest {
   model: string;
   apiKey?: string;
   systemPrompt?: string;
+  ollamaEndpoint?: string;
 }
 
 export interface ChatResult {

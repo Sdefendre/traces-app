@@ -16,6 +16,7 @@ import {
   type GrokVoiceOption,
 } from '@/stores/settings-store';
 import { BYO_AGENTS, BYO_AGENT_IDS } from '../../../shared/byo-agents';
+import { DEFAULT_OLLAMA_ENDPOINT } from '../../../shared/ollama';
 import { electronAPI } from '@/lib/electron-api';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
@@ -450,7 +451,9 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
   // Auto-detect Ollama models on mount, then set defaults
   useEffect(() => {
     let cancelled = false;
-    const ollamaEndpoint = appSettings.ollamaEndpoint || 'http://localhost:11434';
+    const ollamaEndpoint = (appSettings.ollamaEndpoint || DEFAULT_OLLAMA_ENDPOINT)
+      .trim()
+      .replace(/\/+$/, '');
 
     async function detectOllama() {
       try {
@@ -535,15 +538,16 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
   // Send message
   const handleSubmit = async () => {
     if (sendingRef.current || !input.trim() || loading) return;
-    sendingRef.current = true;
 
-    const userMessage: Message = { role: 'user', content: input };
     const apiKey = getApiKey(provider);
 
     if (!isByoAgentId(provider) && provider !== 'ollama' && !apiKey) {
       setError('Add an API key for this provider in Settings > AI & Models.');
       return;
     }
+
+    sendingRef.current = true;
+    const userMessage: Message = { role: 'user', content: input };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
@@ -557,6 +561,7 @@ The current date and time is ${new Date().toLocaleString('en-US', { weekday: 'lo
         model: isByoAgentId(provider) ? BYO_DEFAULT_MODEL : model,
         systemPrompt,
         ...(apiKey ? { apiKey } : {}),
+        ...(provider === 'ollama' ? { ollamaEndpoint: appSettings.ollamaEndpoint } : {}),
       });
 
       const toolCalls = data.toolCalls || [];
