@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import type { BrowserWindow } from 'electron';
 import path from 'path';
 import { watch, FSWatcher } from 'chokidar';
 import { listFiles, readFile, IGNORE_DIRS } from './file-system';
@@ -24,6 +24,22 @@ const READ_RETRY_DELAY_MS = 100;
 const READ_RETRY_COUNT = 2;
 
 export { resetVaultFileCache };
+
+/**
+ * Ignore dot-prefixed entries and IGNORE_DIRS inside the vault, without
+ * matching ancestor directories above the vault root (e.g. ~/.notes or ~/Google-Drive/Notes).
+ */
+export function isIgnoredVaultPath(vaultRoot: string, filePath: string): boolean {
+  const resolvedRoot = path.resolve(vaultRoot);
+  const resolvedTarget = path.resolve(filePath);
+  const rel = path.relative(resolvedRoot, resolvedTarget);
+  if (!rel || rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) {
+    return false;
+  }
+  return rel
+    .split(/[/\\]/)
+    .some((part) => part.startsWith('.') || IGNORE_DIRS.includes(part));
+}
 
 function isCurrent(gen: number): boolean {
   return gen === generation;
@@ -142,13 +158,7 @@ export async function startVaultWatcher(
 
   // Watch before the first scan so files created during that scan are not missed.
   watcher = watch(resolvedRoot, {
-    ignored: [
-      /(^|[\/\\])\./,
-      (filePath: string) => {
-        const parts = filePath.split(/[/\\]/);
-        return parts.some((part) => IGNORE_DIRS.includes(part));
-      },
-    ],
+    ignored: (filePath: string) => isIgnoredVaultPath(resolvedRoot, filePath),
     persistent: true,
     ignoreInitial: true,
     awaitWriteFinish: {
